@@ -5,6 +5,7 @@
 ## 1.0.2
 
 - API: invoices/estimates created without tax_rate now use the company default tax rate. Sales receipts, and updates that recompute tax, use the same rule. An explicit tax_rate of 0 stays 0%.
+- Windows x64 zip: bundled Node and SQLite. Unzip and double-click `start.bat` (no admin). Data is in `%LOCALAPPDATA%\OpenAccounting\data`.
 
 ## 1.0.1
 

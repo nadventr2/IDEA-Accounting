@@ -50,6 +50,12 @@ npm start
 
 The seed renames the first company to Example Widgets LLC and adds Ada Example, a Demo Widget, and one sample sale. It refuses to run if customers already exist.
 
+## Windows
+
+Download [windows/open-accounting-1.0.2-windows-x64.zip](windows/open-accounting-1.0.2-windows-x64.zip) and unzip it. Double-click `start.bat`. No administrator account is needed. The app stores its data in `%LOCALAPPDATA%\OpenAccounting\data`. The default tax rate is 7.75%. Edit it in Settings.
+
+The checksum is in `windows/open-accounting-1.0.2-windows-x64.zip.sha256`.
+
 ## Configuration
 
 Environment variables override `config.json` in the project root. Relative paths are resolved from the project root, not the shell's current directory.
