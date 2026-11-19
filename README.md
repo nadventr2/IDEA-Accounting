@@ -77,8 +77,8 @@ Environment variables override `config.json` in the project root. Relative paths
 | EASYCART_REMIT_FEE_RATE | 0 | Fee fraction for product remittances |
 | EASYCART_CLEAN_START | empty | Optional start date for the import split |
 | EASYCART_IMPORT_OWNER | party_a | `party_a` or `party_b` |
-| DEFAULT_TAX_RATE | 0 | Decimal tax rate seeded on a new company (0.0825 = 8.25%) |
-| DEFAULT_TAX_LABEL | empty | Optional label for that seeded rate |
+| DEFAULT_TAX_RATE | 0.0775 | Decimal tax rate seeded on a new company (0.0775 = 7.75%). Set 0 for no tax. |
+| DEFAULT_TAX_LABEL | Sales tax 7.75% | Label for that seeded rate |
 
 Copy `config.example.json` to `config.json` if you prefer a file. `config.json` is gitignored.
 
