@@ -124,4 +124,4 @@ The database and uploads live in the `acct-data` volume.
 
 ## License
 
-MIT. Copyright Open Accounting contributors. See `LICENSE`.
+Open Accounting is free software licensed under the GNU General Public License, version 3 or (at your option) any later version (GPL-3.0-or-later). Copyright Open Accounting contributors. See `LICENSE` for the full text. If you distribute a modified version, you must release your changes under the same license and make the source available.
