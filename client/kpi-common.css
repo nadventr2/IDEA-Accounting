@@ -1,0 +1,75 @@
+/* Shared KPI summary bubbles — used across accounting pages */
+#accounting-kpi-mount {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0.85rem 1rem 0.35rem;
+  box-sizing: border-box;
+  width: 100%;
+}
+/* Always a single horizontal row (scroll sideways on narrow screens) */
+#accounting-kpi-mount .akpi-grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0.7rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 0.25rem;
+}
+#accounting-kpi-mount .akpi {
+  background: #fff;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid #2563eb;
+  min-width: 140px;
+  flex: 1 1 0;
+  max-width: none;
+}
+#accounting-kpi-mount .akpi.green { border-left-color: #059669; }
+#accounting-kpi-mount .akpi.red { border-left-color: #dc2626; }
+#accounting-kpi-mount .akpi.amber { border-left-color: #d97706; }
+#accounting-kpi-mount .akpi.gray { border-left-color: #6b7280; }
+#accounting-kpi-mount .akpi.purple { border-left-color: #7c3aed; }
+#accounting-kpi-mount .akpi .akpi-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+}
+#accounting-kpi-mount .akpi .akpi-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin-top: 0.2rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#accounting-kpi-mount .akpi .akpi-sub {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#accounting-kpi-mount .akpi-loading,
+#accounting-kpi-mount .akpi-error {
+  font-size: 0.85rem;
+  color: #6b7280;
+  padding: 0.35rem 0.15rem;
+}
+#accounting-kpi-mount .akpi-error { color: #dc2626; }
+
+/* Push content below sticky headers that use padding-top on root */
+body.akpi-active #root.flex-grow,
+body.akpi-active #root {
+  /* keep page layouts working; strip sits above root */
+}

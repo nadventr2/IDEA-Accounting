@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales Tax - My Company</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.22.9/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script type="text/javascript">
+    var gk_isXlsx = false;
+    var gk_xlsxFileLookup = {};
+    var gk_fileData = {};
+    function filledCell(cell) {
+      return cell !== '' && cell != null;
+    }
+    function loadFileData(filename) {
+      if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+        try {
+          var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+          var firstSheetName = workbook.SheetNames[0];
+          var worksheet = workbook.Sheets[firstSheetName];
+          var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+          var filteredData = jsonData.filter(row => row.some(filledCell));
+          var headerRowIndex = filteredData.findIndex((row, index) => {
+            if (index + 1 >= filteredData.length) return false;
+            return row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length;
+          });
+          if (headerRowIndex === -1 || headerRowIndex > 25) {
+            headerRowIndex = 0;
+          }
+          var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
+          csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+          return csv;
+        } catch (e) {
+          console.error('Error processing XLSX:', e);
+          return "";
+        }
+      }
+      return gk_fileData[filename] || "";
+    }
+  </script>
+  <link href="/output.css" rel="stylesheet">
+  <style>
+    .min-h-screen { min-height: 100vh; }
+    .bg-gray-100 { background-color: #f3f4f6; }
+    .bg-blue-600 { background-color: #2563eb; }
+    .text-white { color: #fff; }
+    .p-4 { padding: 1rem; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-4 { gap: 1rem; }
+    .container { max-width: 1280px; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .h-12 { height: 3rem; }
+    .mr-4 { margin-right: 1rem; }
+    .text-2xl { font-size: 1.5rem; }
+    .font-bold { font-weight: 700; }
+    .px-4 { padding-left: 1rem; padding-right: 1rem; }
+    .hover:underline { text-decoration: underline; }
+    .p-6 { padding: 1.5rem; }
+    .flex-grow { flex-grow: 1; }
+    .text-3xl { font-size: 1.875rem; }
+    .mb-6 { margin-bottom: 1.5rem; }
+    .text-sm { font-size: 0.875rem; }
+    .font-medium { font-weight: 500; }
+    .text-gray-700 { color: #374151; }
+    .mt-4 { margin-top: 1rem; }
+    .text-lg { font-size: 1.125rem; }
+    .font-semibold { font-weight: 600; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .min-w-full { min-width: 100%; }
+    .divide-y { border-bottom: 1px solid #e5e7eb; }
+    .divide-gray-200 { border-color: #e5e7eb; }
+    .bg-gray-50 { background-color: #f9fafb; }
+    .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .text-left { text-align: left; }
+    .text-xs { font-size: 0.75rem; }
+    .text-gray-500 { color: #6b7280; }
+    .uppercase { text-transform: uppercase; }
+    .tracking-wider { letter-spacing: 0.05em; }
+    .bg-white { background-color: #fff; }
+    .whitespace-nowrap { white-space: nowrap; }
+    .text-red-600 { color: #dc2626; }
+    .bg-red-100 { background-color: #fee2e2; }
+    .mb-4 { margin-bottom: 1rem; }
+    .table-container { background-color: #fff; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .bg-blue-600 { background-color: #2563eb; }
+    .hover:bg-blue-700:hover { background-color: #1d4ed8; }
+    .bg-green-500 { background-color: #22c55e; }
+    .bg-green-600 { background-color: #16a34a; }
+    .bg-green-100 { background-color: #dcfce7; }
+    .text-green-800 { color: #166534; }
+    .text-right { text-align: right; }
+    .bg-blue-400 { background-color: #60a5fa; }
+    .cursor-wait { cursor: wait; }
+    .cursor-default { cursor: default; }
+    .disabled:cursor-not-allowed { cursor: not-allowed; }
+    .text-gray-600 { color: #4b5563; }
+    .rounded-lg { border-radius: 0.5rem; }
+    .shadow { box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .overflow-x-auto { overflow-x: auto; }
+    .font-semibold { font-weight: 600; }
+    .space-x-2 > * + * { margin-left: 0.5rem; }
+    .mt-2 { margin-top: 0.5rem; }
+    .cursor-pointer { cursor: pointer; }
+    .year-link:hover { color: #2563eb; text-decoration: underline; }
+    .year-link { user-select: none; }
+    .detail-row td { background: #f8fafc; padding: 0 !important; }
+    .detail-inner { padding: 12px 16px 16px; }
+    .detail-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .detail-table th {
+      text-align: left; font-size: 0.7rem; text-transform: uppercase;
+      color: #64748b; padding: 6px 8px; border-bottom: 1px solid #e2e8f0;
+      background: #f1f5f9;
+    }
+    .detail-table td { padding: 8px; border-bottom: 1px solid #eef2f7; vertical-align: top; }
+    .detail-table tr:hover td { background: #eef6ff; }
+    .detail-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .detail-empty { color: #94a3b8; font-style: italic; padding: 12px 8px; }
+    .chevron { display: inline-block; width: 1em; transition: transform 0.15s ease; }
+    .chevron.open { transform: rotate(90deg); }
+  </style>
+  <link rel="stylesheet" href="/app-shell.css" />
+  <link rel="stylesheet" href="/kpi-common.css" />
+  <script src="/app-shell.js" defer></script>
+  <script src="/kpi-common.js" defer></script>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+  <header id="header" class="text-white p-4">
+    <div class="flex items-center">
+        <a href="/"><img src="/logo.png" alt="Company Logo" class="h-12 mr-4" /></a>
+        <h1 class="text-2xl font-bold">Open Accounting</h1>
+      </div>
+      <nav id="nav" class="flex flex-wrap gap-4">
+        <a href="/" class="px-4 hover:underline">Settings</a>
+		<a href="/estimates.html" class="px-4 hover:underline">Estimates</a>
+        <a href="/invoices.html" class="px-4 hover:underline">Invoices</a>
+        <a href="/sales.html" class="px-4 hover:underline">Sales</a>
+        <a href="/add-vendor.html" class="px-4 hover:underline">Add Vendor</a>
+        <a href="/add-products.html" class="px-4 hover:underline">Add Product</a>
+        <a href="/purchase-order.html" class="px-4 hover:underline">Purchase Order</a>
+        <a href="/packing-slip.html" class="px-4 hover:underline">Packing Slips</a>
+        <a href="/transaction-history.html" class="px-4 hover:underline">Transaction History</a>
+        <a href="/customer-list.html" class="px-4 hover:underline">Customer List</a>
+        <a href="/receive-inventory.html" class="px-4 hover:underline">Receive Inventory</a>
+        <a href="/inventory.html" class="px-4 hover:underline">Inventory</a>
+        <a href="/bills.html" class="px-4 hover:underline">Bills</a>
+        <a href="/sales-tax.html" class="px-4 hover:underline">Sales Tax</a>
+        <a href="/reports.html" class="px-4 hover:underline">Reports</a>
+      </nav>
+    </div>
+  </header>
+  <div id="root"></div>
+  <footer class="bg-gray-800 text-white p-4 mt-8">
+    <div class="container mx-auto">
+      <p>© Open Accounting. All rights reserved.</p>
+    </div>
+  </footer>
+<script type="text/babel">
+  const { useState, useEffect } = React;
+  const BASE_URL = window.location.origin + '/api';
+
+  const isTaxedSale = (sale) => {
+    const taxAmt = Number(sale.tax || 0);
+    const rate = Number(sale.tax_rate || 0);
+    return taxAmt > 0.0001 || rate > 0;
+  };
+
+  const saleYear = (sale) => {
+    const year = new Date(sale.date + (String(sale.date).length === 10 ? 'T12:00:00' : '')).getFullYear();
+    return year && !Number.isNaN(year) ? year : null;
+  };
+
+  const SalesTaxPage = () => {
+    const [sales, setSales] = useState([]);
+    const [payments, setPayments] = useState([]);
+    const [error, setError] = useState(null);
+    const [payingYear, setPayingYear] = useState(null);
+    const [success, setSuccess] = useState('');
+    const [expandedYears, setExpandedYears] = useState({});
+
+    const toggleYear = (year) => {
+      setExpandedYears((prev) => ({ ...prev, [year]: !prev[year] }));
+    };
+
+    const fetchJson = async (url, options = {}) => {
+      const res = await fetch(url, {
+        ...options,
+        headers: {
+          Accept: 'application/json',
+          ...(options.headers || {}),
+        },
+      });
+      const text = await res.text();
+      let data = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch (e) {
+        throw new Error(`Expected JSON, got: ${text.slice(0, 160)}`);
+      }
+      if (!res.ok) {
+        throw new Error((data && data.error) || `HTTP ${res.status}: ${text.slice(0, 160)}`);
+      }
+      return data;
+    };
+
+    const loadData = async () => {
+      const companyId = localStorage.getItem('selectedCompanyId') || '1';
+      try {
+        const [salesData, paymentsData] = await Promise.all([
+          fetchJson(`${BASE_URL}/sales?company_id=${companyId}`),
+          fetchJson(`${BASE_URL}/sales_tax_payments?company_id=${companyId}`),
+        ]);
+        setSales(Array.isArray(salesData) ? salesData : []);
+        setPayments(Array.isArray(paymentsData) ? paymentsData : []);
+        setError(null);
+      } catch (err) {
+        console.error(err);
+        setError(err.message || 'Failed to load sales tax data');
+      }
+    };
+
+    useEffect(() => {
+      loadData();
+    }, []);
+
+    const handlePay = async (year) => {
+      if (payingYear != null) return;
+      const companyId = localStorage.getItem('selectedCompanyId') || '1';
+      const paymentDate = new Date().toISOString().replace('T', ' ').slice(0, 19);
+      setPayingYear(year);
+      setSuccess('');
+      setError(null);
+      try {
+        const newPayment = await fetchJson(`${BASE_URL}/sales_tax_payments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            year: Number(year),
+            paid: true,
+            paymentDate,
+            company_id: Number(companyId),
+          }),
+        });
+        setPayments((prev) => {
+          const updated = (prev || []).filter((p) => Number(p.year) !== Number(year));
+          return [...updated, newPayment].sort((a, b) => Number(a.year) - Number(b.year));
+        });
+        setSuccess(`Marked ${year} sales tax as paid (${paymentDate}).`);
+      } catch (err) {
+        console.error(err);
+        setError(`Could not record payment for ${year}: ${err.message || 'Unknown error'}`);
+      } finally {
+        setPayingYear(null);
+      }
+    };
+
+    // Group sales by year (+ list of taxed transactions for drill-down)
+    const salesByYear = sales.reduce((acc, sale) => {
+      const year = saleYear(sale);
+      if (!year) return acc;
+      const taxAmt = Number(sale.tax || 0);
+      const isInState = isTaxedSale(sale);
+      if (!acc[year]) {
+        acc[year] = {
+          tax: 0,
+          inStateSales: 0,
+          outStateSales: 0,
+          totalSales: 0,
+          taxedSales: [],
+        };
+      }
+      acc[year].tax += isInState ? taxAmt : 0;
+      acc[year].totalSales += Number(sale.total || 0);
+      if (isInState) {
+        acc[year].inStateSales += Number(sale.total || 0);
+        if (taxAmt > 0.0001 || Number(sale.tax_rate || 0) > 0) {
+          acc[year].taxedSales.push(sale);
+        }
+      } else {
+        acc[year].outStateSales += Number(sale.total || 0);
+      }
+      return acc;
+    }, {});
+
+    // Newest tax sales first within each year
+    Object.keys(salesByYear).forEach((y) => {
+      salesByYear[y].taxedSales.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+    });
+
+    const years = Object.keys(salesByYear).map(Number).sort((a, b) => b - a);
+
+    return (
+      <main className="container mx-auto p-6 flex-grow">
+        <h2 className="text-3xl font-bold mb-6">Sales Tax Tracking</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Click a <strong>year</strong> to list every taxed sale for that year.
+          Click <strong>Pay</strong> when you have remitted that year’s collected tax. Status is saved per company.
+        </p>
+        {error && (
+          <div className="p-4 mb-4 text-red-700 bg-red-100 rounded-lg shadow-sm">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="p-4 mb-4 text-green-800 bg-green-100 rounded-lg shadow-sm">
+            {success}
+          </div>
+        )}
+        <div className="table-container bg-white rounded-lg shadow overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Year</th>
+                <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Tax collected</th>
+                <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">In-state sales</th>
+                <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Out-of-state</th>
+                <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Total sales</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Payment</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {years.length > 0 ? (
+                years.map((year) => {
+                  const payment = payments.find((p) => Number(p.year) === Number(year));
+                  const isPaid = !!(payment && (payment.paid === true || payment.paid === 1 || payment.paid === '1'));
+                  const paymentDate = payment && (payment.paymentDate || payment.payment_date);
+                  const busy = payingYear === year;
+                  const open = !!expandedYears[year];
+                  const taxed = salesByYear[year].taxedSales || [];
+                  return (
+                    <React.Fragment key={year}>
+                      <tr>
+                        <td className="px-3 py-2 whitespace-nowrap font-semibold">
+                          <button
+                            type="button"
+                            className="year-link cursor-pointer font-semibold bg-transparent border-0 p-0 text-left text-base"
+                            onClick={() => toggleYear(year)}
+                            title={open ? 'Hide taxed sales' : 'Show taxed sales'}
+                            aria-expanded={open}
+                          >
+                            <span className={`chevron ${open ? 'open' : ''}`}>▶</span>{' '}
+                            {year}
+                            <span className="text-xs text-gray-500 font-normal ml-2">
+                              ({taxed.length} taxed)
+                            </span>
+                          </button>
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap text-right">${salesByYear[year].tax.toFixed(2)}</td>
+                        <td className="px-3 py-2 whitespace-nowrap text-right">${salesByYear[year].inStateSales.toFixed(2)}</td>
+                        <td className="px-3 py-2 whitespace-nowrap text-right">${salesByYear[year].outStateSales.toFixed(2)}</td>
+                        <td className="px-3 py-2 whitespace-nowrap text-right">${salesByYear[year].totalSales.toFixed(2)}</td>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => handlePay(year)}
+                            disabled={isPaid || busy}
+                            className={`px-4 py-2 rounded text-white ${
+                              isPaid
+                                ? 'bg-green-600 cursor-default'
+                                : busy
+                                ? 'bg-blue-400 cursor-wait'
+                                : 'bg-blue-600 hover:bg-blue-700'
+                            }`}
+                          >
+                            {isPaid ? 'Paid' : busy ? 'Saving…' : 'Pay'}
+                          </button>
+                          {isPaid && paymentDate && (
+                            <p className="text-sm text-gray-600 mt-1">Paid on {paymentDate}</p>
+                          )}
+                        </td>
+                      </tr>
+                      {open && (
+                        <tr className="detail-row">
+                          <td colSpan="6">
+                            <div className="detail-inner">
+                              <div className="text-sm font-semibold text-gray-700 mb-2">
+                                Taxed transactions — {year}
+                                <span className="font-normal text-gray-500">
+                                  {' '}· {taxed.length} sale{taxed.length === 1 ? '' : 's'} · tax total $
+                                  {salesByYear[year].tax.toFixed(2)}
+                                </span>
+                              </div>
+                              {taxed.length === 0 ? (
+                                <div className="detail-empty">No taxed sales in {year}.</div>
+                              ) : (
+                                <table className="detail-table">
+                                  <thead>
+                                    <tr>
+                                      <th>Date</th>
+                                      <th>Transaction</th>
+                                      <th>Customer</th>
+                                      <th className="num">Subtotal</th>
+                                      <th className="num">Tax</th>
+                                      <th className="num">Shipping</th>
+                                      <th className="num">Total</th>
+                                      <th>Payment</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {taxed.map((s) => (
+                                      <tr key={s.id || s.transaction_number}>
+                                        <td className="whitespace-nowrap">{s.date || '—'}</td>
+                                        <td className="whitespace-nowrap font-medium">
+                                          {s.transaction_number || `#${s.id}`}
+                                        </td>
+                                        <td>{s.customer_name || '—'}</td>
+                                        <td className="num">${Number(s.subtotal || 0).toFixed(2)}</td>
+                                        <td className="num font-semibold">${Number(s.tax || 0).toFixed(2)}</td>
+                                        <td className="num">${Number(s.shipping || 0).toFixed(2)}</td>
+                                        <td className="num">${Number(s.total || 0).toFixed(2)}</td>
+                                        <td className="whitespace-nowrap">{s.payment_method || '—'}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                  <tfoot>
+                                    <tr>
+                                      <td colSpan="4" className="num font-semibold" style={{ paddingTop: 10 }}>
+                                        Tax total
+                                      </td>
+                                      <td className="num font-semibold" style={{ paddingTop: 10 }}>
+                                        ${salesByYear[year].tax.toFixed(2)}
+                                      </td>
+                                      <td colSpan="3" />
+                                    </tr>
+                                  </tfoot>
+                                </table>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan="6" className="px-3 py-6 text-center text-gray-500">
+                    No sales data available for this company.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </main>
+    );
+  };
+
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(<SalesTaxPage />);
+</script>
+</body>
+</html>

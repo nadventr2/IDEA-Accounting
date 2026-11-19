@@ -1,0 +1,2154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="/proxy/3003/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales - Accounting</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.24.0/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="ship-to.js"></script>
+  <script src="company-config.js"></script>
+  <style>
+    .min-h-screen { min-height: 100vh; }
+    .bg-gray-100 { background-color: #f3f4f6; }
+    .bg-blue-600 { background-color: #2563eb; }
+    .text-white { color: #fff; }
+    .p-4 { padding: 1rem; }
+    .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .container { max-width: 1280px; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-4 { gap: 1rem; }
+    .h-12 { height: 3rem; }
+    .mr-4 { margin-right: 1rem; }
+    .text-2xl { font-size: 1.5rem; }
+    .font-bold { font-weight: 700; }
+    .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .hover\:bg-blue-700:hover { background-color: #1d4ed8; }
+    .rounded-md { border-radius: 0.375rem; }
+    .bg-blue-700 { background-color: #1d4ed8; }
+    .p-6 { padding: 1.5rem; }
+    .flex-grow { flex-grow: 1; }
+    .text-3xl { font-size: 1.875rem; }
+    .mb-6 { margin-bottom: 1.5rem; }
+    .form-container { background-color: #fff; padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .grid { display: grid; }
+    .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+    .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .text-sm { font-size: 0.875rem; }
+    .font-medium { font-weight: 500; }
+    .text-gray-700 { color: #374151; }
+    .mt-1 { margin-top: 0.25rem; }
+    .mb-1 { margin-bottom: 0.25rem; }
+    .w-full { width: 100%; }
+    .border-gray-300 { border-color: #d1d5db; }
+    .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+    .focus\:ring-blue-500:focus { outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); }
+    .focus\:border-blue-500:focus { border-color: #3b82f6; }
+    .mt-4 { margin-top: 1rem; }
+    .text-lg { font-size: 1.125rem; }
+    .font-semibold { font-weight: 600; }
+    .mb-4 { margin-bottom: 1rem; }
+    .border { border: 1px solid #e5e7eb; }
+    .p-2 { padding: 0.5rem; }
+    .bg-gray-50 { background-color: #f9fafb; }
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .text-left { text-align: left; }
+    .border-collapse { border-collapse: collapse; }
+    .bg-white { background-color: #fff; }
+    .text-red-600 { color: #dc2626; }
+    .bg-red-100 { background-color: #fee2e2; }
+    .text-green-600 { color: #16a34a; }
+    .bg-green-100 { background-color: #dcfce7; }
+    .px-4 { padding-left: 1rem; padding-right: 1rem; }
+    .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+    .hover\:bg-red-700:hover { background-color: #b91c1c; }
+    .bg-red-600 { background-color: #dc2626; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .border-gray-200 { border-color: #e5e7eb; }
+    .space-x-2 > * + * { margin-left: 0.5rem; }
+    .min-w-full { min-width: 100%; }
+    .divide-y { border-bottom: 1px solid #e5e7eb; }
+    .divide-gray-200 { border-color: #e5e7eb; }
+    .text-xs { font-size: 0.75rem; }
+    .text-gray-500 { color: #6b7280; }
+    .uppercase { text-transform: uppercase; }
+    .tracking-wider { letter-spacing: 0.05em; }
+    .whitespace-nowrap { white-space: nowrap; }
+    .table-container { background-color: #fff; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .cursor-pointer { cursor: pointer; }
+    .bg-blue-100 { background-color: #dbeafe; }
+    .bg-gray-600 { background-color: #4b5563; }
+    .hover\:bg-gray-700:hover { background-color: #374151; }
+    .disabled\:bg-gray-300 { background-color: #d1d5db; }
+    .btn-packing {
+      background-color: #0f766e;
+      color: #fff;
+      font-weight: 700;
+      padding: 0.35rem 0.65rem;
+      border-radius: 0.375rem;
+      border: 1px solid #115e59;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+      white-space: nowrap;
+    }
+    .btn-packing:hover:not(:disabled) { background-color: #0d9488; }
+    .btn-packing:disabled {
+      background-color: #9ca3af;
+      border-color: #9ca3af;
+      color: #f3f4f6;
+      cursor: not-allowed;
+      opacity: 0.85;
+      box-shadow: none;
+    }
+    .relative { position: relative; }
+    .absolute { position: absolute; }
+    .z-10 { z-index: 10; }
+    .max-h-48 { max-height: 12rem; }
+    .overflow-y-auto { overflow-y: auto; }
+    .top-full { top: 100%; }
+    .w-20 { width: 5rem; }
+    .ml-2 { margin-left: 0.5rem; }
+    .opacity-50 { opacity: 0.5; }
+    .cursor-not-allowed { cursor: not-allowed; }
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .month-collapsed { display: none; }
+    .month-header:hover { color: #2563eb; }
+  </style>
+  <link rel="stylesheet" href="/app-shell.css" />
+  <link rel="stylesheet" href="/kpi-common.css" />
+  <script src="/app-shell.js" defer></script>
+  <script src="/kpi-common.js" defer></script>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+  <header id="header" class="text-white p-4">
+    <div class="fixed top-0 left-0 w-full bg-blue-600 text-white p-4 flex flex-wrap items-center justify-between gap-4 shadow-md z-10">
+      <div class="flex items-center">
+        <a href="/"><img src="/logo.png" alt="Company Logo" class="h-12 mr-4" /></a>
+        <h1 class="text-2xl font-bold">Open Accounting</h1>
+      </div>
+      <nav id="nav" class="flex flex-wrap gap-4">
+        <a href="/" class="bg-white text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200">Settings</a>
+<a href="/estimates.html" class="px-4 hover:underline">Estimates</a>
+        <a href="/invoices.html" class="px-4 hover:underline">Invoices</a>
+        <a href="/sales.html" class="px-4 hover:underline">Sales</a>
+        <a href="/add-vendor.html" class="px-4 hover:underline">Add Vendor</a>
+        <a href="/add-products.html" class="px-4 hover:underline">Add Product</a>
+        <a href="/purchase-order.html" class="px-4 hover:underline">Purchase Order</a>
+        <a href="/packing-slip.html" class="px-4 hover:underline">Packing Slips</a>
+        <a href="/transaction-history.html" class="px-4 hover:underline">Transaction History</a>
+        <a href="/customer-list.html" class="px-4 hover:underline">Customer List</a>
+        <a href="/receive-inventory.html" class="px-4 hover:underline">Receive Inventory</a>
+        <a href="/inventory.html" class="px-4 hover:underline">Inventory</a>
+        <a href="/bills.html" class="px-4 hover:underline">Bills</a>
+        <a href="/sales-tax.html" class="px-4 hover:underline">Sales Tax</a>
+        <a href="/reports.html" class="px-4 hover:underline">Reports</a>
+      </nav>
+    </div>
+  </header>
+  <div id="root" class="flex-grow"></div>
+    <footer class="bg-gray-800 text-white p-4 mt-8">
+    <div class="container mx-auto">
+      <p>© Open Accounting. All rights reserved.</p>
+    </div>
+  </footer>
+  <script type="text/javascript">
+    var gk_isXlsx = false;
+    var gk_xlsxFileLookup = {};
+    var gk_fileData = {};
+    function filledCell(cell) {
+      return cell !== '' && cell != null;
+    }
+    function loadFileData(filename) {
+      if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+        try {
+          var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+          var firstSheetName = workbook.SheetNames[0];
+          var worksheet = workbook.Sheets[firstSheetName];
+          var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+          var filteredData = jsonData.filter(row => row.some(filledCell));
+          var headerRowIndex = filteredData.findIndex((row, index) => {
+            if (index + 1 >= filteredData.length) return false;
+            return row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length;
+          });
+          if (headerRowIndex === -1 || headerRowIndex > 25) {
+            headerRowIndex = 0;
+          }
+          var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
+          csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+          return csv;
+        } catch (e) {
+          console.error('Error processing XLSX:', e);
+          return "";
+        }
+      }
+      return gk_fileData[filename] || "";
+    }
+  </script>
+  <script type="text/javascript">
+    const BASE_URL = window.location.origin + '/api';
+    const fetchWithRetry = async (url, options, type, setter, retries = 10, delay = 1000) => {
+      console.log(`[FETCH] Starting ${type} from ${url}`);
+      const companyId = localStorage.getItem('selectedCompanyId') || '1';
+      const urlWithCompany = `${url}?company_id=${companyId}`;
+      for (let i = 0; i < retries; i++) {
+        try {
+          console.log(`[FETCH] Attempt ${i + 1} for ${type} at ${new Date().toISOString()}`);
+          const response = await fetch(urlWithCompany, {
+            ...options,
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', ...options?.headers },
+            signal: AbortSignal.timeout(15000)
+          });
+          console.log(`[FETCH] Response for ${type}: status ${response.status}, headers:`, response.headers);
+          if (!response.ok) {
+            let errorText = 'No response text';
+            try {
+              errorText = await response.text() || 'Empty response';
+            } catch (textErr) {
+              console.warn(`[FETCH] Failed to read response text:`, textErr);
+            }
+            const error = new Error(`HTTP ${response.status}: ${errorText}`);
+            error.status = response.status;
+            if (response.status === 404) {
+              console.log(`[FETCH] 404 detected, skipping retries:`, error.message);
+              throw error;
+            }
+            throw error;
+          }
+          if (response.status === 204) {
+            console.log(`[FETCH] 204 No Content for ${type}, returning null`);
+            return null;
+          }
+          const contentType = response.headers.get('content-type');
+          if (contentType && !contentType.includes('application/json')) {
+            const text = await response.text().catch(() => 'No response text');
+            throw new Error(`Expected JSON, got ${contentType || 'unknown'}: ${text.slice(0, 200)}`);
+          }
+          const data = await response.json();
+          console.log(`[FETCH] Data for ${type}:`, JSON.stringify(data, null, 2));
+          if (!data && type !== 'delete sale') {
+            throw new Error(`Received empty response for ${type}`);
+          }
+          if (setter) {
+            const validatedData = Array.isArray(data) ? data : [data];
+            console.log(`[FETCH] Setting state for ${type}:`, validatedData.length, 'items');
+            setter(validatedData);
+          }
+          return data;
+        } catch (error) {
+          console.error(`[FETCH] Error for ${type} (attempt ${i + 1}):`, error.message, 'Status:', error.status, 'Error:', JSON.stringify(error));
+          if (error.status === 404 || error.message.includes('HTTP 404')) {
+            console.log(`[FETCH] 404 error caught, throwing immediately:`, error.message);
+            throw error;
+          }
+          if (i < retries - 1) {
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+          throw error;
+        }
+      }
+    };
+  </script>
+  <script type="text/babel">
+  const { useState, useEffect, useCallback, useMemo, Fragment } = React;
+
+  /** CA sales tax is stored as decimal 0.0775. EasyCart import briefly stored 7.75 (percent).
+   *  Any sale with tax collected counts as CA for display + liability. */
+  const CA_SALES_TAX_RATE = 0.0775;
+  function isCaSalesTax(sale) {
+    if (!sale) return false;
+    const tax = Number(sale.tax || 0);
+    if (tax > 0.0001) return true;
+    const r = Number(sale.tax_rate || 0);
+    if (r > 1) return true; // percent form e.g. 7.75
+    return Math.abs(r - CA_SALES_TAX_RATE) < 0.001 || r > 0;
+  }
+  const ErrorBoundary = ({ children }) => {
+    const [error, setError] = useState(null);
+    useEffect(() => {
+      const errorHandler = (error) => {
+        console.error('ErrorBoundary caught:', error);
+        const errorMessage = error.message || (typeof error === 'string' ? error : 'An unexpected error occurred');
+        setError(errorMessage);
+      };
+      window.addEventListener('error', errorHandler);
+      return () => window.removeEventListener('error', errorHandler);
+    }, []);
+    if (error) {
+      return (
+        <div className="p-4 text-red-600 bg-red-100 rounded-lg shadow-sm">
+          <h2>Error: {error}</h2>
+          <p>Please refresh the page or check the console for details.</p>
+        </div>
+      );
+    }
+        return children;
+  };
+
+
+  const SalesPage = () => {
+    console.log('SalesPage component initialized');
+    const debounce = (func, delay) => {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+};
+    const [products, setProducts] = useState([]);
+    const [customers, setCustomers] = useState([]);
+    const [sales, setSales] = useState([]);
+    const [invoices, setInvoices] = useState([]);
+    const [selectedInvoiceId, setSelectedInvoiceId] = useState('');
+    const [form, setForm] = useState({
+      customerId: '',
+      items: [],
+      discount: 0,
+      taxRate: 0,
+      shipping: 0,
+      paymentMethod: 'Cash',
+      date: new Date().toISOString().split('T')[0],
+      notes: ''
+    });
+    const [currentProductId, setCurrentProductId] = useState('');
+    const [currentQuantity, setCurrentQuantity] = useState('');
+    const [currentCustomPrice, setCurrentCustomPrice] = useState('');
+    const [editForm, setEditForm] = useState(null);
+    const [newCustomer, setNewCustomer] = useState({
+      name: '',
+      email: '',
+      phone: '',
+      billing_address: '',
+      shipping_address: ''
+    });
+
+      useEffect(() => {
+  if (!newCustomer.billing_address) return;
+
+    const lines = newCustomer.billing_address.split('\n').filter(line => line.trim());
+console.log('Name effect:', {
+  billing: newCustomer.billing_address,
+  firstLine: lines[0],
+  nameNow: newCustomer.name
+});
+    if (lines.length >= 1 && !newCustomer.name?.trim()) {
+      setNewCustomer(prev => ({
+        ...prev,
+        name: lines[0].trim()
+      }));
+    }
+  }, [newCustomer.billing_address]);
+          if (isLoading) {
+      return (
+        <main className="container mx-auto p-6 flex-grow">
+          <h2 className="text-3xl font-bold mb-6">Sales</h2>
+          <p>Loading...</p>
+        </main>
+      );
+    }
+    const [skuSearch, setSkuSearch] = useState('');
+    const [selectedSaleIndex, setSelectedSaleIndex] = useState(-1);
+    const [error, setError] = useState(null);
+    const [message, setMessage] = useState({ text: '', type: '' });
+    const [importFile, setImportFile] = useState(null);
+    const [showCustomerModal, setShowCustomerModal] = useState(false);
+    const [customerSearch, setCustomerSearch] = useState('');
+    const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+    const [selectedCustomer, setSelectedCustomer] = useState(null);
+    // Per-sale shipping: edit existing customer ship-to or one-time override
+    const [saleShippingAddress, setSaleShippingAddress] = useState('');
+    const [saveShippingToCustomer, setSaveShippingToCustomer] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
+    const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
+    const [currentMonth, setCurrentMonth] = useState(null);
+    const [collapsedMonths, setCollapsedMonths] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const selectedCompanyId = localStorage.getItem('selectedCompanyId') || '1';
+    const companyUsesProducts = () =>
+      (window.CompanyConfig && window.CompanyConfig.usesProducts)
+        ? window.CompanyConfig.usesProducts(selectedCompanyId)
+        : true;
+    const companyTaxRates = () => {
+      const c = window.CompanyConfig && window.CompanyConfig.get
+        ? window.CompanyConfig.get(selectedCompanyId)
+        : null;
+      return (c && c.tax_rates) || [
+        { label: 'Out of State (0%)', rate: 0 },
+        { label: 'CA (7.75%)', rate: 0.0775 },
+      ];
+    };
+    const companyLegalName = () => {
+      const c = window.CompanyConfig && window.CompanyConfig.get
+        ? window.CompanyConfig.get(selectedCompanyId)
+        : null;
+      return (c && (c.legal_name || c.name)) || 'Accounting';
+    };
+    const companyWebsite = () => {
+      const c = window.CompanyConfig && window.CompanyConfig.get
+        ? window.CompanyConfig.get(selectedCompanyId)
+        : null;
+      return (c && c.website) || '';
+    };
+    const hasEditedName = React.useRef(false);
+useEffect(() => {
+        const fetchData = async () => {
+          setIsLoading(true);
+          try {
+            const urls = [
+              `${BASE_URL}/products?company_id=${selectedCompanyId}`,
+              `${BASE_URL}/customers?company_id=${selectedCompanyId}`,
+              `${BASE_URL}/sales?company_id=${selectedCompanyId}`,
+              `${BASE_URL}/invoices?company_id=${selectedCompanyId}`
+            ];
+            const responses = await Promise.all(urls.map(u => fetch(u)));
+            const [prodRes, custRes, salesRes, invRes] = responses;
+            if (!prodRes.ok || !custRes.ok || !salesRes.ok || !invRes.ok) throw new Error('Failed to fetch data');
+            const productsData = await prodRes.json();
+            const customersData = await custRes.json();
+            const salesData = await salesRes.json();
+            const invoicesData = await invRes.json();
+            setProducts(productsData);
+            setCustomers(customersData);
+            setSales(salesData);
+            setInvoices(invoicesData.filter(i => i.status === 'Approved'));
+          } catch (err) {
+            console.error(err);
+            setError('Failed to load data: ' + err.message);
+          } finally {
+            setIsLoading(false);
+          }
+        };
+        fetchData();
+      }, [selectedCompanyId]);
+
+useEffect(() => {
+  const handleClickOutside = (event) => {
+    // Only run if dropdown is open
+    if (!showCustomerDropdown) return;
+
+    // Check if click was inside the search input or dropdown
+    const searchInput = document.getElementById('customerSearch');
+    const dropdown = document.querySelector('.absolute.z-10.w-full'); // rough selector for your dropdown
+
+    if (
+      searchInput && !searchInput.contains(event.target) &&
+      dropdown && !dropdown.contains(event.target)
+    ) {
+      setShowCustomerDropdown(false);
+    }
+  };
+
+  // Add listener to whole document
+  document.addEventListener('mousedown', handleClickOutside);
+  
+  // Cleanup when component unmounts or dropdown changes
+  return () => {
+    document.removeEventListener('mousedown', handleClickOutside);
+  };
+}, [showCustomerDropdown]);  // only re-run when dropdown visibility changes
+
+    useEffect(() => {
+      if (sales.length > 0 && !currentMonth) {
+        const validSales = sales.filter(sale => sale.date && !isNaN(Date.parse(sale.date)));
+        const latestSaleDate = validSales.length > 0
+          ? validSales.reduce((latest, sale) => {
+              const saleDate = new Date(sale.date);
+              return saleDate > latest ? saleDate : latest;
+            }, new Date(validSales[0].date))
+          : new Date();
+        const monthKey = `${latestSaleDate.getFullYear()}-${String(latestSaleDate.getMonth() + 1).padStart(2, '0')}`;
+        console.log(`[PAGINATION] Setting initial currentMonth: ${monthKey}`);
+        setCurrentMonth(monthKey);
+      }
+    }, [sales]);
+    const getMonthKey = (saleDate) => {
+      if (!saleDate || isNaN(Date.parse(saleDate))) {
+        console.warn(`[PAGINATION] Invalid sale_date: ${saleDate}, skipping sale`);
+        return null;
+      }
+      const [year, month, day] = saleDate.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      if (monthKey === '2025-03') {
+        console.log(`[PAGINATION] Sale assigned to March 2025: sale_date=${saleDate}`);
+      }
+      return monthKey;
+    };
+    const groupSalesByMonth = (sales) => {
+      const months = {};
+      sales.forEach(sale => {
+        const monthKey = getMonthKey(sale.date);
+        if (monthKey) {
+          if (!months[monthKey]) {
+            months[monthKey] = [];
+          }
+          months[monthKey].push(sale);
+        }
+      });
+      const monthGroups = Object.keys(months)
+        .map(month => ({ month, sales: months[month] }))
+        .sort((a, b) => b.month.localeCompare(a.month));
+      console.log('[PAGINATION] Month groups:', monthGroups.map(g => ({ month: g.month, count: g.sales.length })));
+      return monthGroups;
+    };
+    const handleMonthNavigation = (direction) => {
+      const months = groupSalesByMonth(sales).map(m => m.month);
+      const currentIndex = months.indexOf(currentMonth);
+      console.log(`[PAGINATION] Navigating ${direction}, currentMonth: ${currentMonth}, currentIndex: ${currentIndex}, months:`, months);
+      if (direction === 'next' && currentIndex < months.length - 1) {
+        const nextMonth = months[currentIndex + 1];
+        setCurrentMonth(nextMonth);
+        setCollapsedMonths(prev => [...new Set([...prev, ...months.slice(0, currentIndex + 1).filter(m => m !== nextMonth)])]);
+      } else if (direction === 'prev' && currentIndex > 0) {
+        const prevMonth = months[currentIndex - 1];
+        setCurrentMonth(prevMonth);
+        setCollapsedMonths(prev => prev.filter(m => m !== prevMonth));
+      } else {
+        console.warn(`[PAGINATION] Invalid navigation: ${direction}, currentIndex: ${currentIndex}`);
+      }
+    };
+    const toggleMonth = (month) => {
+  setCollapsedMonths(prev =>
+    prev.includes(month)
+      ? prev.filter(m => m !== month)     // was collapsed → expand
+      : [...prev, month]                   // was expanded → collapse
+  );
+};
+    const handleFormChange = useCallback((e) => {
+      const { name, value } = e.target;
+      setForm(prev => {
+        const newForm = {
+          ...prev,
+          [name]: name === 'shipping' || name === 'discount' ? (value ? parseFloat(value) || 0 : 0) : value
+        };
+        console.log('[FORM] Updated form:', newForm);
+        return newForm;
+      });
+    }, []);
+    const handleEditFormChange = useCallback((e) => {
+      const { name, value } = e.target;
+      setEditForm(prev => {
+        const newForm = {
+          ...prev,
+          [name]: name === 'shipping' || name === 'discount' ? (value ? parseFloat(value) || 0 : 0) : value
+        };
+        console.log('[EDIT FORM] Updated form:', newForm);
+        return newForm;
+      });
+    }, []);
+
+const handleCustomerFormChange = (e) => {
+  const { name, value } = e.target;
+
+  setNewCustomer(prev => {
+    let updated = { ...prev, [name]: value };
+
+    if (name === 'billing_address') {
+      const lines = value.split('\n').filter(line => line.trim());
+
+      // Treat name like shipping: copy first line if name is empty
+      if (lines.length >= 1 && !updated.name?.trim()) {
+        updated.name = lines[0].trim();
+      }
+
+      // Your working shipping copy
+      const oldBilling = prev.billing_address || '';
+      const currentShipping = updated.shipping_address || '';
+
+      if (!currentShipping.trim() || currentShipping === oldBilling) {
+        updated.shipping_address = value;
+      }
+    }
+
+    console.log('[CUSTOMER FORM] Updated:', updated);
+    return updated;
+  });
+};
+
+    const handleImportFileChange = useCallback((e) => {
+      setImportFile(e.target.files[0]);
+      setMessage({ text: '', type: '' });
+      console.log('[IMPORT] File selected:', e.target.files[0]?.name);
+    }, []);
+    const handleSkuSearchChange = useCallback((e) => {
+      setSkuSearch(e.target.value);
+      setCurrentProductId('');
+      console.log('[SKU SEARCH] Updated:', e.target.value);
+    }, []);
+    const handleProductSelect = useCallback((product) => {
+      setCurrentProductId(product.id.toString());
+      setSkuSearch(product.sku);
+      if (product.retail_price != null && !currentCustomPrice) {
+        setCurrentCustomPrice(String(product.retail_price));
+      }
+      console.log('[PRODUCT] Selected:', product.id, product.sku);
+    }, [currentCustomPrice]);
+    const itemMatchesQuery = (p, q) => {
+      const query = (q || '').trim().toLowerCase();
+      if (!query) return false;
+      const hay = `${p.sku || ''} ${p.name || ''}`.toLowerCase();
+      if (hay.includes(query)) return true;
+      const stem = query.replace(/(ing|ed|ers|er|s)$/,'');
+      if (stem.length >= 4 && hay.includes(stem)) return true;
+      const words = hay.split(/[^a-z0-9]+/).filter(Boolean);
+      return words.some(w => w.startsWith(query) || (query.startsWith(w) && w.length >= 4));
+    };
+    const resolveLineProduct = async () => {
+      const quantity = parseInt(currentQuantity, 10);
+      if (!quantity) {
+        setMessage({ text: 'Enter a quantity', type: 'error' });
+        return null;
+      }
+      if (currentProductId) {
+        const hit = products.find(p => p.id === parseInt(currentProductId, 10));
+        if (!hit) {
+          setMessage({ text: 'Pick a product or service from the list', type: 'error' });
+          return null;
+        }
+        return hit;
+      }
+      const q = (skuSearch || '').trim();
+      const matches = products.filter(p => itemMatchesQuery(p, q));
+      if (matches.length === 1) return matches[0];
+      if (matches.length > 1) {
+        setMessage({ text: 'Several matches — click one in the list, then Add', type: 'error' });
+        return null;
+      }
+      const price = parseFloat(currentCustomPrice);
+      if (!q) {
+        setMessage({ text: 'Type a name or pick one from the list', type: 'error' });
+        return null;
+      }
+      if (!(price > 0)) {
+        setMessage({ text: 'No catalog match for “' + q + '”. Enter a price to save it as a new service.', type: 'error' });
+        return null;
+      }
+      const sku = 'SVC-' + q.toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 20);
+      try {
+        const res = await fetch(`${BASE_URL}/products`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({
+            sku,
+            name: q,
+            wholesale_price: 0,
+            retail_price: price,
+            stock: null,
+            vendor_id: null,
+            company_id: parseInt(selectedCompanyId, 10) || 1,
+            item_kind: 'service'
+          })
+        });
+        if (!res.ok) {
+          const t = await res.text();
+          setMessage({ text: 'Could not create service: ' + t, type: 'error' });
+          return null;
+        }
+        const created = await res.json();
+        setProducts(prev => [...prev, created]);
+        return created;
+      } catch (err) {
+        setMessage({ text: 'Could not create service: ' + err.message, type: 'error' });
+        return null;
+      }
+    };
+    const handleAddItem = useCallback(async () => {
+      const product = await resolveLineProduct();
+      const quantity = parseInt(currentQuantity, 10);
+      if (!product || !quantity) return;
+      const customPrice = parseFloat(currentCustomPrice) || null;
+      setForm(prev => {
+        const newItems = [...prev.items, { productId: product.id, quantity, customPrice }];
+        console.log('[ITEM] Added item:', { productId: product.id, quantity, customPrice });
+        return { ...prev, items: newItems };
+      });
+      setMessage({ text: 'Added ' + product.name, type: 'success' });
+      setCurrentProductId('');
+      setCurrentQuantity('');
+      setCurrentCustomPrice('');
+      setSkuSearch('');
+    }, [currentProductId, currentQuantity, currentCustomPrice, products, selectedCompanyId, skuSearch]);
+    const handleRemoveItem = useCallback((index) => {
+      setForm(prev => {
+        const newItems = prev.items.filter((_, i) => i !== index);
+        console.log('[ITEM] Removed item at index:', index);
+        return { ...prev, items: newItems };
+      });
+    }, []);
+    const handleEditAddItem = useCallback(async () => {
+      const product = await resolveLineProduct();
+      const quantity = parseInt(currentQuantity, 10);
+      if (!product || !quantity) return;
+      const customPrice = parseFloat(currentCustomPrice) || null;
+      setEditForm(prev => {
+        const newItems = [...prev.items, { productId: product.id, quantity, customPrice }];
+        console.log('[EDIT ITEM] Added item:', { productId: product.id, quantity, customPrice });
+        return { ...prev, items: newItems };
+      });
+      setMessage({ text: 'Added ' + product.name, type: 'success' });
+      setCurrentProductId('');
+      setCurrentQuantity('');
+      setCurrentCustomPrice('');
+      setSkuSearch('');
+    }, [currentProductId, currentQuantity, currentCustomPrice, products, selectedCompanyId, skuSearch]);
+    const handleEditRemoveItem = useCallback((index) => {
+      setEditForm(prev => {
+        const newItems = prev.items.filter((_, i) => i !== index);
+        console.log('[EDIT ITEM] Removed item at index:', index);
+        return { ...prev, items: newItems };
+      });
+    }, []);
+    const updateRunningTotal = useCallback((items, taxRate, discount = 0, shipping = 0) => {
+      const subtotal = items.reduce((sum, item) => {
+        const product = products.find(p => p.id === item.productId) || {};
+        const price = item.customPrice || (product.retail_price || 0);
+        return sum + price * (item.quantity || 0);
+      }, 0);
+      const validTaxRate = isNaN(taxRate) ? 0 : taxRate;
+      const validShipping = isNaN(shipping) ? 0 : shipping;
+      const validDiscount = isNaN(discount) ? 0 : discount;
+      const tax = subtotal * validTaxRate;
+      const total = subtotal + tax + validShipping - validDiscount;
+      console.log('[TOTAL] Calculated:', { subtotal, tax, shipping, discount, total });
+      return {
+        subtotal,
+        tax,
+        shipping: validShipping,
+        discount: validDiscount,
+        total: total < 0 ? 0 : total
+      };
+    }, [products]);
+    const handleCustomerSearchChange = useCallback((e) => {
+      setCustomerSearch(e.target.value);
+      setShowCustomerDropdown(true);
+      console.log('[CUSTOMER SEARCH] Updated:', e.target.value);
+    }, []);
+    const handleCustomerSelect = useCallback((customer) => {
+      setSelectedCustomer(customer);
+      setCustomerSearch(customer.name);
+      setForm(prev => ({ ...prev, customerId: customer.id.toString() }));
+      setShowCustomerDropdown(false);
+      const ship = (customer.shipping_address || customer.billing_address || '').trim();
+      setSaleShippingAddress(ship);
+      setSaveShippingToCustomer(true);
+      console.log('[CUSTOMER] Selected:', customer.id, customer.name);
+    }, []);
+    const filteredCustomers = useMemo(() => {
+      const filtered = customers
+        .filter(c => c.name.toLowerCase().includes(customerSearch.toLowerCase()))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      console.log('[CUSTOMER] Filtered customers:', filtered.length);
+      return filtered;
+    }, [customers, customerSearch]);
+    const filteredProducts = useMemo(() => {
+      const filtered = products
+        .filter(p => itemMatchesQuery(p, skuSearch))
+        .sort((a, b) => String(a.sku || '').localeCompare(String(b.sku || '')));
+      console.log('[PRODUCT] Filtered products:', filtered.length);
+      return filtered;
+    }, [products, skuSearch]);
+    const filteredInvoices = useMemo(() => {
+      const filtered = invoices
+        .filter(i => i.status === 'Approved')
+        .sort((a, b) => a.invoice_number.localeCompare(b.invoice_number));
+      console.log('[INVOICE] Filtered invoices:', filtered.length);
+      return filtered;
+    }, [invoices]);
+
+    
+
+    const handleAddCustomer = async (e) => {
+  e.preventDefault();
+  if (!newCustomer.name || !newCustomer.billing_address) {
+    setMessage({ text: 'Name and billing address are required', type: 'error' });
+    return;
+  }
+  try {
+    const response = await fetch(`${BASE_URL}/customers`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: newCustomer.name,
+        email: newCustomer.email || null,
+        phone: newCustomer.phone || null,
+        billing_address: newCustomer.billing_address,
+        shipping_address: newCustomer.shipping_address || newCustomer.billing_address,
+        company_id: selectedCompanyId
+      })
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Failed to add customer');
+    }
+    const data = await response.json();
+
+    // Add to customers list
+    setCustomers(prev => [...prev, data]);
+
+    // Auto-select the new customer in the form
+    setSelectedCustomer(data);
+    setCustomerSearch(data.name);
+    setForm(prev => ({ ...prev, customerId: data.id.toString() }));
+    setSaleShippingAddress((data.shipping_address || data.billing_address || '').trim());
+    setSaveShippingToCustomer(true);
+
+    // Close modal and reset form
+    setShowCustomerModal(false);
+    setNewCustomer({ name: '', email: '', phone: '', billing_address: '', shipping_address: '' });
+
+    setMessage({ text: 'Customer added and selected!', type: 'success' });
+  } catch (err) {
+    setMessage({ text: 'Failed to add customer: ' + err.message, type: 'error' });
+  }
+};
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      const { customerId, items, discount, taxRate, shipping, paymentMethod, date, notes } = form;
+      if (!customerId || items.length === 0 || !paymentMethod || !date) {
+        setMessage({ text: 'Please complete all required fields', type: 'error' });
+        return;
+      }
+      try {
+        const shipAddr = (saleShippingAddress || '').trim();
+        // Optionally update customer's permanent shipping address
+        if (saveShippingToCustomer && selectedCustomer && shipAddr) {
+          const cust = selectedCustomer;
+          const putRes = await fetch(`${BASE_URL}/customers/${cust.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: cust.name,
+              email: cust.email || null,
+              phone: cust.phone || null,
+              billing_address: cust.billing_address || shipAddr,
+              shipping_address: shipAddr,
+              company_id: parseInt(selectedCompanyId, 10) || cust.company_id || 1
+            })
+          });
+          if (!putRes.ok) {
+            const errorText = await putRes.text();
+            throw new Error(errorText || 'Failed to update customer shipping address');
+          }
+          const updatedCust = await putRes.json();
+          setCustomers(prev => prev.map(c => c.id === updatedCust.id ? updatedCust : c));
+          setSelectedCustomer(updatedCust);
+        }
+        const totals = updateRunningTotal(items, taxRate, discount, shipping);
+        const response = await fetch(`${BASE_URL}/sales`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customer_id: parseInt(customerId),
+            items: items.map(item => ({
+              product_id: item.productId,
+              quantity: item.quantity,
+              custom_price: item.customPrice
+            })),
+            discount: totals.discount,
+            tax_rate: taxRate,
+            shipping: totals.shipping,
+            payment_method: paymentMethod,
+            date,
+            subtotal: totals.subtotal,
+            tax: totals.tax,
+            total: totals.total,
+            notes,
+            shipping_address: shipAddr || null,
+            company_id: selectedCompanyId
+          })
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || 'Failed to record sale');
+        }
+        const data = await response.json();
+        setSales(prev => [data, ...prev]);
+        setForm({
+          customerId: '',
+          items: [],
+          discount: 0,
+          taxRate: 0,
+          shipping: 0,
+          paymentMethod: 'Cash',
+          date: new Date().toISOString().split('T')[0],
+          notes: ''
+        });
+        setSelectedCustomer(null);
+        setCustomerSearch('');
+        setSaleShippingAddress('');
+        setSaveShippingToCustomer(true);
+        setMessage({ text: 'Sale recorded successfully', type: 'success' });
+      } catch (err) {
+        setMessage({ text: 'Failed to record sale: ' + err.message, type: 'error' });
+      }
+    };
+    const handleEdit = (sale) => {
+      setEditForm({
+        id: sale.id,
+        customerId: sale.customer_id.toString(),
+        items: sale.items.map(item => ({
+          productId: item.product_id,
+          quantity: item.quantity,
+          customPrice: item.custom_price
+        })),
+        discount: sale.discount,
+        taxRate: sale.tax_rate,
+        shipping: sale.shipping,
+        paymentMethod: sale.payment_method,
+        date: sale.date,
+        notes: sale.notes || ''
+      });
+    };
+
+    const handleCreatePackingSlip = async (sale) => {
+      if (!sale?.items?.length) {
+        setMessage({ text: 'Cannot create packing slip: sale has no line items', type: 'error' });
+        return;
+      }
+      if (!sale.customer_id) {
+        setMessage({ text: 'Cannot create packing slip: sale has no customer', type: 'error' });
+        return;
+      }
+      if (!window.confirm(
+        `Create a packing slip from sale ${sale.transaction_number || sale.id}?\n\n` +
+        'You can split quantities into multiple boxes on the Packing Slips page.'
+      )) {
+        return;
+      }
+      try {
+        const companyId = parseInt(selectedCompanyId || sale.company_id || '1', 10);
+        const customer = customers.find(c => c.id === sale.customer_id);
+        const today = new Date();
+        const date_shipped = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const items = sale.items.map(item => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+          box_number: 1
+        }));
+        const payload = {
+          slip_number: `PL-${Date.now().toString().slice(-8)}`,
+          customer_id: sale.customer_id,
+          customer_po: sale.transaction_number || null,
+          date_shipped,
+          shipping_address: (typeof resolveShipTo === 'function'
+            ? resolveShipTo({ sale_shipping: sale.shipping_address, customer })
+            : (sale.shipping_address || customer?.shipping_address || customer?.billing_address || null)),
+          notes: `From sale ${sale.transaction_number || sale.id}` + (sale.notes ? ` — ${sale.notes}` : ''),
+          tracking_number: null,
+          sale_id: sale.id,
+          invoice_id: null,
+          company_id: companyId,
+          items
+        };
+        const slip = await fetchWithRetry(`${BASE_URL}/packing-slips`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(payload)
+        }, 'create packing slip', null);
+        setMessage({
+          text: `Packing slip ${slip.slip_number} created from sale ${sale.transaction_number || sale.id}. Opening editor…`,
+          type: 'success'
+        });
+        window.location.href = `/packing-slip.html?edit=${slip.id}`;
+      } catch (err) {
+        console.error('[PACKING] Error creating from sale:', err);
+        setMessage({ text: `Error creating packing slip: ${err.message}`, type: 'error' });
+      }
+    };
+    const handleEditSubmit = async (e) => {
+      e.preventDefault();
+      const { id, customerId, items, discount, taxRate, shipping, paymentMethod, date, notes } = editForm;
+      if (!customerId || items.length === 0 || !paymentMethod || !date) {
+        setMessage({ text: 'Please complete all required fields', type: 'error' });
+        return;
+      }
+      try {
+        const totals = updateRunningTotal(items, taxRate, discount, shipping);
+        const response = await fetch(`${BASE_URL}/sales/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customer_id: parseInt(customerId),
+            items: items.map(item => ({
+              product_id: item.productId,
+              quantity: item.quantity,
+              custom_price: item.customPrice
+            })),
+            discount: totals.discount,
+            tax_rate: taxRate,
+            shipping: totals.shipping,
+            payment_method: paymentMethod,
+            date,
+            subtotal: totals.subtotal,
+            tax: totals.tax,
+            total: totals.total,
+            company_id: selectedCompanyId
+          })
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || 'Failed to update sale');
+        }
+        const data = await response.json();
+        setSales(prev => prev.map(s => s.id === id ? data : s));
+        setEditForm(null);
+        setMessage({ text: 'Sale updated successfully', type: 'success' });
+      } catch (err) {
+        setMessage({ text: 'Failed to update sale: ' + err.message, type: 'error' });
+      }
+    };
+    const handleDelete = (id, transaction_number) => {
+      if (window.confirm(`Are you sure you want to delete sale #${transaction_number || id}?`)) {
+        fetch(`${BASE_URL}/sales/${id}`, { method: 'DELETE' })
+          .then(response => {
+            if (!response.ok) throw new Error('Failed to delete sale');
+            setSales(prev => prev.filter(s => s.id !== id));
+            setMessage({ text: 'Sale deleted successfully', type: 'success' });
+          })
+          .catch(err => {
+            setMessage({ text: 'Failed to delete sale: ' + err.message, type: 'error' });
+          });
+      }
+    };
+    const generatePDF = (sale) => {
+  if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
+    alert('PDF library failed to load. Please refresh the page.');
+    console.error('jsPDF not loaded');
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  // === Centered Header ===
+  const logoWidth = 80;
+  const logoHeight = 28;
+  const logoX = (pageWidth - logoWidth) / 2;
+  doc.addImage('/logo.png', 'PNG', logoX, 10, logoWidth, logoHeight);
+
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text(companyLegalName(), pageWidth / 2, 45, { align: 'center' });
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(companyWebsite() || ' ', pageWidth / 2, 52, { align: 'center' });
+
+  doc.setFontSize(18);
+  doc.text('Sale Receipt', pageWidth / 2, 70, { align: 'center' });
+
+  // === Sale Details ===
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
+  let y = 85;
+
+  doc.text(`Transaction Number: ${sale.transaction_number || 'N/A'}`, 14, y); y += 6;
+  doc.text(`Date: ${sale.date || 'N/A'}`, 14, y); y += 6;
+  doc.text(`Customer: ${sale.customer_name || 'Unknown'}`, 14, y); y += 6;
+  doc.text(`Payment Method: ${sale.payment_method || 'N/A'}`, 14, y); y += 6;
+  doc.text(`Comments: ${sale.notes || 'N/A'}`, 14, y); y += 12;
+
+  // === Billing Address ===
+  doc.text('Billing Address:', 14, y); y += 6;
+  const billingAddr = customers.find(c => c.id === sale.customer_id)?.billing_address || 'N/A';
+  billingAddr.split('\n').map(l => l.trim()).filter(l => l).forEach(line => {
+    doc.text(line, 14, y);
+    y += 6;
+  });
+  y += 8;
+
+  // === Shipping Address (unified: sale → customer ship → billing) ===
+  doc.text('Shipping Address:', 14, y); y += 6;
+  const custForShip = customers.find(c => c.id === sale.customer_id);
+  const shippingAddr = (typeof resolveShipTo === 'function'
+    ? resolveShipTo({ sale_shipping: sale.shipping_address, customer: custForShip })
+    : (sale.shipping_address || custForShip?.shipping_address || custForShip?.billing_address || 'N/A')) || 'N/A';
+  shippingAddr.split('\n').map(l => l.trim()).filter(l => l).forEach(line => {
+    doc.text(line, 14, y);
+    y += 6;
+  });
+  y += 12;
+
+  // === Items Table ===
+  const columns = ['Item', 'SKU', 'Quantity', 'Price', 'Subtotal'];
+  const rows = sale.items.map(item => {
+    const p = products.find(p => p.id === item.product_id) || {};
+    const price = item.custom_price || p.retail_price || 0;
+    return [
+      p.name || 'Unknown',
+      p.sku || 'N/A',
+      item.quantity,
+      `$${price.toFixed(2)}`,
+      `$${(price * item.quantity).toFixed(2)}`
+    ];
+  });
+
+  doc.autoTable({
+    head: [columns],
+    body: rows,
+    startY: y,
+    theme: 'grid',
+    headStyles: { fillColor: [37, 99, 235] },
+    styles: { fontSize: 10, cellPadding: 3 },
+    margin: { left: 14, right: 14 }
+  });
+
+  // === Summary ===
+  let finalY = doc.lastAutoTable.finalY + 12;  // ← change const to let
+doc.setFontSize(11);
+doc.setFont("helvetica", "normal");
+
+doc.text(`Subtotal: $${(sale.subtotal || 0).toFixed(2)}`, 14, finalY); finalY += 8;
+doc.text(`Tax: $${(sale.tax || 0).toFixed(2)} (${isCaSalesTax(sale) ? 'CA 7.75%' : 'Out of State 0%'})`, 14, finalY); finalY += 8;
+doc.text(`Shipping: $${(sale.shipping || 0).toFixed(2)}`, 14, finalY); finalY += 8;
+
+if (sale.discount > 0) {
+  doc.text(`Discount: -$${(sale.discount || 0).toFixed(2)}`, 14, finalY); finalY += 8;
+}
+
+doc.setFontSize(12);
+doc.setFont("helvetica", "bold");
+doc.text(`Total: $${(sale.total || 0).toFixed(2)}`, 14, finalY);
+
+  doc.save(`sale_${sale.transaction_number || sale.id}.pdf`);
+};
+    const handleImport = async (e) => {
+      e.preventDefault();
+      if (!importFile) {
+        setMessage({ text: 'Please select a file to import', type: 'error' });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const workbook = XLSX.read(event.target.result, { type: 'binary' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          const importedSales = json.slice(1).map(row => ({
+            customer_name: row[0],
+            date: row[1],
+            items: row[2].split(';').map(itemStr => {
+              const [product_name, quantity] = itemStr.trim().split(':');
+              return { product_name, quantity: parseInt(quantity) };
+            }),
+            subtotal: parseFloat(row[3]),
+            tax: parseFloat(row[4]),
+            shipping: parseFloat(row[5]),
+            discount: parseFloat(row[6]),
+            total: parseFloat(row[7]),
+            payment_method: row[8]
+          }));
+          const responses = await Promise.all(importedSales.map(sale => fetch(`${BASE_URL}/sales`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(sale)
+          })));
+          const data = await Promise.all(responses.map(res => res.json()));
+          setSales(prev => [...data, ...prev]);
+          setMessage({ text: 'Sales imported successfully', type: 'success' });
+        } catch (err) {
+          setMessage({ text: 'Failed to import sales: ' + err.message, type: 'error' });
+        }
+      };
+      reader.readAsBinaryString(importFile);
+    };
+    const handleInvoiceSelect = async (e) => {
+      const invoiceId = e.target.value;
+      setSelectedInvoiceId(invoiceId);
+      if (!invoiceId) return;
+      try {
+        const response = await fetch(`${BASE_URL}/invoices/${invoiceId}`);
+        const invoice = await response.json();
+        setForm({
+          customerId: invoice.customer_id.toString(),
+          items: invoice.items.map(item => ({
+            productId: item.product_id,
+            quantity: item.quantity,
+            customPrice: item.custom_price
+          })),
+          discount: invoice.discount,
+          taxRate: invoice.tax_rate,
+          shipping: invoice.shipping,
+          paymentMethod: invoice.payment_method,
+          date: new Date().toISOString().split('T')[0],
+          notes: invoice.notes
+        });
+        setSelectedCustomer(customers.find(c => c.id === invoice.customer_id));
+        setCustomerSearch(invoice.customer_name);
+      } catch (err) {
+        setMessage({ text: 'Failed to load invoice: ' + err.message, type: 'error' });
+      }
+    };
+    const handleSaleClick = (saleIndex) => {
+      setSelectedSaleIndex(prev => prev === saleIndex ? -1 : saleIndex);
+    };
+    const handlePreviousSale = () => {
+      setSelectedSaleIndex(prev => prev - 1);
+    };
+    const handleNextSale = () => {
+      setSelectedSaleIndex(prev => prev + 1);
+    };
+    const handleSort = (key) => {
+      setSortConfig(prev => ({
+        key,
+        direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+      }));
+    };
+    const sortSales = (salesToSort, key, direction) => {
+      return [...salesToSort].sort((a, b) => {
+        let valA = a[key] || '';
+        let valB = b[key] || '';
+        if (key === 'date') {
+          valA = new Date(valA);
+          valB = new Date(valB);
+        } else if (key === 'total') {
+          valA = parseFloat(valA);
+          valB = parseFloat(valB);
+        } else if (typeof valA === 'string') {
+          valA = valA.toLowerCase();
+          valB = valB.toLowerCase();
+        }
+        if (valA < valB) return direction === 'asc' ? -1 : 1;
+        if (valA > valB) return direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    };
+    const filteredSales = useMemo(() => {
+      const lowerQuery = searchQuery.toLowerCase();
+      return sales.filter(sale =>
+        (sale.transaction_number || '').toLowerCase().includes(lowerQuery) ||
+        (sale.customer_name || '').toLowerCase().includes(lowerQuery) ||
+        (sale.date || '').includes(lowerQuery) ||
+        sale.total.toString().includes(lowerQuery)
+      );
+    }, [sales, searchQuery]);
+    const invalidDateSales = useMemo(() => filteredSales.filter(sale => !getMonthKey(sale.date)), [filteredSales]);
+    const monthGroups = useMemo(() => groupSalesByMonth(filteredSales.filter(sale => getMonthKey(sale.date))), [filteredSales]);
+    const currentIndex = monthGroups.findIndex(g => g.month === currentMonth);
+    return (
+      <ErrorBoundary>
+        <main className="container mx-auto p-6 flex-grow">
+          <h2 className="text-3xl font-bold mb-6">Sales</h2>
+          {error && <p className="text-red-600 mb-4">{error}</p>}
+          {message.text && (
+            <div className={`p-4 mb-4 rounded ${message.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+              {message.text}
+            </div>
+          )}
+          <div className="form-container mb-8">
+<h3 className="text-2xl font-bold mb-4">Record New Sale</h3>
+            <form onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="relative">
+                  <label htmlFor="customerSearch" className="block text-sm font-medium text-gray-700">Customer</label>
+                  <input
+                    type="text"
+                    id="customerSearch"
+                    value={customerSearch}
+                    onChange={handleCustomerSearchChange}
+                    onFocus={() => setShowCustomerDropdown(true)}
+                    placeholder="Search or add customer"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                  
+{/* Invoice Import Dropdown */}
+  <div id="invoiceSelectSection">  {/* ← anchor for scrolling */}
+    <label htmlFor="invoiceSelect" className="block text-sm font-medium text-gray-700">
+      Import / Convert from Approved Invoice
+    </label>
+    <select
+      id="invoiceSelect"
+      value={selectedInvoiceId || ''}
+      onChange={handleInvoiceSelect}
+      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+    >
+      <option value="">-- Select an Invoice --</option>
+      {invoices
+        .filter(i => i.status === 'Approved')
+        .sort((a, b) => a.invoice_number.localeCompare(b.invoice_number))
+        .map(invoice => (
+          <option key={invoice.id} value={invoice.id}>
+            #{invoice.invoice_number} – {invoice.customer_name || 'Unknown'} – ${invoice.total?.toFixed(2) || '0.00'}
+          </option>
+        ))}
+    </select>
+  </div>
+
+                  {showCustomerDropdown && filteredCustomers.length > 0 && (
+                    <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-sm max-h-48 overflow-y-auto">
+                      {filteredCustomers.map(customer => (
+                        <div
+                          key={customer.id}
+                          onClick={() => handleCustomerSelect(customer)}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        >
+                          {customer.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomerModal(true)}
+                    className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                  >
+                    Add New Customer
+                  </button>
+                  {selectedCustomer && (
+                    <div className="mt-4 p-3 border border-gray-200 rounded-md bg-gray-50 space-y-3">
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">Billing address</p>
+                        <p className="text-sm text-gray-600 whitespace-pre-line mt-1">
+                          {selectedCustomer.billing_address || '—'}
+                        </p>
+                      </div>
+                      <div>
+                        <label htmlFor="saleShippingAddress" className="block text-sm font-medium text-gray-700">
+                          Shipping address for this sale
+                        </label>
+                        <textarea
+                          id="saleShippingAddress"
+                          value={saleShippingAddress}
+                          onChange={(e) => setSaleShippingAddress(e.target.value)}
+                          rows="4"
+                          placeholder="Edit for a one-time ship-to, or change their permanent address"
+                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        <label className="mt-2 flex items-start gap-2 text-sm text-gray-700 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="mt-1"
+                            checked={saveShippingToCustomer}
+                            onChange={(e) => setSaveShippingToCustomer(e.target.checked)}
+                          />
+                          <span>
+                            <strong>Also update customer record</strong> with this shipping address.
+                            Uncheck for a one-time ship-to (saved only on this sale).
+                          </span>
+                        </label>
+                        <button
+                          type="button"
+                          className="mt-2 text-sm text-blue-600 hover:underline"
+                          onClick={() => setSaleShippingAddress(selectedCustomer.billing_address || '')}
+                        >
+                          Copy billing → shipping
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {companyUsesProducts() && (
+                  <>
+                    <div>
+                      <label htmlFor="skuSearch" className="block text-sm font-medium text-gray-700">Add product or service (SKU or name)</label>
+                      <div className="relative mt-1 flex items-center flex-wrap">
+                        <input
+                          type="text"
+                          id="skuSearch"
+                          value={skuSearch}
+                          onChange={handleSkuSearchChange}
+                          placeholder="SKU, product, or service"
+                          className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:w-[calc(100%-7.5rem)]"
+                        />
+                        <input
+                          type="number"
+                          id="currentQuantity"
+                          value={currentQuantity}
+                          onChange={(e) => setCurrentQuantity(e.target.value)}
+                          min="1"
+                          placeholder="Qty"
+                          className="ml-2 w-20 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddItem}
+                          disabled={!currentQuantity || (!currentProductId && !skuSearch.trim())}
+                          className="ml-2 bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 disabled:bg-gray-300"
+                        >
+                          Add
+                        </button>
+                        {skuSearch && filteredProducts.length > 0 && !currentProductId && (
+                          <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-sm max-h-48 overflow-y-auto top-full">
+                            {filteredProducts.map(product => (
+                              <div
+                                key={product.id}
+                                onClick={() => handleProductSelect(product)}
+                                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                              >
+                                {`${product.name} (${(product.item_kind || 'product') === 'service' ? 'service' : 'SKU'}: ${product.sku})`}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <label htmlFor="currentCustomPrice" className="block text-sm font-medium text-gray-700 mt-4">Custom Price (Optional)</label>
+                      <input
+                        type="number"
+                        id="currentCustomPrice"
+                        value={currentCustomPrice}
+                        onChange={(e) => setCurrentCustomPrice(e.target.value)}
+                        min="0"
+                        step="0.01"
+                        placeholder={currentProductId ? `Default: $${products.find(p => p.id === parseInt(currentProductId))?.retail_price?.toFixed(2) || '0.00'}` : 'Enter custom price'}
+                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  </>
+                )}
+                <div>
+                  <label htmlFor="discount" className="block text-sm font-medium text-gray-700">Discount (Optional)</label>
+                  <input
+                    type="number"
+                    id="discount"
+                    name="discount"
+                    value={form.discount}
+                    onChange={handleFormChange}
+                    min="0"
+                    step="0.01"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="taxRate" className="block text-sm font-medium text-gray-700">Sales Tax</label>
+                  <select
+                    id="taxRate"
+                    name="taxRate"
+                    value={form.taxRate}
+                    onChange={handleFormChange}
+                    required
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {companyTaxRates().map((tr, i) => (
+                      <option key={i} value={tr.rate}>{tr.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="shipping" className="block text-sm font-medium text-gray-700">Shipping Charge</label>
+                  <input
+                    type="number"
+                    id="shipping"
+                    name="shipping"
+                    value={form.shipping}
+                    onChange={handleFormChange}
+                    min="0"
+                    step="0.01"
+                    placeholder="Enter shipping charge"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="paymentMethod" className="block text-sm font-medium text-gray-700">Payment Method</label>
+                  <select
+                    id="paymentMethod"
+                    name="paymentMethod"
+                    value={form.paymentMethod}
+                    onChange={handleFormChange}
+                    required
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="Cash">Cash</option>
+                    <option value="Card">Card</option>
+                    <option value="PayPal">PayPal</option>
+                    <option value="Amazon">Amazon</option>
+                    <option value="eBay">eBay</option>
+                    <option value="Check">Check</option>
+                    <option value="Square">Square</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="date" className="block text-sm font-medium text-gray-700">Date</label>
+                  <input
+                    type="date"
+                    id="date"
+                    name="date"
+                    value={form.date}
+                    onChange={handleFormChange}
+                    required
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label htmlFor="notes" className="block text-sm font-medium text-gray-700">Comments</label>
+                  <textarea
+                    id="notes"
+                    name="notes"
+                    value={form.notes}
+                    onChange={handleFormChange}
+                    rows="4"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+              {form.items.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="text-lg font-semibold">Selected Items</h4>
+                  {form.items.map((item, index) => {
+                    const product = products.find(p => p.id === item.productId) || {};
+                    const price = item.customPrice || (product.retail_price || 0);
+                    return (
+                      <div key={index} className="border border-gray-200 p-2 mb-2 rounded flex justify-between items-center">
+                        <div>
+                          <p><strong>Item Name:</strong> {product.name || 'Unknown'}</p>
+                          <p><strong>SKU:</strong> {product.sku || 'N/A'}</p>
+                          <p><strong>Quantity:</strong> {item.quantity || 0}</p>
+                          <p><strong>Price:</strong> ${price.toFixed(2)}{item.customPrice ? ' (Custom)' : ''}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(index)}
+                          className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <div className="mt-4">
+                <h4 className="text-lg font-semibold">Sale Summary</h4>
+                <p>Subtotal: ${(updateRunningTotal(form.items, form.taxRate, form.discount, form.shipping).subtotal || 0).toFixed(2)}</p>
+                <p>Tax: ${(updateRunningTotal(form.items, form.taxRate, form.discount, form.shipping).tax || 0).toFixed(2)}</p>
+                <p>Shipping: ${(form.shipping || 0).toFixed(2)}</p>
+                {form.discount > 0 && <p>Discount: -${form.discount.toFixed(2)}</p>}
+                <p><strong>Total: ${(updateRunningTotal(form.items, form.taxRate, form.discount, form.shipping).total || 0).toFixed(2)}</strong></p>
+              </div>
+              <button type="submit" className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                Record Sale
+              </button>
+            </form>
+            <div className="mt-8">
+              <h3 className="text-xl font-bold mb-4">Import Sales from Excel</h3>
+              <form onSubmit={handleImport}>
+                <input
+                  type="file"
+                  onChange={handleImportFileChange}
+                  accept=".xlsx, .xls"
+                  className="mb-4"
+                />
+                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                  Import Sales
+                </button>
+              </form>
+            </div>
+          </div>
+          <div className="table-container">
+            <h3 className="text-2xl font-bold mb-4">Recent Sales</h3>
+            <div className="mb-4 flex items-center gap-4">
+              <label htmlFor="searchQuery" className="text-sm font-medium text-gray-700">Search Sales</label>
+              <input
+                type="text"
+                id="searchQuery"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by transaction #, customer, date, or total"
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 md:w-1/2"
+              />
+              <button
+                onClick={() => setSearchQuery('')}
+                className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+              >
+                Clear Search
+              </button>
+              {currentIndex > 0 && (
+                <button
+                  onClick={() => handleMonthNavigation('prev')}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                >
+                  Next Month
+                </button>
+              )}
+              {currentIndex < monthGroups.length - 1 && (
+                <button
+                  onClick={() => handleMonthNavigation('next')}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                >
+                  Previous Month
+                </button>
+              )}
+            </div>
+            {invalidDateSales.length > 0 && (
+              <div className="p-4 mb-6 text-yellow-600 bg-yellow-100 rounded-lg shadow-sm">
+                <h3 className="text-lg font-semibold">Sales with Invalid Dates</h3>
+                <p>{invalidDateSales.length} sale(s) have invalid or missing dates and are not shown in the month groups. Please edit these sales to assign a valid date.</p>
+                <ul className="list-disc pl-5">
+                  {invalidDateSales.map(sale => (
+                    <li key={sale.id}>Sale #{sale.transaction_number || sale.id} (Customer: {sale.customer_name || 'Unknown'})</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {monthGroups.length === 0 && invalidDateSales.length === 0 ? (
+              <div className="p-8 bg-white rounded-lg shadow-md text-center border border-gray-200">
+                <p className="text-lg font-semibold text-gray-800 mb-1">No sales yet</p>
+                <p className="text-sm text-gray-500 mb-4">
+                  Record a sale with the form above, import from EasyCart, or convert an invoice.
+                </p>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <a href="#customerSearch" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 inline-block no-underline">
+                    New sale
+                  </a>
+                  <a href="/wpeasycart-import.html" className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 inline-block no-underline">
+                    EasyCart import
+                  </a>
+                  <a href="/invoices.html" className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 inline-block no-underline">
+                    Invoices
+                  </a>
+                </div>
+              </div>
+            ) : (
+              monthGroups.map((group, index) => {
+                const [year, month] = group.month.split('-').map(Number);
+                const displayMonth = new Date(year, month - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+                console.log(`[PAGINATION] Rendering month: ${group.month} as ${displayMonth}`);
+                return (
+                  <div key={group.month}>
+                    <h3
+                      className="month-header text-lg font-semibold mb-2 cursor-pointer"
+                      onClick={() => toggleMonth(group.month)}
+                    >
+                      {displayMonth}
+                      {collapsedMonths.includes(group.month) ? ' (Expand)' : ' (Collapse)'}
+                    </h3>
+                    <div className={collapsedMonths.includes(group.month) ? 'month-collapsed' : 'block'}>
+                      {group.sales.length === 0 ? (
+                        <p className="p-4 bg-white rounded-lg shadow-md">No sales match the search criteria for {displayMonth}.</p>
+                      ) : (
+                        <>
+                          <div className="flex justify-between mb-4">
+                            <button
+                              onClick={handlePreviousSale}
+                              disabled={selectedSaleIndex <= -1 || group.sales.length === 0}
+                              className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 disabled:bg-gray-300"
+                            >
+                              Previous Sale
+                            </button>
+                            <button
+                              onClick={handleNextSale}
+                              disabled={selectedSaleIndex >= group.sales.length - 1 || group.sales.length === 0}
+                              className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 disabled:bg-gray-300"
+                            >
+                              Next Sale
+                            </button>
+                          </div>
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-blue-600 text-white">
+                              <tr>
+                                <th
+                                  className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider cursor-pointer"
+                                  onClick={() => handleSort('transaction_number')}
+                                >
+                                  Transaction # {sortConfig.key === 'transaction_number' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th
+                                  className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider cursor-pointer"
+                                  onClick={() => handleSort('customer_name')}
+                                >
+                                  Customer {sortConfig.key === 'customer_name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th
+                                  className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider cursor-pointer"
+                                  onClick={() => handleSort('date')}
+                                >
+                                  Date {sortConfig.key === 'date' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th
+                                  className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider cursor-pointer"
+                                  onClick={() => handleSort('total')}
+                                >
+                                  Total {sortConfig.key === 'total' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                              {sortSales(group.sales, sortConfig.key, sortConfig.direction).map((sale, saleIndex) => (
+                                <Fragment key={sale.id}>
+                                  <tr
+                                    onClick={() => handleSaleClick(saleIndex)}
+                                    className={`cursor-pointer ${saleIndex === selectedSaleIndex ? 'bg-blue-100' : ''}`}
+                                  >
+                                    <td className="px-2 py-2 whitespace-nowrap">{sale.transaction_number || 'N/A'}</td>
+                                    <td className="px-2 py-2 whitespace-nowrap">{sale.customer_name || 'Unknown'}</td>
+                                    <td className="px-2 py-2 whitespace-nowrap">{sale.date || 'N/A'}</td>
+                                    <td className="px-2 py-2 whitespace-nowrap">${(sale.total || 0).toFixed(2)}</td>
+                                    <td className="px-2 py-2 whitespace-nowrap space-x-2">
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); handleEdit(sale); }}
+                                        className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); handleDelete(sale.id, sale.transaction_number); }}
+                                        className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+                                      >
+                                        Delete
+                                      </button>
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); generatePDF(sale); }}
+                                        className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                                      >
+                                        Print
+                                      </button>
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); handleCreatePackingSlip(sale); }}
+                                        className="btn-packing"
+                                        title="Create packing slip from this sale (edit boxes on Packing Slips page)"
+                                        disabled={!sale.items || !sale.items.length}
+                                      >
+                                        Create Packing Slip
+                                      </button>
+                                    </td>
+                                  </tr>
+                                  {saleIndex === selectedSaleIndex && (
+                                    <tr>
+                                      <td colSpan="5" className="px-2 py-2">
+                                        <div className="p-4 border rounded-lg bg-gray-50">
+                                          <div className="flex justify-between items-center mb-2">
+                                            <h3 className="text-lg font-semibold">Sale Details</h3>
+                                            <div className="space-x-2">
+                                              <button
+                                                onClick={handlePreviousSale}
+                                                disabled={selectedSaleIndex <= -1}
+                                                className="bg-gray-600 text-white p-2 rounded disabled:bg-gray-300"
+                                              >
+                                                ←
+                                              </button>
+                                              <button
+                                                onClick={handleNextSale}
+                                                disabled={selectedSaleIndex >= group.sales.length - 1}
+                                                className="bg-gray-600 text-white p-2 rounded disabled:bg-gray-300"
+                                              >
+                                                →
+                                              </button>
+                                            </div>
+                                          </div>
+                                          <p><strong>Transaction Number:</strong> {sale.transaction_number || 'N/A'}</p>
+                                          <p><strong>Date:</strong> {sale.date || 'N/A'}</p>
+                                          <p><strong>Customer:</strong> {sale.customer_name || 'Unknown'}</p>
+                                          <p><strong>Items:</strong></p>
+                                          <ul className="list-disc pl-5">
+                                            {sale.items && sale.items.length > 0 ? (
+                                              sale.items.map((item, itemIndex) => {
+                                                const product = products.find(p => p.id === item.product_id) || {};
+                                                const price = item.custom_price || (product.retail_price || 0);
+                                                return (
+                                                  <li key={itemIndex}>
+                                                    {product.name || 'Unknown'} (SKU: {product.sku || 'N/A'}, Quantity: {item.quantity || 0}, Price: ${price.toFixed(2)}{item.custom_price ? ' (Custom)' : ''})
+                                                  </li>
+                                                );
+                                              })
+                                            ) : (
+                                              <li>No items</li>
+                                            )}
+                                          </ul>
+                                          <p><strong>Subtotal:</strong> ${(sale.subtotal || 0).toFixed(2)}</p>
+                                          <p><strong>Tax:</strong> ${(sale.tax || 0).toFixed(2)} ({isCaSalesTax(sale) ? 'CA 7.75%' : 'Out of State 0%'})</p>
+                                          <p><strong>Shipping:</strong> ${(sale.shipping || 0).toFixed(2)}</p>
+                                          {sale.discount > 0 && <p><strong>Discount:</strong> -${(sale.discount || 0).toFixed(2)}</p>}
+                                          <p><strong>Total:</strong> ${(sale.total || 0).toFixed(2)}</p>
+                                          <p><strong>Payment Method:</strong> {sale.payment_method || 'N/A'}</p>
+                                          <p><strong>Comments:</strong> {sale.notes || 'N/A'}</p>
+                                          <p><strong>Billing Address:</strong> {(customers.find(c => c.id === sale.customer_id)?.billing_address || 'N/A')}</p>
+                                          <p><strong>Shipping Address:</strong> {(typeof resolveShipTo === 'function'
+                                            ? resolveShipTo({ sale_shipping: sale.shipping_address, customer: customers.find(c => c.id === sale.customer_id) })
+                                            : (sale.shipping_address || customers.find(c => c.id === sale.customer_id)?.shipping_address || customers.find(c => c.id === sale.customer_id)?.billing_address || 'N/A')) || 'N/A'}</p>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  )}
+                                </Fragment>
+                              ))}
+                            </tbody>
+                          </table>
+                          {/* ADD THE GRAND TOTAL HERE */}
+                          <div className="p-6 bg-gray-50 border-t">
+                            <h4 className="text-lg font-semibold mb-3">Month Summary – {displayMonth}</h4>
+                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-sm">
+                              <div>
+                                <p className="text-gray-600">Subtotal</p>
+                                <p className="font-medium">${group.sales.reduce((sum, s) => sum + (s.subtotal || 0), 0).toFixed(2)}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600">Tax</p>
+                                <p className="font-medium">${group.sales.reduce((sum, s) => sum + (s.tax || 0), 0).toFixed(2)}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600">Shipping</p>
+                                <p className="font-medium">${group.sales.reduce((sum, s) => sum + (s.shipping || 0), 0).toFixed(2)}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600">Discount</p>
+                                <p className="font-medium text-red-600">-${group.sales.reduce((sum, s) => sum + (s.discount || 0), 0).toFixed(2)}</p>
+                              </div>
+                              <div className="col-span-2 sm:col-span-1 border-t pt-2 sm:border-t-0 sm:pt-0">
+                                <p className="text-gray-600 font-semibold">Grand Total</p>
+                                <p className="text-xl font-bold text-green-700">
+                                  ${group.sales.reduce((sum, s) => sum + (s.total || 0), 0).toFixed(2)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    {index === currentIndex && (
+                      <div className="month-navigation mt-4 flex gap-4">
+                        {currentIndex > 0 && (
+                          <button
+                            onClick={() => handleMonthNavigation('prev')}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                          >
+                            Next Month
+                          </button>
+                        )}
+                        {currentIndex < monthGroups.length - 1 && (
+                          <button
+                            onClick={() => handleMonthNavigation('next')}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                          >
+                            Previous Month
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+          {showCustomerModal && (
+            <div className="modal">
+              <div className="modal-content">
+                <h3 className="text-lg font-semibold mb-4">Add New Customer</h3>
+                <form onSubmit={handleAddCustomer}>
+                  <label htmlFor="customerName" className="block text-sm font-medium text-gray-700">Name</label>
+                  <input
+                    type="text"
+                    id="customerName"
+                    name="name"
+                    value={newCustomer.name}
+                    onChange={handleCustomerFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mt-4">Email (Optional)</label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={newCustomer.email}
+                    onChange={handleCustomerFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mt-4">Phone (Optional)</label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={newCustomer.phone}
+                    onChange={handleCustomerFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <label htmlFor="billing_address" className="block text-sm font-medium text-gray-700 mt-4">Billing Address</label>
+                  <textarea
+                    id="billing_address"
+                    name="billing_address"
+                    value={newCustomer.billing_address}
+                    onChange={handleCustomerFormChange}
+                    rows="4"
+                    placeholder="Paste address here; first line sets Name, address copies to Shipping by default"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                  <label htmlFor="shipping_address" className="block text-sm font-medium text-gray-700 mt-4">Shipping Address (Optional)</label>
+                  <textarea
+                    id="shipping_address"
+                    name="shipping_address"
+                    value={newCustomer.shipping_address}
+                    onChange={handleCustomerFormChange}
+                    rows="4"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <div className="mt-4 flex justify-end gap-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCustomerModal(false);
+                        setNewCustomer({ name: '', email: '', phone: '', billing_address: '', shipping_address: '' });
+                      }}
+                      className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                      Add Customer
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+          {editForm && (
+            <div className="modal">
+              <div className="modal-content">
+                <h3 className="text-lg font-semibold mb-4">Edit Sale</h3>
+                <form onSubmit={handleEditSubmit}>
+                  <label htmlFor="editCustomerId" className="block text-sm font-medium text-gray-700">Customer</label>
+                  <select
+                    id="editCustomerId"
+                    name="customerId"
+                    value={editForm.customerId}
+                    onChange={handleEditFormChange}
+                    required
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select a customer</option>
+                    {customers.map(customer => (
+                      <option key={customer.id} value={customer.id}>{customer.name}</option>
+                    ))}
+                  </select>
+                  {companyUsesProducts() && (
+                    <>
+                      <label htmlFor="editSkuSearch" className="block text-sm font-medium text-gray-700 mt-4">Add Product (Search by SKU or Name)</label>
+                      <div className="relative mt-1 flex items-center flex-wrap">
+                        <input
+                          type="text"
+                          id="editSkuSearch"
+                          value={skuSearch}
+                          onChange={handleSkuSearchChange}
+                          placeholder="SKU, product, or service"
+                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:w-[calc(100%-7.5rem)]"
+                        />
+                        <input
+                          type="number"
+                          id="editCurrentQuantity"
+                          value={currentQuantity}
+                          onChange={(e) => setCurrentQuantity(e.target.value)}
+                          min="1"
+                          placeholder="Qty"
+                          className="mt-1 ml-2 w-20 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleEditAddItem}
+                          disabled={!currentQuantity || (!currentProductId && !skuSearch.trim())}
+                          className="mt-1 ml-2 bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 disabled:bg-gray-300"
+                        >
+                          Add
+                        </button>
+                        {skuSearch && filteredProducts.length > 0 && !currentProductId && (
+                          <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-sm max-h-48 overflow-y-auto top-full">
+                            {filteredProducts.map(product => (
+                              <div
+                                key={product.id}
+                                onClick={() => handleProductSelect(product)}
+                                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                              >
+                                {`${product.name} (${(product.item_kind || 'product') === 'service' ? 'service' : 'SKU'}: ${product.sku})`}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <label htmlFor="editCurrentCustomPrice" className="block text-sm font-medium text-gray-700 mt-4">Custom Price (Optional)</label>
+                      <input
+                        type="number"
+                        id="editCurrentCustomPrice"
+                        value={currentCustomPrice}
+                        onChange={(e) => setCurrentCustomPrice(e.target.value)}
+                        min="0"
+                        step="0.01"
+                        placeholder={currentProductId ? `Default: $${products.find(p => p.id === parseInt(currentProductId))?.retail_price?.toFixed(2) || '0.00'}` : 'Enter custom price'}
+                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </>
+                  )}
+                  {editForm.items.length > 0 && (
+                    <div className="mt-4">
+                      <h4 className="text-lg font-semibold">Selected Items</h4>
+                      {editForm.items.map((item, index) => {
+                        const product = products.find(p => p.id === item.productId) || {};
+                        const price = item.customPrice || (product.retail_price || 0);
+                        return (
+                          <div key={index} className="border border-gray-200 p-2 mb-2 rounded flex justify-between items-center">
+                            <div>
+                              <p><strong>Item Name:</strong> {product.name || 'Unknown'}</p>
+                              <p><strong>SKU:</strong> {product.sku || 'N/A'}</p>
+                              <p><strong>Quantity:</strong> {item.quantity || 0}</p>
+                              <p><strong>Price:</strong> ${price.toFixed(2)}{item.customPrice ? ' (Custom)' : ''}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleEditRemoveItem(index)}
+                              className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <label htmlFor="editDiscount" className="block text-sm font-medium text-gray-700 mt-4">Discount (Optional)</label>
+                  <input
+                    type="number"
+                    id="editDiscount"
+                    name="discount"
+                    value={editForm.discount}
+                    onChange={handleEditFormChange}
+                    min="0"
+                    step="0.01"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <label htmlFor="editTaxRate" className="block text-sm font-medium text-gray-700 mt-4">Sales Tax</label>
+                  <select
+                    id="editTaxRate"
+                    name="taxRate"
+                    value={editForm.taxRate}
+                    onChange={handleEditFormChange}
+                    required
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {companyTaxRates().map((tr, i) => (
+                      <option key={i} value={tr.rate}>{tr.label}</option>
+                    ))}
+                  </select>
+                  <label htmlFor="editShipping" className="block text-sm font-medium text-gray-700 mt-4">Shipping Charge</label>
+                  <input
+                    type="number"
+                    id="editShipping"
+                    name="shipping"
+                    value={editForm.shipping}
+                    onChange={handleEditFormChange}
+                    min="0"
+                    step="0.01"
+                    placeholder="Enter shipping charge"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <label htmlFor="editPaymentMethod" className="block text-sm font-medium text-gray-700 mt-4">Payment Method</label>
+                  <select
+                    id="editPaymentMethod"
+                    name="paymentMethod"
+                    value={editForm.paymentMethod}
+                    onChange={handleEditFormChange}
+                    required
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="Cash">Cash</option>
+                    <option value="Card">Card</option>
+                    <option value="PayPal">PayPal</option>
+                    <option value="Amazon">Amazon</option>
+                    <option value="eBay">eBay</option>
+                    <option value="Check">Check</option>
+                    <option value="Square">Square</option>
+                  </select>
+                  <label htmlFor="editDate" className="block text-sm font-medium text-gray-700 mt-4">Date</label>
+                  <input
+                    type="date"
+                    id="editDate"
+                    name="date"
+                    value={editForm.date}
+                    onChange={handleEditFormChange}
+                    required
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <label htmlFor="editNotes" className="block text-sm font-medium text-gray-700 mt-4">Comments</label>
+                  <textarea
+                    id="editNotes"
+                    name="notes"
+                    value={editForm.notes}
+                    onChange={handleEditFormChange}
+                    rows="4"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <div className="mt-4">
+                    <h4 className="text-lg font-semibold">Sale Summary</h4>
+                    <p>Subtotal: ${(updateRunningTotal(editForm.items, editForm.taxRate, editForm.discount, editForm.shipping).subtotal || 0).toFixed(2)}</p>
+                    <p>Tax: ${(updateRunningTotal(editForm.items, editForm.taxRate, editForm.discount, editForm.shipping).tax || 0).toFixed(2)}</p>
+                    <p>Shipping: ${(editForm.shipping || 0).toFixed(2)}</p>
+                    {editForm.discount > 0 && <p>Discount: -${editForm.discount.toFixed(2)}</p>}
+                    <p><strong>Total: ${(updateRunningTotal(editForm.items, editForm.taxRate, editForm.discount, editForm.shipping).total || 0).toFixed(2)}</strong></p>
+                  </div>
+                  <div className="mt-4 flex justify-end gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setEditForm(null)}
+                      className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                      Update Sale
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </main>
+      </ErrorBoundary>
+    );
+  };
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(<SalesPage />);
+</script>
+<script type="text/javascript">
+
+  linkColorPicker.addEventListener('change', (e) => {
+    const newColor = e.target.value;
+    navLinks.forEach(link => link.style.color = newColor);
+    localStorage.setItem(linkKey, newColor);
+  });
+  // Call setRootPadding after DOM is loaded
+  setRootPadding();
+});
+function setRootPadding() {
+  const fixedHeader = document.querySelector('.fixed');
+  if (fixedHeader) {
+    const headerHeight = fixedHeader.offsetHeight;
+    document.getElementById('root').style.paddingTop = `${headerHeight}px`;
+  }
+}
+window.addEventListener('resize', setRootPadding);
+</script>
+</body>
+</html>

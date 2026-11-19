@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Company Settings — Accounting</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.24.0/babel.min.js"></script>
+  <link rel="stylesheet" href="/app-shell.css" />
+  <link rel="stylesheet" href="/kpi-common.css" />
+  <script src="/company-config.js"></script>
+  <script src="/app-shell.js" defer></script>
+  <script src="/kpi-common.js" defer></script>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; background: #f3f4f6; color: #111; }
+    main { max-width: 960px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+    h2 { margin: 0 0 0.35rem; font-size: 1.75rem; }
+    .sub { color: #6b7280; font-size: 0.9rem; margin-bottom: 1.25rem; }
+    .card {
+      background: #fff; border-radius: 10px; padding: 1.1rem 1.25rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 1rem;
+    }
+    .card h3 { margin: 0 0 0.75rem; font-size: 1.15rem; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    @media (max-width: 700px) { .grid2 { grid-template-columns: 1fr; } }
+    label { display: block; font-size: 0.72rem; font-weight: 600; color: #6b7280; text-transform: uppercase; margin-bottom: 0.2rem; }
+    input, select, textarea {
+      width: 100%; box-sizing: border-box; padding: 0.45rem 0.55rem;
+      border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem;
+    }
+    textarea { min-height: 4rem; font-family: inherit; }
+    .row { margin-bottom: 0.65rem; }
+    .checks { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; margin: 0.5rem 0 0.75rem; }
+    .checks label { text-transform: none; font-size: 0.9rem; color: #111; font-weight: 500; display: flex; align-items: center; gap: 0.35rem; }
+    .btn {
+      border: none; border-radius: 6px; padding: 0.5rem 0.95rem; font-weight: 600; cursor: pointer;
+      background: #2563eb; color: #fff;
+    }
+    .btn:hover { background: #1d4ed8; }
+    .btn.secondary { background: #4b5563; }
+    .btn.secondary:hover { background: #374151; }
+    .btn.danger { background: #dc2626; }
+    .msg { padding: 0.65rem 0.85rem; border-radius: 6px; margin-bottom: 0.85rem; font-size: 0.9rem; }
+    .msg.ok { background: #dcfce7; color: #166534; }
+    .msg.err { background: #fee2e2; color: #991b1b; }
+    .tabs { display: flex; gap: 0.4rem; margin-bottom: 0.85rem; flex-wrap: wrap; }
+    .tabs button {
+      border: 1px solid #d1d5db; background: #fff; border-radius: 999px; padding: 0.35rem 0.85rem;
+      cursor: pointer; font-weight: 600; font-size: 0.9rem;
+    }
+    .tabs button.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .hint { font-size: 0.82rem; color: #6b7280; margin: 0.25rem 0 0.75rem; }
+    code { background: #f3f4f6; padding: 0.1rem 0.3rem; border-radius: 4px; font-size: 0.85rem; }
+    .logo-row {
+      display: grid; grid-template-columns: 7.5rem 1fr; gap: 1rem; align-items: start;
+    }
+    @media (max-width: 600px) { .logo-row { grid-template-columns: 1fr; } }
+    .logo-preview-wrap {
+      display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
+    }
+    .logo-preview {
+      width: 7rem; height: 7rem; object-fit: contain; background: #f8fafc;
+      border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.4rem;
+    }
+    .logo-preview.missing { display: grid; place-items: center; color: #94a3b8; font-size: 0.75rem; text-align: center; }
+    .dropzone {
+      border: 2px dashed #cbd5e1; border-radius: 0.75rem; padding: 1rem 1.1rem;
+      background: #f8fafc; text-align: center; cursor: pointer; transition: border-color .15s, background .15s;
+    }
+    .dropzone:hover, .dropzone.dragover {
+      border-color: #2563eb; background: #eff6ff;
+    }
+    .dropzone p { margin: 0.25rem 0; font-size: 0.9rem; color: #334155; }
+    .dropzone .hint { margin: 0.35rem 0 0; }
+    .dropzone input[type=file] { display: none; }
+    .logo-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+  </style>
+</head>
+<body class="bg-gray-100">
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const API = (window.CompanyConfig && window.CompanyConfig.apiBase)
+      ? window.CompanyConfig.apiBase()
+      : '/api';
+
+    function emptyForm() {
+      return {
+        name: '',
+        dba_name: '',
+        industry: '',
+        bank_name: '',
+        short_name: '',
+        legal_name: '',
+        website: '',
+        logo_path: '/logo.png',
+        favicon_path: '/favicon.ico',
+        address: '',
+        phone: '',
+        email: '',
+        tax_id: '',
+        state_id: '',
+        receipt_footer: 'Thank you for your business.',
+        tax_rates_text: 'Out of State (0%)|0\nLocal tax|0',
+        payment_methods_text: 'Cash\nCard\nCheck\nACH',
+        default_tax_rate: 0,
+        features: { products: true, easycart: false, packing_slips: true, books: true, deposits: true },
+        party_a_label: '',
+        party_b_label: '',
+        notes: '',
+      };
+    }
+
+    function companyToForm(c) {
+      const s = c.settings || {};
+      const rates = c.tax_rates || s.tax_rates || [];
+      const methods = c.payment_methods || s.payment_methods || [];
+      const feat = Object.assign(
+        { products: true, easycart: false, packing_slips: true, books: true, deposits: true },
+        c.features || s.features || {}
+      );
+      return {
+        name: c.name || '',
+        dba_name: c.dba_name || '',
+        industry: c.industry || '',
+        bank_name: c.bank_name || '',
+        short_name: c.short_name || s.short_name || '',
+        legal_name: c.legal_name || s.legal_name || c.name || '',
+        website: c.website != null ? c.website : (s.website || ''),
+        logo_path: c.logo_path || s.logo_path || '/logo.png',
+        favicon_path: c.favicon_path || s.favicon_path || '/favicon.ico',
+        address: s.address || '',
+        phone: s.phone || '',
+        email: s.email || '',
+        tax_id: s.tax_id || '',
+        state_id: s.state_id || '',
+        receipt_footer: s.receipt_footer || 'Thank you for your business.',
+        tax_rates_text: rates.map(r => `${r.label}|${r.rate}`).join('\n'),
+        payment_methods_text: methods.join('\n'),
+        default_tax_rate: s.default_tax_rate != null ? s.default_tax_rate : 0,
+        features: feat,
+        party_a_label: s.party_a_label || c.party_a_label || '',
+        party_b_label: s.party_b_label || c.party_b_label || '',
+        notes: s.notes || '',
+      };
+    }
+
+    function parseTaxRates(text) {
+      return String(text || '')
+        .split('\n')
+        .map(l => l.trim())
+        .filter(Boolean)
+        .map((line, i) => {
+          const parts = line.split('|');
+          const label = (parts[0] || `Rate ${i + 1}`).trim();
+          const rate = parseFloat(parts[1] != null ? parts[1] : '0');
+          return { id: 'r' + i, label, rate: Number.isFinite(rate) ? rate : 0 };
+        });
+    }
+
+    function SettingsPage() {
+      const [companies, setCompanies] = useState([]);
+      const [tabId, setTabId] = useState(null);
+      const [form, setForm] = useState(emptyForm());
+      const [msg, setMsg] = useState(null);
+      const [loading, setLoading] = useState(true);
+      const [saving, setSaving] = useState(false);
+      const [uploading, setUploading] = useState(false);
+      const [uploadingFav, setUploadingFav] = useState(false);
+      const [dragOver, setDragOver] = useState(false);
+      const [dragOverFav, setDragOverFav] = useState(false);
+      const [logoBust, setLogoBust] = useState(Date.now());
+      const [favBust, setFavBust] = useState(Date.now());
+      const fileInputRef = React.useRef(null);
+      const favInputRef = React.useRef(null);
+
+      const load = async () => {
+        setLoading(true);
+        setMsg(null);
+        try {
+          const list = window.CompanyConfig
+            ? await window.CompanyConfig.load(true)
+            : await fetch(API + '/companies').then(r => r.json());
+          setCompanies(list);
+          const id = tabId || list[0]?.id;
+          setTabId(id);
+          const c = list.find(x => String(x.id) === String(id)) || list[0];
+          if (c) setForm(companyToForm(c));
+        } catch (e) {
+          setMsg({ type: 'err', text: e.message || String(e) });
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      useEffect(() => { load(); }, []);
+
+      useEffect(() => {
+        if (!tabId || !companies.length) return;
+        const c = companies.find(x => String(x.id) === String(tabId));
+        if (c) setForm(companyToForm(c));
+      }, [tabId]);
+
+      const setField = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
+      const setFeat = (k, v) => setForm(prev => ({ ...prev, features: { ...prev.features, [k]: v } }));
+
+      const bustSrc = (path, bust) => {
+        const p = (path || '').trim();
+        if (!p) return '';
+        const sep = p.indexOf('?') >= 0 ? '&' : '?';
+        return p + sep + 'v=' + bust;
+      };
+      const logoSrc = () => bustSrc(form.logo_path, logoBust);
+      const favSrc = () => bustSrc(form.favicon_path, favBust);
+
+      const uploadBrandFile = async (file, kind) => {
+        if (!file || !tabId) return;
+        const isFav = kind === 'favicon';
+        const typeOk = isFav
+          ? (/^image\/(png|jpe?g|webp|x-icon|vnd\.microsoft\.icon)$/i.test(file.type) || /\.ico$/i.test(file.name))
+          : /^image\/(png|jpe?g|webp)$/i.test(file.type);
+        if (!typeOk) {
+          setMsg({ type: 'err', text: isFav
+            ? 'Use PNG, JPG, WebP, or ICO for the favicon (max 2 MB).'
+            : 'Use a PNG, JPG, or WebP image (max 2 MB).' });
+          return;
+        }
+        if (file.size > 2 * 1024 * 1024) {
+          setMsg({ type: 'err', text: 'Image must be 2 MB or smaller.' });
+          return;
+        }
+        if (isFav) setUploadingFav(true); else setUploading(true);
+        setMsg(null);
+        try {
+          const fd = new FormData();
+          fd.append('logo', file);
+          fd.append('company_id', String(tabId));
+          fd.append('kind', isFav ? 'favicon' : 'logo');
+          const res = await fetch(API + '/settings/logo', { method: 'POST', body: fd });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.error || 'Upload failed');
+          if (isFav) {
+            const path = data.favicon_path || data.path || form.favicon_path;
+            setField('favicon_path', path);
+            setFavBust(Date.now());
+            setMsg({
+              type: 'ok',
+              text: 'Favicon uploaded to ' + path + '. Click Save company settings to keep it on this company.',
+            });
+          } else {
+            const path = data.logo_path || data.path || form.logo_path;
+            setField('logo_path', path);
+            setLogoBust(Date.now());
+            setMsg({
+              type: 'ok',
+              text: 'Logo uploaded to ' + path + '. Click Save company settings to keep it on this company.',
+            });
+          }
+        } catch (e) {
+          setMsg({ type: 'err', text: e.message || String(e) });
+        } finally {
+          if (isFav) setUploadingFav(false); else setUploading(false);
+        }
+      };
+
+      const onDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragOver(false);
+        const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) uploadBrandFile(f, 'logo');
+      };
+
+      const onDropFav = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragOverFav(false);
+        const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) uploadBrandFile(f, 'favicon');
+      };
+
+      const save = async () => {
+        if (!tabId) return;
+        setSaving(true);
+        setMsg(null);
+        try {
+          const tax_rates = parseTaxRates(form.tax_rates_text);
+          const payment_methods = String(form.payment_methods_text || '')
+            .split('\n').map(s => s.trim()).filter(Boolean);
+          const settings = {
+            short_name: form.short_name,
+            legal_name: form.legal_name || form.name,
+            website: form.website,
+            logo_path: form.logo_path,
+            favicon_path: form.favicon_path,
+            address: form.address,
+            phone: form.phone,
+            email: form.email,
+            tax_id: form.tax_id,
+            state_id: form.state_id,
+            receipt_footer: form.receipt_footer,
+            tax_rates,
+            payment_methods,
+            default_tax_rate: Number(form.default_tax_rate) || 0,
+            features: form.features,
+            party_a_label: form.party_a_label,
+            party_b_label: form.party_b_label,
+            notes: form.notes,
+          };
+          const res = await fetch(API + '/companies/' + tabId, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({
+              name: form.name,
+              dba_name: form.dba_name,
+              industry: form.industry,
+              bank_name: form.bank_name,
+              settings,
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Save failed');
+          setMsg({ type: 'ok', text: `Saved settings for ${data.name}` });
+          if (window.CompanyConfig) await window.CompanyConfig.load(true);
+          await load();
+          setTabId(data.id);
+        } catch (e) {
+          setMsg({ type: 'err', text: e.message || String(e) });
+        } finally {
+          setSaving(false);
+        }
+      };
+
+      const resetEmpty = async () => {
+        if (!tabId) return;
+        if (!confirm('Reset this company to empty release defaults? Name can stay; branding/tax/features go generic.')) return;
+        setSaving(true);
+        try {
+          const res = await fetch(API + '/companies/' + tabId + '/reset-settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reset_name: false }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Reset failed');
+          setMsg({ type: 'ok', text: 'Reset to empty template (name kept).' });
+          await load();
+        } catch (e) {
+          setMsg({ type: 'err', text: e.message || String(e) });
+        } finally {
+          setSaving(false);
+        }
+      };
+
+      if (loading) {
+        return <main><p>Loading company settings…</p></main>;
+      }
+
+      return (
+        <main>
+          <h2>Company settings</h2>
+          <p className="sub">
+            Branding, tax rates, payment methods, and feature flags live here per company.
+          </p>
+
+          {msg && <div className={`msg ${msg.type === 'ok' ? 'ok' : 'err'}`}>{msg.text}</div>}
+
+          <div className="tabs">
+            {companies.map(c => (
+              <button
+                key={c.id}
+                type="button"
+                className={String(tabId) === String(c.id) ? 'active' : ''}
+                onClick={() => setTabId(c.id)}
+              >
+                #{c.id} {c.short_name || c.name}
+              </button>
+            ))}
+          </div>
+
+          <div className="card">
+            <h3>Identity</h3>
+            <p className="hint">Shown in the header switcher, PDFs, and footers once pages read CompanyConfig.</p>
+            <div className="grid2">
+              <div className="row">
+                <label>Legal / display name</label>
+                <input value={form.name} onChange={e => setField('name', e.target.value)} />
+              </div>
+              <div className="row">
+                <label>DBA / short brand</label>
+                <input value={form.dba_name} onChange={e => setField('dba_name', e.target.value)} />
+              </div>
+              <div className="row">
+                <label>Short name (nav)</label>
+                <input value={form.short_name} onChange={e => setField('short_name', e.target.value)} />
+              </div>
+              <div className="row">
+                <label>Legal name (documents)</label>
+                <input value={form.legal_name} onChange={e => setField('legal_name', e.target.value)} />
+              </div>
+              <div className="row">
+                <label>Website</label>
+                <input value={form.website} onChange={e => setField('website', e.target.value)} placeholder="www.example.com" />
+              </div>
+              <div className="row">
+                <label>Industry</label>
+                <input value={form.industry} onChange={e => setField('industry', e.target.value)} />
+              </div>
+              <div className="row">
+                <label>Primary bank</label>
+                <input value={form.bank_name} onChange={e => setField('bank_name', e.target.value)} />
+              </div>
+            </div>
+
+            <div className="row" style={{ marginTop: '0.75rem' }}>
+              <label>Company logo</label>
+              <p className="hint">Preview updates from the path below. Drop a new image to upload (PNG / JPG / WebP, max 2&nbsp;MB).</p>
+              <div className="logo-row">
+                <div className="logo-preview-wrap">
+                  {form.logo_path ? (
+                    <img
+                      className="logo-preview"
+                      src={logoSrc()}
+                      alt="Company logo preview"
+                      onError={(e) => { e.target.style.opacity = '0.3'; }}
+                      onLoad={(e) => { e.target.style.opacity = '1'; }}
+                    />
+                  ) : (
+                    <div className="logo-preview missing">No logo path</div>
+                  )}
+                  <span className="hint" style={{ fontSize: '0.7rem' }}>Preview</span>
+                </div>
+                <div>
+                  <div className="row">
+                    <label>Logo path</label>
+                    <input
+                      value={form.logo_path}
+                      onChange={e => { setField('logo_path', e.target.value); setLogoBust(Date.now()); }}
+                      placeholder="/company-logo-1.png"
+                    />
+                  </div>
+                  <div
+                    className={'dropzone' + (dragOver ? ' dragover' : '')}
+                    onDragEnter={e => { e.preventDefault(); setDragOver(true); }}
+                    onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={e => { e.preventDefault(); setDragOver(false); }}
+                    onDrop={onDrop}
+                    onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current && fileInputRef.current.click(); }}
+                  >
+                    <p><strong>{uploading ? 'Uploading…' : 'Drop logo here'}</strong> or click to browse</p>
+                    <p className="hint">Saved as <code>/company-logo-{tabId || 'N'}.png</code> (or .jpg / .webp)</p>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={e => {
+                        const f = e.target.files && e.target.files[0];
+                        if (f) uploadBrandFile(f, 'logo');
+                        e.target.value = '';
+                      }}
+                    />
+                  </div>
+                  <div className="logo-actions">
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      disabled={uploading || !form.logo_path}
+                      onClick={() => setLogoBust(Date.now())}
+                    >
+                      Refresh preview
+                    </button>
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      disabled={uploading}
+                      onClick={() => {
+                        setField('logo_path', tabId === 2 || String(tabId) === '2' ? '/logo.png' : '/logo.png');
+                        setLogoBust(Date.now());
+                      }}
+                    >
+                      Use default path
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="row" style={{ marginTop: '0.75rem' }}>
+              <label>Browser favicon (tab icon)</label>
+              <p className="hint">Small icon in the browser tab. PNG/ICO works best (square, 32×32 or 64×64).</p>
+              <div className="logo-row">
+                <div className="logo-preview-wrap">
+                  {form.favicon_path ? (
+                    <img
+                      className="logo-preview"
+                      style={{ width: '3.5rem', height: '3.5rem' }}
+                      src={favSrc()}
+                      alt="Favicon preview"
+                      onError={(e) => { e.target.style.opacity = '0.3'; }}
+                      onLoad={(e) => { e.target.style.opacity = '1'; }}
+                    />
+                  ) : (
+                    <div className="logo-preview missing" style={{ width: '3.5rem', height: '3.5rem' }}>No favicon</div>
+                  )}
+                  <span className="hint" style={{ fontSize: '0.7rem' }}>Preview</span>
+                </div>
+                <div>
+                  <div className="row">
+                    <label>Favicon path</label>
+                    <input
+                      value={form.favicon_path}
+                      onChange={e => { setField('favicon_path', e.target.value); setFavBust(Date.now()); }}
+                      placeholder="/favicon.ico"
+                    />
+                  </div>
+                  <div
+                    className={'dropzone' + (dragOverFav ? ' dragover' : '')}
+                    onDragEnter={e => { e.preventDefault(); setDragOverFav(true); }}
+                    onDragOver={e => { e.preventDefault(); setDragOverFav(true); }}
+                    onDragLeave={e => { e.preventDefault(); setDragOverFav(false); }}
+                    onDrop={onDropFav}
+                    onClick={() => favInputRef.current && favInputRef.current.click()}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') favInputRef.current && favInputRef.current.click(); }}
+                  >
+                    <p><strong>{uploadingFav ? 'Uploading…' : 'Drop favicon here'}</strong> or click to browse</p>
+                    <p className="hint">Saved as <code>/company-favicon-{tabId || 'N'}.png</code> (or .ico / .jpg / .webp)</p>
+                    <input
+                      ref={favInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/x-icon,.ico"
+                      onChange={e => {
+                        const f = e.target.files && e.target.files[0];
+                        if (f) uploadBrandFile(f, 'favicon');
+                        e.target.value = '';
+                      }}
+                    />
+                  </div>
+                  <div className="logo-actions">
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      disabled={uploadingFav || !form.favicon_path}
+                      onClick={() => setFavBust(Date.now())}
+                    >
+                      Refresh preview
+                    </button>
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      disabled={uploadingFav}
+                      onClick={() => {
+                        setField('favicon_path', '/favicon.ico');
+                        setFavBust(Date.now());
+                      }}
+                    >
+                      Use default path
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="row">
+              <label>Address (multi-line)</label>
+              <textarea value={form.address} onChange={e => setField('address', e.target.value)} />
+            </div>
+            <div className="grid2">
+              <div className="row">
+                <label>Phone</label>
+                <input value={form.phone} onChange={e => setField('phone', e.target.value)} />
+              </div>
+              <div className="row">
+                <label>Email</label>
+                <input value={form.email} onChange={e => setField('email', e.target.value)} />
+              </div>
+              <div className="row">
+                <label>Federal tax ID (EIN) — optional</label>
+                <input
+                  value={form.tax_id}
+                  onChange={e => setField('tax_id', e.target.value)}
+                  placeholder="e.g. 12-3456789"
+                  autoComplete="off"
+                />
+              </div>
+              <div className="row">
+                <label>State tax / entity ID — optional</label>
+                <input
+                  value={form.state_id}
+                  onChange={e => setField('state_id', e.target.value)}
+                  placeholder="e.g. CA seller’s permit or SOS #"
+                  autoComplete="off"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="card">
+            <h3>Tax rates</h3>
+            <p className="hint">One per line: <code>Label|rate</code> where rate is a decimal (e.g. 0.0775 for 7.75%).</p>
+            <div className="row">
+              <textarea
+                value={form.tax_rates_text}
+                onChange={e => setField('tax_rates_text', e.target.value)}
+                style={{ minHeight: '6rem' }}
+              />
+            </div>
+            <div className="row" style={{ maxWidth: 220 }}>
+              <label>Default tax rate</label>
+              <input
+                type="number"
+                step="0.0001"
+                value={form.default_tax_rate}
+                onChange={e => setField('default_tax_rate', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="card">
+            <h3>Payment methods</h3>
+            <p className="hint">One method per line (Sales / Invoices dropdowns will use this).</p>
+            <textarea
+              value={form.payment_methods_text}
+              onChange={e => setField('payment_methods_text', e.target.value)}
+              style={{ minHeight: '6rem' }}
+            />
+          </div>
+
+          <div className="card">
+            <h3>Features</h3>
+            <p className="hint">
+              <strong>Products / SKUs</strong> replaces the old hard-coded “company 1 only” product line items.
+            </p>
+            <div className="checks">
+              {[
+                ['products', 'Products / SKU sales'],
+                ['easycart', 'EasyCart import'],
+                ['packing_slips', 'Packing slips'],
+                ['books', 'Books / CPA module'],
+                ['deposits', 'Deposits'],
+              ].map(([k, label]) => (
+                <label key={k}>
+                  <input
+                    type="checkbox"
+                    checked={!!form.features[k]}
+                    onChange={e => setFeat(k, e.target.checked)}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+            <div className="grid2">
+              <div className="row">
+                <label>Party A label (optional remittance)</label>
+                <input value={form.party_a_label} onChange={e => setField('party_a_label', e.target.value)} placeholder="optional" />
+              </div>
+              <div className="row">
+                <label>Party B label (optional remittance)</label>
+                <input value={form.party_b_label} onChange={e => setField('party_b_label', e.target.value)} placeholder="e.g. Party B" />
+              </div>
+            </div>
+            <div className="row">
+              <label>Receipt footer</label>
+              <input value={form.receipt_footer} onChange={e => setField('receipt_footer', e.target.value)} />
+            </div>
+            <div className="row">
+              <label>Internal notes</label>
+              <textarea value={form.notes} onChange={e => setField('notes', e.target.value)} />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem' }}>
+            <button type="button" className="btn" disabled={saving} onClick={save}>
+              {saving ? 'Saving…' : 'Save company settings'}
+            </button>
+            <button type="button" className="btn secondary" disabled={saving} onClick={load}>
+              Reload
+            </button>
+            <button type="button" className="btn danger" disabled={saving} onClick={resetEmpty}>
+              Reset to empty template
+            </button>
+          </div>
+          <p className="hint" style={{ marginTop: '1rem' }}>
+            After save, hard-refresh other tabs so the header picks up new names/logos.
+            Pages still being migrated may show old hardcoded titles until updated to use CompanyConfig.
+          </p>
+        </main>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<SettingsPage />);
+  </script>
+</body>
+</html>

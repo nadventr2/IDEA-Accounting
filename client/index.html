@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home — Accounting</title>
+  <link rel="stylesheet" href="/app-shell.css" />
+  <link rel="stylesheet" href="/kpi-common.css" />
+  <script src="/company-config.js"></script>
+  <script src="/app-shell.js" defer></script>
+  <script src="/kpi-common.js" defer></script>
+  <style>
+    :root {
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --card: #ffffff;
+      --bg: #f1f5f9;
+      --green: #059669;
+      --green-soft: #ecfdf5;
+      --blue: #2563eb;
+      --blue-soft: #eff6ff;
+      --amber: #d97706;
+      --amber-soft: #fffbeb;
+      --red: #dc2626;
+      --red-soft: #fef2f2;
+      --violet: #7c3aed;
+      --violet-soft: #f5f3ff;
+      --shadow: 0 1px 2px rgba(15, 23, 42, .06), 0 8px 24px rgba(15, 23, 42, .06);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    .dash {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 1.25rem 1.1rem 3.5rem;
+    }
+    .hero {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.35rem;
+    }
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.55rem, 2.5vw, 2rem);
+      letter-spacing: -0.02em;
+    }
+    .hero p {
+      margin: 0.35rem 0 0;
+      color: var(--muted);
+      max-width: 42rem;
+      line-height: 1.45;
+      font-size: 0.98rem;
+    }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      border: none;
+      border-radius: 0.55rem;
+      padding: 0.55rem 0.9rem;
+      font-weight: 650;
+      font-size: 0.9rem;
+      text-decoration: none;
+      cursor: pointer;
+      color: #fff;
+      background: var(--blue);
+      box-shadow: var(--shadow);
+    }
+    .btn:hover { filter: brightness(0.95); }
+    .btn.ghost {
+      background: #fff;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .lane {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+      box-shadow: var(--shadow);
+      padding: 1rem 1.1rem 1.15rem;
+      margin-bottom: 1.15rem;
+    }
+    .lane-head {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      margin-bottom: 0.9rem;
+    }
+    .lane-badge {
+      width: 0.65rem;
+      height: 0.65rem;
+      border-radius: 999px;
+      flex-shrink: 0;
+    }
+    .lane-head h2 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 750;
+    }
+    .lane-head span {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    /* Flow row with nodes + arrows */
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: stretch;
+      gap: 0.35rem 0.15rem;
+      justify-content: flex-start;
+    }
+    .flow-node {
+      flex: 0 1 9.5rem;
+      min-width: 8.2rem;
+      max-width: 11rem;
+    }
+    .flow-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 1.35rem;
+      font-weight: 700;
+      padding: 0 0.15rem;
+      user-select: none;
+      min-width: 1.4rem;
+    }
+    @media (max-width: 720px) {
+      .flow-arrow { transform: rotate(90deg); width: 100%; min-height: 1.2rem; }
+      .flow { flex-direction: column; align-items: stretch; }
+      .flow-node { max-width: none; flex: 1 1 auto; }
+    }
+
+    a.tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      text-decoration: none;
+      color: inherit;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 0.85rem;
+      padding: 0.85rem 0.55rem 0.75rem;
+      height: 100%;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+    }
+    a.tile:hover {
+      transform: translateY(-2px);
+      border-color: #cbd5e1;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
+    }
+    a.tile:focus-visible {
+      outline: 2px solid var(--blue);
+      outline-offset: 2px;
+    }
+    .tile-icon {
+      width: 3.1rem;
+      height: 3.1rem;
+      border-radius: 0.9rem;
+      display: grid;
+      place-items: center;
+      margin-bottom: 0.55rem;
+      font-size: 1.45rem;
+      line-height: 1;
+    }
+    .tile-icon svg { width: 1.55rem; height: 1.55rem; display: block; }
+    .tile-title {
+      font-weight: 750;
+      font-size: 0.92rem;
+      letter-spacing: -0.01em;
+    }
+    .tile-sub {
+      margin-top: 0.2rem;
+      font-size: 0.72rem;
+      color: var(--muted);
+      line-height: 1.25;
+    }
+
+    .theme-green .tile-icon { background: var(--green-soft); color: var(--green); }
+    .theme-blue .tile-icon { background: var(--blue-soft); color: var(--blue); }
+    .theme-amber .tile-icon { background: var(--amber-soft); color: var(--amber); }
+    .theme-red .tile-icon { background: var(--red-soft); color: var(--red); }
+    .theme-violet .tile-icon { background: var(--violet-soft); color: var(--violet); }
+
+    .hub-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(8.8rem, 1fr));
+      gap: 0.65rem;
+    }
+    .hub-grid .tile { min-height: 7.2rem; }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.25rem;
+      margin-top: 0.25rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    .legend i {
+      display: inline-block;
+      width: 0.55rem;
+      height: 0.55rem;
+      border-radius: 999px;
+      margin-right: 0.35rem;
+      vertical-align: middle;
+    }
+
+    .co-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0.3rem 0.7rem 0.3rem 0.35rem;
+      font-size: 0.82rem;
+      font-weight: 650;
+      color: var(--ink);
+    }
+    .co-pill img {
+      width: 1.4rem;
+      height: 1.4rem;
+      object-fit: contain;
+      border-radius: 0.3rem;
+    }
+
+    .footnote {
+      margin-top: 0.5rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="dash" id="dash">
+    <div class="hero">
+      <div>
+        <div class="co-pill" id="coPill" style="margin-bottom:0.55rem">
+          <img id="coLogo" src="/logo.png" alt="" />
+          <span id="coName">Accounting</span>
+        </div>
+        <h1>Business flow</h1>
+        <p>
+          Jump to any module from the map below. Arrows show the usual path —
+          estimates become invoices become sales; purchase orders become inventory and bills.
+        </p>
+      </div>
+      <div class="hero-actions">
+        <a class="btn" href="/sales.html">+ New sale</a>
+        <a class="btn ghost" href="/settings.html">Company settings</a>
+      </div>
+    </div>
+
+    <!-- MONEY IN -->
+    <section class="lane" aria-labelledby="lane-in">
+      <div class="lane-head">
+        <span class="lane-badge" style="background:var(--green)"></span>
+        <div>
+          <h2 id="lane-in">Money in</h2>
+          <span>Quote → bill → collect · or import web orders straight to sales</span>
+        </div>
+      </div>
+
+      <div class="flow" id="flowSales">
+        <!-- filled by JS -->
+      </div>
+
+      <div class="flow" id="flowWeb" style="margin-top:0.85rem">
+        <!-- EasyCart optional -->
+      </div>
+    </section>
+
+    <!-- SUPPLY CHAIN -->
+    <section class="lane" aria-labelledby="lane-ops">
+      <div class="lane-head">
+        <span class="lane-badge" style="background:var(--blue)"></span>
+        <div>
+          <h2 id="lane-ops">Buy · stock · pay vendors</h2>
+          <span>Catalog and vendors → purchase orders → receive stock → inventory &amp; bills</span>
+        </div>
+      </div>
+      <div class="flow" id="flowBuy"></div>
+    </section>
+
+    <!-- BOOKS / REPORTS -->
+    <section class="lane" aria-labelledby="lane-books">
+      <div class="lane-head">
+        <span class="lane-badge" style="background:var(--red)"></span>
+        <div>
+          <h2 id="lane-books">Books, tax &amp; reports</h2>
+          <span>Money out, tax filings, CPA-ready books, and analysis</span>
+        </div>
+      </div>
+      <div class="hub-grid" id="hubFinance"></div>
+    </section>
+
+    <!-- PEOPLE / LOOKUPS -->
+    <section class="lane" aria-labelledby="lane-ref">
+      <div class="lane-head">
+        <span class="lane-badge" style="background:var(--violet)"></span>
+        <div>
+          <h2 id="lane-ref">People &amp; history</h2>
+          <span>Customers, deposits, and the full transaction log</span>
+        </div>
+      </div>
+      <div class="hub-grid" id="hubRef"></div>
+    </section>
+
+    <div class="legend">
+      <span><i style="background:var(--green)"></i>Incoming / sales</span>
+      <span><i style="background:var(--blue)"></i>Inventory &amp; ops</span>
+      <span><i style="background:var(--red)"></i>Payables &amp; books</span>
+      <span><i style="background:var(--violet)"></i>Reference</span>
+    </div>
+    <p class="footnote">
+      Modules hide automatically when disabled in
+      <a href="/settings.html">Company settings</a> (e.g. EasyCart, packing slips, products).
+    </p>
+  </div>
+
+  <script>
+(function () {
+  'use strict';
+
+  // Simple geometric icons (no emoji dependency)
+  var ICONS = {
+    estimate: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l3 3v15H7z"/><path d="M14 3v4h4"/><path d="M9 12h6M9 16h6M9 8h2"/></svg>',
+    invoice: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12v18l-2-1.2L14 21l-2-1.2L10 21l-2-1.2L6 21z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>',
+    sale: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8H17a1 1 0 0 0 1-.7L20 7H7"/></svg>',
+    pack: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v8l9 4 9-4V8"/><path d="M12 12v8"/></svg>',
+    cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 5h2l1 9h12l2-6H7"/><circle cx="10" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>',
+    vendor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V6l8-3 8 3v14"/><path d="M9 20v-6h6v6"/><path d="M9 9h.01M15 9h.01"/></svg>',
+    product: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16"/></svg>',
+    po: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>',
+    receive: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>',
+    inventory: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16v12H4z"/><path d="M8 7V5h8v2"/><path d="M8 12h8"/></svg>',
+    bill: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg>',
+    expense: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18"/><path d="M17 8H9.5a2.5 2.5 0 0 0 0 5H14a2.5 2.5 0 0 1 0 5H6"/></svg>',
+    tax: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20L20 4"/><circle cx="7.5" cy="7.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg>',
+    books: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 0-2 2z"/><path d="M6 3v18"/></svg>',
+    report: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5M12 16V8M16 16v-3"/></svg>',
+    customer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5"/></svg>',
+    deposit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/><path d="M12 14v3M10.5 15.5h3"/></svg>',
+    history: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M12 8v5l3 2"/></svg>',
+  };
+
+  function tile(t) {
+    return (
+      '<a class="tile theme-' + t.theme + '" href="' + t.href + '" title="' + (t.sub || t.title) + '">' +
+        '<div class="tile-icon">' + (ICONS[t.icon] || ICONS.report) + '</div>' +
+        '<div class="tile-title">' + t.title + '</div>' +
+        (t.sub ? '<div class="tile-sub">' + t.sub + '</div>' : '') +
+      '</a>'
+    );
+  }
+
+  function flowHtml(nodes) {
+    var html = '';
+    nodes.forEach(function (n, i) {
+      if (i) html += '<div class="flow-arrow" aria-hidden="true">→</div>';
+      html += '<div class="flow-node">' + tile(n) + '</div>';
+    });
+    return html;
+  }
+
+  function render() {
+    var co = (window.CompanyConfig && window.CompanyConfig.get)
+      ? window.CompanyConfig.get()
+      : { name: 'Accounting', legal_name: 'Accounting', logo_path: '/logo.png', features: {} };
+    var f = co.features || {};
+    var usesProducts = f.products !== false;
+    var usesEc = !!f.easycart;
+    var usesPack = f.packing_slips !== false;
+    var usesBooks = f.books !== false;
+    var usesDep = f.deposits !== false;
+
+    document.getElementById('coName').textContent = co.legal_name || co.name || 'Accounting';
+    document.getElementById('coLogo').src = co.logo_path || '/logo.png';
+    document.title = (co.short_name || co.name || 'Accounting') + ' — Home';
+
+    // Money in: estimate → invoice → sale [→ packing]
+    var salesFlow = [
+      { href: '/estimates.html', title: 'Estimates', sub: 'Quotes & proposals', icon: 'estimate', theme: 'green' },
+      { href: '/invoices.html', title: 'Invoices', sub: 'Bill the customer', icon: 'invoice', theme: 'green' },
+      { href: '/sales.html', title: 'Sales', sub: 'Record payment', icon: 'sale', theme: 'green' },
+    ];
+    if (usesPack) {
+      salesFlow.push({ href: '/packing-slip.html', title: 'Packing slips', sub: 'Ship the order', icon: 'pack', theme: 'blue' });
+    }
+    document.getElementById('flowSales').innerHTML = flowHtml(salesFlow);
+
+    var webEl = document.getElementById('flowWeb');
+    if (usesEc) {
+      webEl.style.display = '';
+      webEl.innerHTML = flowHtml([
+        { href: '/wpeasycart-import.html', title: 'EasyCart import', sub: 'Web orders in', icon: 'cart', theme: 'green' },
+        { href: '/sales.html', title: 'Sales', sub: 'Imported orders land here', icon: 'sale', theme: 'green' },
+      ]);
+    } else {
+      webEl.style.display = 'none';
+      webEl.innerHTML = '';
+    }
+
+    // Buy path
+    var buy = [];
+    if (usesProducts) {
+      buy.push({ href: '/add-products.html', title: 'Products & services', sub: 'SKUs, services & pricing', icon: 'product', theme: 'blue' });
+    }
+    buy.push({ href: '/add-vendor.html', title: 'Vendors', sub: 'Who you buy from', icon: 'vendor', theme: 'red' });
+    buy.push({ href: '/purchase-order.html', title: 'Purchase orders', sub: 'Order stock', icon: 'po', theme: 'red' });
+    if (usesProducts) {
+      buy.push({ href: '/receive-inventory.html', title: 'Receive inventory', sub: 'PO arrives', icon: 'receive', theme: 'blue' });
+      buy.push({ href: '/inventory.html', title: 'Inventory', sub: 'On-hand view', icon: 'inventory', theme: 'blue' });
+    }
+    buy.push({ href: '/bills.html', title: 'Bills', sub: 'Pay the vendor', icon: 'bill', theme: 'red' });
+    document.getElementById('flowBuy').innerHTML = flowHtml(buy);
+
+    // Finance hub
+    var fin = [
+      { href: '/expenses.html', title: 'Expenses', sub: 'Other spend', icon: 'expense', theme: 'red' },
+      { href: '/sales-tax.html', title: 'Sales tax', sub: 'Collections', icon: 'tax', theme: 'red' },
+      { href: '/reports.html', title: 'Reports', sub: 'P&amp;L &amp; more', icon: 'report', theme: 'violet' },
+    ];
+    if (usesBooks) {
+      fin.unshift({ href: '/books.html', title: 'Books', sub: 'CPA / ledger', icon: 'books', theme: 'red' });
+    }
+    document.getElementById('hubFinance').innerHTML = fin.map(tile).join('');
+
+    // Reference hub
+    var ref = [
+      { href: '/customer-list.html', title: 'Customers', sub: 'Contacts & merge', icon: 'customer', theme: 'violet' },
+      { href: '/transaction-history.html', title: 'Transactions', sub: 'Full history', icon: 'history', theme: 'violet' },
+    ];
+    if (usesDep) {
+      ref.unshift({ href: '/deposits.html', title: 'Deposits', sub: 'Money parked', icon: 'deposit', theme: 'green' });
+    }
+    document.getElementById('hubRef').innerHTML = ref.map(tile).join('');
+  }
+
+  function boot() {
+    if (window.CompanyConfig && window.CompanyConfig.load) {
+      window.CompanyConfig.load().then(render).catch(render);
+    } else {
+      render();
+    }
+  }
+
+  window.addEventListener('accounting-company-changed', function () {
+    if (window.CompanyConfig && window.CompanyConfig.load) {
+      window.CompanyConfig.load(true).then(render).catch(render);
+    } else render();
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();
+  </script>
+</body>
+</html>

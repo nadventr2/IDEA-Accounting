@@ -1,0 +1,16 @@
+services:
+  open-accounting:
+    build: .
+    ports:
+      - "3003:3003"
+    environment:
+      PORT: "3003"
+      HOST: "0.0.0.0"
+      DATABASE_PATH: /data/accounting.db
+      UPLOAD_DIR: /data/uploads
+      BACKUP_DIR: /data/backups
+      EASYCART_ENABLED: "0"
+    volumes:
+      - acct-data:/data
+volumes:
+  acct-data:

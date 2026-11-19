@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Receive Inventory - Open Accounting</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.22.9/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+  <link href="/output.css" rel="stylesheet">
+  <style>
+    body { background-color: #f3f4f6; color: #000; font-family: Arial, sans-serif; }
+    header { background-color: #2563eb; color: #fff; padding: 1rem; }
+    main { max-width: 1024px; margin: 0 auto; padding: 1.5rem; }
+    .table-container { background-color: #fff; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background-color: #f9fafb; }
+    th, td { padding: 0.5rem; text-align: left; font-size: 0.875rem; }
+    th { color: #6b7280; font-size: 0.75rem; text-transform: uppercase; cursor: pointer; }
+    td { color: #000; }
+    tbody tr { border-bottom: 1px solid #e5e7eb; }
+    tbody tr:hover { background-color: #f9fafb; }
+    button { padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer; }
+    button.bg-blue-600 { background-color: #2563eb; color: #fff; }
+    button:disabled { background-color: #d1d5db; cursor: not-allowed; }
+    input, select { width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; }
+    label { display: block; margin-bottom: 0.25rem; }
+    .error { color: #dc2626; font-size: 0.875rem; }
+    .success { color: #16a34a; font-size: 0.875rem; }
+    .cursor-pointer { cursor: pointer; }
+    .search-box { max-width: 500px; }
+    /* Spacing handled by app-shell spacer — do not add large padding-top hacks */
+    main { padding-top: 1rem; }
+  </style>
+  <link rel="stylesheet" href="/app-shell.css" />
+  <link rel="stylesheet" href="/kpi-common.css" />
+  <script src="/app-shell.js" defer></script>
+  <script src="/kpi-common.js" defer></script>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+  <header id="header" class="text-white p-4">
+    <div class="fixed top-0 left-0 w-full bg-blue-600 text-white p-4 flex flex-wrap items-center justify-between gap-4 shadow-md z-10">
+      <div class="flex items-center">
+        <a href="/"><img src="/logo.png" alt="Company Logo" class="h-12 mr-4" /></a>
+        <h1 class="text-2xl font-bold">Open Accounting</h1>
+      </div>
+      <nav id="nav" class="flex flex-wrap gap-4">
+        <a href="/" class="px-4 hover:underline">Settings</a>
+        <a href="/estimates.html" class="px-4 hover:underline">Estimates</a>
+        <a href="/invoices.html" class="px-4 hover:underline">Invoices</a>
+        <a href="/sales.html" class="px-4 hover:underline">Sales</a>
+        <a href="/add-vendor.html" class="px-4 hover:underline">Add Vendor</a>
+        <a href="/add-products.html" class="px-4 hover:underline">Add Product</a>
+        <a href="/packing-slip.html" class="px-4 hover:underline">Packing Slips</a>
+        <a href="/purchase-order.html" class="px-4 hover:underline">Purchase Order</a>
+        <a href="/transaction-history.html" class="px-4 hover:underline">Transaction History</a>
+        <a href="/customer-list.html" class="px-4 hover:underline">Customer List</a>
+        <a href="/receive-inventory.html" class="px-4 hover:underline">Receive Inventory</a>
+        <a href="/inventory.html" class="px-4 hover:underline">Inventory</a>
+        <a href="/bills.html" class="px-4 hover:underline">Bills</a>
+        <a href="/sales-tax.html" class="px-4 hover:underline">Sales Tax</a>
+        <a href="/reports.html" class="px-4 hover:underline">Reports</a>
+      </nav>
+    </div>
+  </header>
+
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const BASE_URL = window.location.origin + '/api';
+
+    const ReceiveInventoryPage = () => {
+      const [purchaseOrders, setPurchaseOrders] = useState([]);
+      const [vendors, setVendors] = useState([]);
+      const [customers, setCustomers] = useState([]);
+      const [products, setProducts] = useState([]);
+      const [selectedPOId, setSelectedPOId] = useState(null);
+      const [poItems, setPOItems] = useState([]);
+      const [receivedQuantities, setReceivedQuantities] = useState({});
+      const [totalAmount, setTotalAmount] = useState(0);
+      const [billDate, setBillDate] = useState(new Date().toISOString().split('T')[0]);
+      const [dueDate, setDueDate] = useState('');
+      const [error, setError] = useState(null);
+      const [success, setSuccess] = useState(null);
+      const [isLoading, setIsLoading] = useState(false);
+      const [searchQuery, setSearchQuery] = useState('');
+      const [sortConfig, setSortConfig] = useState({ key: 'po_number', direction: 'asc' });
+
+      useEffect(() => {
+        const fetchData = async () => {
+          try {
+            const companyId = localStorage.getItem('selectedCompanyId') || '1';
+
+            const [posRes, vendorRes, customerRes, productRes] = await Promise.all([
+              fetch(`${BASE_URL}/purchase-order?company_id=${companyId}`),
+              fetch(`${BASE_URL}/vendors?company_id=${companyId}`),
+              fetch(`${BASE_URL}/customers?company_id=${companyId}`),
+              fetch(`${BASE_URL}/products?company_id=${companyId}`)
+            ]);
+
+            const posData = await posRes.json();
+            const vendorData = await vendorRes.json();
+            const customerData = await customerRes.json();
+            const productData = await productRes.json();
+
+            setPurchaseOrders(Array.isArray(posData) ? posData : []);
+            setVendors(Array.isArray(vendorData) ? vendorData : []);
+            setCustomers(Array.isArray(customerData) ? customerData : []);
+            setProducts(Array.isArray(productData) ? productData : []);
+          } catch (err) {
+            setError('Failed to load data: ' + err.message);
+            setPurchaseOrders([]);
+            setVendors([]);
+            setCustomers([]);
+            setProducts([]);
+          }
+        };
+        fetchData();
+      }, []);
+
+      useEffect(() => {
+        if (selectedPOId) {
+          const selectedPO = purchaseOrders.find(po => po.id === selectedPOId);
+          if (selectedPO && selectedPO.items) {
+            setPOItems(selectedPO.items.map(item => ({
+              ...item,
+              received_quantity: Number(item.received_quantity || 0)
+            })));
+            setReceivedQuantities({});
+            setTotalAmount(0);
+            requestAnimationFrame(() => {
+              document.getElementById('receive-form-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+          }
+        }
+      }, [selectedPOId, purchaseOrders]);
+
+      const handleSort = (key) => {
+        let direction = 'asc';
+        if (sortConfig.key === key && sortConfig.direction === 'asc') {
+          direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+      };
+
+      const sortedPOs = [...purchaseOrders].sort((a, b) => {
+        let aValue = '';
+        let bValue = '';
+
+        switch (sortConfig.key) {
+          case 'po_number':
+            aValue = a.po_number || '';
+            bValue = b.po_number || '';
+            break;
+          case 'drop_ship_customer_name':
+            aValue = customers.find(c => c.id === a.drop_ship_customer_id)?.name || '';
+            bValue = customers.find(c => c.id === b.drop_ship_customer_id)?.name || '';
+            break;
+          case 'vendor_name':
+            aValue = vendors.find(v => v.id === a.vendor_id)?.name || '';
+            bValue = vendors.find(v => v.id === b.vendor_id)?.name || '';
+            break;
+          case 'date_ordered':
+            aValue = a.date_ordered || '';
+            bValue = b.date_ordered || '';
+            break;
+          case 'status':
+            aValue = a.status || '';
+            bValue = b.status || '';
+            break;
+          default:
+            aValue = a[sortConfig.key] || '';
+            bValue = b[sortConfig.key] || '';
+        }
+
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+
+      const filteredPOs = sortedPOs.filter(po => {
+        const query = searchQuery.toLowerCase();
+        const vendorName = vendors.find(v => v.id === po.vendor_id)?.name || '';
+        const customerName = customers.find(c => c.id === po.drop_ship_customer_id)?.name || '';
+
+        return (
+          (po.po_number || '').toLowerCase().includes(query) ||
+          vendorName.toLowerCase().includes(query) ||
+          customerName.toLowerCase().includes(query) ||
+          (po.date_ordered || '').toLowerCase().includes(query) ||
+          (po.status || '').toLowerCase().includes(query)
+        );
+      });
+
+      const getPOStatus = (po) => {
+        if (!po.items || po.items.length === 0) return 'unknown';
+        const isFullyReceived = po.items.every(item => (item.received_quantity || 0) >= (item.quantity || 0));
+        return isFullyReceived ? 'received' : 'pending';
+      };
+
+      const handlePOClick = (poId) => {
+        setSelectedPOId(poId);
+      };
+
+      const handleQuantityChange = (itemId, value) => {
+        const quantity = parseInt(value) || 0;
+        setReceivedQuantities(prev => ({ ...prev, [itemId]: quantity }));
+
+        const newTotal = poItems.reduce((sum, item) => {
+          const received = item.id === itemId ? quantity : (receivedQuantities[item.id] || 0);
+          return sum + received * (item.unit_price || 0);
+        }, 0);
+        setTotalAmount(newTotal.toFixed(2));
+      };
+
+      const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError(null);
+  setSuccess(null);
+
+  const itemsToReceive = poItems
+    .filter(item => (receivedQuantities[item.id] || 0) > 0)
+    .map(item => ({
+      id: item.id,
+      received_quantity: receivedQuantities[item.id] || 0
+    }));
+
+  if (itemsToReceive.length === 0) {
+    setError('No items selected to receive');
+    setIsLoading(false);
+    return;
+  }
+
+  try {
+    const res = await fetch(`${BASE_URL}/receive_inventory`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        purchase_order_id: selectedPOId,
+        items: itemsToReceive,
+        company_id: parseInt(localStorage.getItem('selectedCompanyId') || '1', 10),
+        bill_date: billDate,
+        due_date: dueDate
+      })
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error || 'Failed to receive inventory');
+    }
+
+    const responseData = await res.json(); // get success response
+
+    setSuccess('Inventory received and bill created successfully');
+
+    // 1. Refresh the full list of purchase orders
+    const posRes = await fetch(`${BASE_URL}/purchase-order?company_id=${localStorage.getItem('selectedCompanyId') || '1'}`);
+    if (!posRes.ok) throw new Error('Failed to refresh POs');
+    const posData = await posRes.json();
+    setPurchaseOrders(posData || []);
+
+    // 2. Force-update the currently selected PO's items (this fixes Previously Received)
+    const updatedPO = posData.find(po => po.id === selectedPOId);
+    if (updatedPO && updatedPO.items) {
+      // Map items and ensure received_quantity is a number
+      const freshItems = updatedPO.items.map(item => ({
+        ...item,
+        received_quantity: Number(item.received_quantity || 0)
+      }));
+      setPOItems(freshItems);
+
+      // Optional: force a small delay + re-render if needed (rare race condition fix)
+      setTimeout(() => setPOItems(freshItems), 300);
+    }
+
+    // Reset form
+    setReceivedQuantities({});
+    setTotalAmount(0);
+    setBillDate(new Date().toISOString().split('T')[0]);
+    setDueDate('');
+  } catch (err) {
+    console.error('Receive error:', err);
+    setError(err.message || 'An error occurred');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+      return (
+        <main className="p-6">
+          <h1 className="text-3xl font-bold mb-6">Receive Inventory / Purchase Orders</h1>
+
+          {/* Search Box */}
+          <div className="mb-6 search-box">
+            <input
+              type="text"
+              placeholder="Search by PO #, Customer, Vendor, Date, or Status..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          {/* Purchase Orders Table */}
+          <div className="table-container mb-8">
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th onClick={() => handleSort('po_number')} className="cursor-pointer">PO #</th>
+                  <th onClick={() => handleSort('drop_ship_customer_name')} className="cursor-pointer">Customer</th>
+                  <th onClick={() => handleSort('vendor_name')} className="cursor-pointer">Vendor</th>
+                  <th onClick={() => handleSort('date_ordered')} className="cursor-pointer">Date Ordered</th>
+                  <th onClick={() => handleSort('status')} className="cursor-pointer">Received Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredPOs.length > 0 ? (
+                  filteredPOs.map(po => (
+                    <tr
+                      key={po.id}
+                      onClick={() => handlePOClick(po.id)}
+                      className={`hover:bg-gray-50 cursor-pointer ${po.drop_ship_customer_id ? 'bg-blue-50' : ''}`}
+                    >
+                      <td className="px-2 py-2">{po.po_number || 'N/A'}</td>
+                      <td className="px-2 py-2" title={customers.find(c => c.id === po.drop_ship_customer_id)?.name || 'No drop-ship customer'}>
+                        {customers.find(c => c.id === po.drop_ship_customer_id)?.name || 'N/A'}
+                      </td>
+                      <td className="px-2 py-2">{vendors.find(v => v.id === po.vendor_id)?.name || 'Unknown'}</td>
+                      <td className="px-2 py-2">{po.date_ordered || 'N/A'}</td>
+                      <td className="px-2 py-2">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          getPOStatus(po) === 'received' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {getPOStatus(po) === 'received' ? 'Fully Received' : 'Pending'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="px-2 py-2 text-center text-gray-500">No purchase orders found</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Receive Form */}
+          {selectedPOId && (
+            <div id="receive-form-panel" className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-2xl font-bold mb-4">
+                Receive Inventory for PO #{purchaseOrders.find(po => po.id === selectedPOId)?.po_number}
+              </h2>
+
+              {error && <p className="error mb-4">{error}</p>}
+              {success && <p className="success mb-4">{success}</p>}
+
+              <form onSubmit={handleSubmit}>
+                {isLoading ? (
+                  <p className="text-center">Processing...</p>
+                ) : (
+                  <>
+                    <table className="w-full mb-4">
+                      <thead>
+                        <tr>
+                          <th>Product</th>
+                          <th>Ordered</th>
+                          <th>Previously Received</th>
+                          <th>Receive Now</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {poItems.map(item => (
+                          <tr key={item.id}>
+                            <td>{products.find(p => p.id === item.product_id)?.name || 'Unknown'}</td>
+                            <td>{item.quantity}</td>
+                            <td>{item.received_quantity || 0}</td>
+                            <td>
+                              <input
+                                type="number"
+                                min="0"
+                                max={item.quantity - (item.received_quantity || 0)}
+                                value={receivedQuantities[item.id] || ''}
+                                onChange={e => handleQuantityChange(item.id, e.target.value)}
+                                className="w-full p-1 border rounded"
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    <div className="mb-4">
+                      <label htmlFor="totalAmount" className="block text-sm font-medium text-gray-700">Total Amount</label>
+                      <input
+                        id="totalAmount"
+                        type="text"
+                        value={totalAmount}
+                        readOnly
+                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-100"
+                      />
+                    </div>
+
+                    <div className="mb-4">
+                      <label htmlFor="billDate" className="block text-sm font-medium text-gray-700">Bill Date</label>
+                      <input
+                        id="billDate"
+                        type="date"
+                        value={billDate}
+                        onChange={e => setBillDate(e.target.value)}
+                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                        required
+                      />
+                    </div>
+
+                    <div className="mb-4">
+                      <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700">Due Date (Optional)</label>
+                      <input
+                        id="dueDate"
+                        type="date"
+                        value={dueDate}
+                        onChange={e => setDueDate(e.target.value)}
+                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+                      disabled={isLoading || !selectedPOId}
+                    >
+                      Receive Inventory and Create Bill
+                    </button>
+                  </>
+                )}
+              </form>
+            </div>
+          )}
+        </main>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<ReceiveInventoryPage />);
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,175 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Open Accounting</title>
+  <style>
+    .min-h-screen { min-height: 100vh; }
+    .bg-gray-100 { background-color: #f3f4f6; }
+    .bg-blue-600 { background-color: #2563eb; }
+    .text-white { color: #fff; }
+    .p-4 { padding: 1rem; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-4 { gap: 1rem; }
+    .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .container { max-width: 1280px; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .h-12 { height: 3rem; }
+    .mr-4 { margin-right: 1rem; }
+    .text-2xl { font-size: 1.5rem; }
+    .font-bold { font-weight: 700; }
+    .px-4 { padding-left: 1rem; padding-right: 1rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .hover\\:underline:hover { text-decoration: underline; }
+    .hover\\:bg-gray-200:hover { background-color: #e5e7eb; }
+    .p-6 { padding: 1.5rem; }
+    .flex-grow { flex-grow: 1; }
+    .text-3xl { font-size: 1.875rem; }
+    .mb-6 { margin-bottom: 1.5rem; }
+    .bg-gray-800 { background-color: #1f2937; }
+    .text-gray-300 { color: #d1d5db; }
+    .mr-2 { margin-right: 0.5rem; }
+    .w-10 { width: 2.5rem; }
+    .h-10 { height: 2.5rem; }
+    .border { border: 1px solid #d1d5db; }
+    .rounded { border-radius: 0.25rem; }
+    .border-gray-300 { border-color: #d1d5db; }
+    .rounded-md { border-radius: 0.375rem; }
+    .bg-white { background-color: #fff; }
+    .text-gray-700 { color: #374151; }
+    .p-2 { padding: 0.5rem; }
+    .text-center { text-align: center; }
+    .hover\\:bg-blue-700:hover { background-color: #1d4ed8; }
+    .w-full { width: 100%; }
+  </style>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+  <header id="header" class="text-white p-4">
+    <div class="fixed top-0 left-0 w-full bg-blue-600 text-white p-4 flex flex-wrap items-center justify-between gap-4 shadow-md z-10">
+      <div class="flex items-center">
+        <a href="/services-home"><img src="/logo.png" alt="My Company Logo" class="h-12 mr-4" /></a>
+        <h1 class="text-2xl font-bold">Open Accounting</h1>
+      </div>
+      <div class="flex items-center gap-4">
+        <a href="/" class="bg-white text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200">Switch Company</a>
+        <nav id="nav" class="flex flex-wrap gap-4">
+          <a href="/deposits" class="w-full">
+            <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Deposits</button>
+          </a>
+          <a href="/expenses" class="w-full">
+            <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Expenses</button>
+          </a>
+          <a href="/services-reports" class="w-full">
+            <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Reports</button>
+          </a>
+        </nav>
+      </div>
+    </div>
+  </header>
+  <main class="container mx-auto p-6 flex-grow">
+    <h2 class="text-3xl font-bold mb-6 text-center">Open Accounting</h2>
+    <div class="bg-white p-6 rounded-md shadow-md">
+      <h3 class="text-2xl font-bold mb-4">Navigate to:</h3>
+      <div class="flex flex-col gap-2">
+        <a href="/deposits" class="w-full">
+          <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 w-full">Deposits</button>
+        </a>
+        <a href="/expenses" class="w-full">
+          <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 w-full">Expenses</button>
+        </a>
+        <a href="/services-reports" class="w-full">
+          <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 w-full">Reports</button>
+        </a>
+      </div>
+    </div>
+  </main>
+  <footer class="bg-gray-800 text-white p-4 mt-8">
+    <div class="container mx-auto">
+      <div class="flex justify-between items-center">
+        <p>© 2025 My Company All rights reserved.</p>
+        <div class="flex items-center gap-4">
+          <div>
+            <label class="text-gray-300 mr-2">Header Color:</label>
+            <input type="color" id="headerColorPicker" class="w-10 h-10 border rounded" />
+          </div>
+          <div>
+            <label class="text-gray-300 mr-2">Link Color:</label>
+            <input type="color" id="linkColorPicker" class="w-10 h-10 border rounded" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const pageKey = 'headerColor_services';
+      const linkKey = 'linkColor_services';
+      const header = document.getElementById('header');
+      const navLinks = document.querySelectorAll('a');
+      const headerColorPicker = document.getElementById('headerColorPicker');
+      const linkColorPicker = document.getElementById('linkColorPicker');
+      const headerColor = localStorage.getItem(pageKey) || '#2563eb';
+      const linkColor = localStorage.getItem(linkKey) || '#000000';
+      header.style.backgroundColor = headerColor;
+      navLinks.forEach(link => link.style.color = linkColor);
+      headerColorPicker.value = headerColor;
+      linkColorPicker.value = linkColor;
+      headerColorPicker.addEventListener('change', (e) => {
+        const newColor = e.target.value;
+        header.style.backgroundColor = newColor;
+        localStorage.setItem(pageKey, newColor);
+      });
+      linkColorPicker.addEventListener('change', (e) => {
+        const newColor = e.target.value;
+        navLinks.forEach(link => link.style.color = newColor);
+        localStorage.setItem(linkKey, newColor);
+      });
+      localStorage.setItem('selectedCompanyId', '2');
+    });
+  </script>
+</body>
+</html>

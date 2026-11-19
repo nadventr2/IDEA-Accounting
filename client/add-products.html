@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Products - Open Accounting</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.22.9/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <link href="/output.css" rel="stylesheet">
+  <style>
+    body { 
+      background-color: #f3f4f6; 
+      color: #000; 
+      font-family: Arial, sans-serif; 
+      margin: 0; 
+      padding-top: 100px; /* Increased for clear title visibility */
+    }
+    .fixed { position: fixed; }
+    .top-0 { top: 0; }
+    .left-0 { left: 0; }
+    .w-full { width: 100%; }
+    .bg-blue-600 { background-color: #2563eb; }
+    .text-white { color: #fff; }
+    .p-4 { padding: 1rem; }
+    .flex { display: flex; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-4 { gap: 1rem; }
+    .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .z-10 { z-index: 10; }
+    .h-12 { height: 3rem; }
+    .mr-4 { margin-right: 1rem; }
+    .text-2xl { font-size: 1.5rem; }
+    .font-bold { font-weight: 700; }
+    .px-4 { padding-left: 1rem; padding-right: 1rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .rounded-md { border-radius: 0.375rem; }
+    .bg-white { background-color: #fff; }
+    .text-gray-700 { color: #374151; }
+    .hover\\:bg-gray-200:hover { background-color: #e5e7eb; }
+    .hover\\:underline:hover { text-decoration: underline; }
+
+    /* Content */
+    .container { max-width: 1024px; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .p-6 { padding: 1.5rem; }
+    .text-3xl { font-size: 1.875rem; }
+    .mb-6 { margin-bottom: 1.5rem; }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead { background-color: #f9fafb; }
+    th, td { padding: 0.5rem; text-align: left; font-size: 0.875rem; }
+    th { color: #6b7280; font-size: 0.75rem; text-transform: uppercase; }
+    tbody tr { border-bottom: 1px solid #e5e7eb; }
+    button { padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer; }
+    button:hover { opacity: 0.9; }
+    input, textarea { width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; }
+    .item-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+    .item-table th, .item-table td { border: 1px solid #e5e7eb; padding: 0.5rem; }
+    .item-table th { background-color: #f9fafb; color: #6b7280; font-size: 0.75rem; text-transform: uppercase; }
+  </style>
+  <link rel="stylesheet" href="/app-shell.css" />
+  <link rel="stylesheet" href="/kpi-common.css" />
+  <script src="/app-shell.js" defer></script>
+  <script src="/kpi-common.js" defer></script>
+</head>
+<body>
+  <!-- FIXED HEADER -->
+  <div id="header" class="fixed top-0 left-0 w-full bg-blue-600 text-white p-4 flex flex-wrap items-center justify-between gap-4 shadow-md z-10">
+    <div class="flex items-center">
+      <a href="/"><img src="/logo.png" alt="Company Logo" class="h-12 mr-4" /></a>
+      <h1 class="text-2xl font-bold">Open Accounting</h1>
+    </div>
+    <nav class="flex flex-wrap gap-4">
+      <a href="/" class="bg-white text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200">Settings</a>
+      <a href="/estimates.html" class="px-4 hover:underline">Estimates</a>
+      <a href="/invoices.html" class="px-4 hover:underline">Invoices</a>
+      <a href="/sales.html" class="px-4 hover:underline">Sales</a>
+      <a href="/add-vendor.html" class="px-4 hover:underline">Add Vendor</a>
+      <a href="/add-products.html" class="px-4 hover:underline">Add Product</a>
+      <a href="/purchase-order.html" class="px-4 hover:underline">Purchase Order</a>
+      <a href="/packing-slip.html" class="px-4 font-bold">Packing Slips</a>
+      <a href="/transaction-history.html" class="px-4 hover:underline">Transaction History</a>
+      <a href="/customer-list.html" class="px-4 hover:underline">Customer List</a>
+      <a href="/receive-inventory.html" class="px-4 hover:underline">Receive Inventory</a>
+      <a href="/inventory.html" class="px-4 hover:underline">Inventory</a>
+      <a href="/bills.html" class="px-4 hover:underline">Bills</a>
+      <a href="/sales-tax.html" class="px-4 hover:underline">Sales Tax</a>
+      <a href="/reports.html" class="px-4 hover:underline">Reports</a>
+    </nav>
+  </div>
+
+  <div id="root"></div>
+
+  <footer class="bg-gray-800 text-white p-4 mt-auto">
+    <div class="container mx-auto">
+      <div class="flex justify-between items-center">
+        <p>© 2025 My Company. All rights reserved.</p>
+    </div>
+    </div>
+  </footer>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const BASE_URL = window.location.origin + '/api';
+
+    const ProductsPage = () => {
+      const [products, setProducts] = useState([]);
+      const [vendors, setVendors] = useState([]);
+      const [searchQuery, setSearchQuery] = useState('');
+      const [sortKey, setSortKey] = useState('sku');
+      const [sortDirection, setSortDirection] = useState('asc');
+      const [editingProductId, setEditingProductId] = useState(null);
+      const [showBulkEditModal, setShowBulkEditModal] = useState(false);
+      const [selectedProductIds, setSelectedProductIds] = useState([]);
+      const [bulkEdit, setBulkEdit] = useState({
+        retailPriceType: 'percentage',
+        retailPrice: '',
+        wholesalePriceType: 'percentage',
+        wholesalePrice: '',
+        vendorId: ''
+      });
+      const [file, setFile] = useState(null);
+      const [error, setError] = useState(null);
+      const [success, setSuccess] = useState(null);
+      const [newProduct, setNewProduct] = useState({
+        sku: '',
+        name: '',
+        vendorId: '',
+        wholesalePrice: '',
+        retailPrice: '',
+        stock: '',
+        itemKind: 'product'
+      });
+      const [kindFilter, setKindFilter] = useState('all');
+      const companyId = () => parseInt(localStorage.getItem('selectedCompanyId') || '1', 10) || 1;
+      const [isLoading, setIsLoading] = useState(true);
+
+      const fetchWithRetry = async (url, options, type, setter, retries = 3, delay = 1000) => {
+        console.log(`[FETCH] Starting ${type} from ${url}`);
+        for (let i = 0; i < retries; i++) {
+          try {
+            console.log(`[FETCH] Attempt ${i + 1} for ${type}`);
+            const response = await fetch(url, {
+              ...options,
+              signal: AbortSignal.timeout(15000)
+            });
+            console.log(`[FETCH] Response for ${type}: status ${response.status}, ok: ${response.ok}`);
+            if (!response.ok) {
+              const errorText = await response.text().catch(() => 'No response text');
+              console.error(`[FETCH] HTTP error for ${type}: ${response.status} - ${errorText}`);
+              throw new Error(`HTTP ${response.status}: ${errorText || 'Unknown server error'}`);
+            }
+            const contentType = response.headers.get('content-type');
+            console.log(`[FETCH] Content-Type for ${type}: ${contentType}`);
+            if (!contentType?.includes('application/json')) {
+              const text = await response.text().catch(() => 'No response text');
+              console.error(`[FETCH] Non-JSON response for ${type}: ${contentType || 'unknown'} - ${text.slice(0, 200)}`);
+              throw new Error(`Expected JSON, got ${contentType || 'unknown'}: ${text.slice(0, 200)}`);
+            }
+            const data = await response.json();
+            console.log(`[FETCH] Data for ${type}:`, data);
+            if (!data) {
+              console.error(`[FETCH] Empty response for ${type}`);
+              throw new Error(`Received empty response for ${type}`);
+            }
+            if (setter) {
+              console.log(`[FETCH] Setting state for ${type}`);
+              setter(data);
+            }
+            return data;
+          } catch (error) {
+            console.error(`[FETCH] Error for ${type} (attempt ${i + 1}):`, error.message);
+            if (i < retries - 1) {
+              console.log(`[FETCH] Retrying ${type} after ${delay}ms`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              continue;
+            }
+            console.error(`[FETCH] All retries failed for ${type}:`, error.message);
+            setError(`Failed to fetch ${type}: ${error.message}`);
+            setIsLoading(false);
+            throw error;
+          }
+        }
+      };
+
+      useEffect(() => {
+        const fetchData = async () => {
+          try {
+            console.log('Starting fetch for products and vendors');
+            await Promise.all([
+              fetchWithRetry(`${BASE_URL}/products?company_id=${companyId()}`, { headers: { 'Accept': 'application/json' } }, 'products', setProducts),
+              fetchWithRetry(`${BASE_URL}/vendors?company_id=${companyId()}`, { headers: { 'Accept': 'application/json' } }, 'vendors', setVendors)
+            ]);
+            console.log('All fetches complete');
+            setIsLoading(false);
+          } catch (err) {
+            console.error('Fetch error:', err.message);
+            setError(`Failed to load data: ${err.message}`);
+            setIsLoading(false);
+          }
+        };
+        fetchData();
+      }, []);
+
+      const getVendorName = (vendorId) => {
+        const vendor = vendors.find(v => v.id === parseInt(vendorId));
+        return vendor ? vendor.name : 'No Vendor';
+      };
+
+      const filteredProducts = products.filter(product => {
+        const kind = (product.item_kind || 'product').toLowerCase();
+        if (kindFilter !== 'all' && kind !== kindFilter) return false;
+        const q = searchQuery.toLowerCase();
+        return product.sku?.toLowerCase().includes(q) ||
+          product.name?.toLowerCase().includes(q) ||
+          getVendorName(product.vendor_id).toLowerCase().includes(q);
+      });
+
+      const sortedProducts = [...filteredProducts].sort((a, b) => {
+        const isAsc = sortDirection === 'asc' ? 1 : -1;
+        if (sortKey === 'vendorName') {
+          const aName = getVendorName(a.vendor_id).toLowerCase();
+          const bName = getVendorName(b.vendor_id).toLowerCase();
+          return aName.localeCompare(bName) * isAsc;
+        }
+        if (sortKey === 'sku' || sortKey === 'name') {
+          const aValue = (a[sortKey] || '').toLowerCase();
+          const bValue = (b[sortKey] || '').toLowerCase();
+          return aValue.localeCompare(bValue) * isAsc;
+        }
+        const aValue = a[sortKey] || 0;
+        const bValue = b[sortKey] || 0;
+        return (aValue - bValue) * isAsc;
+      });
+
+      const handleSort = (key) => {
+        if (sortKey === key) {
+          setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+          setSortKey(key);
+          setSortDirection('asc');
+        }
+      };
+
+      const handleSelectAll = () => {
+        if (selectedProductIds.length === sortedProducts.length) {
+          setSelectedProductIds([]);
+        } else {
+          setSelectedProductIds(sortedProducts.map(p => p.id));
+        }
+      };
+
+      const handleSelectProduct = (id) => {
+        setSelectedProductIds(prev =>
+          prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]
+        );
+      };
+
+      const addProduct = async () => {
+        const kind = newProduct.itemKind === 'service' ? 'service' : 'product';
+        let sku = (newProduct.sku || '').trim();
+        if (!sku && newProduct.name) {
+          sku = (kind === 'service' ? 'SVC-' : '') + newProduct.name.toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 24);
+        }
+        if (!sku || !newProduct.name || !newProduct.retailPrice) {
+          setError('Name and retail price are required (SKU auto-fills if blank)');
+          return;
+        }
+        if (kind === 'product' && newProduct.wholesalePrice === '') {
+          setError('Wholesale price is required for products');
+          return;
+        }
+        const productData = {
+          sku,
+          name: newProduct.name,
+          wholesale_price: newProduct.wholesalePrice === '' ? 0 : parseFloat(newProduct.wholesalePrice),
+          retail_price: parseFloat(newProduct.retailPrice),
+          stock: kind === 'service' ? null : (newProduct.stock ? parseInt(newProduct.stock) : null),
+          vendor_id: newProduct.vendorId ? parseInt(newProduct.vendorId) : null,
+          company_id: companyId(),
+          item_kind: kind
+        };
+        try {
+          const res = await fetch(`${BASE_URL}/products`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(productData)
+          });
+          if (!res.ok) {
+            const errorText = await res.text();
+            if (errorText.includes('UNIQUE constraint failed: products.sku')) {
+              setError(`Product with SKU ${newProduct.sku} already exists`);
+              return;
+            }
+            throw new Error(`HTTP ${res.status}: ${errorText}`);
+          }
+          const data = await res.json();
+          setProducts(prev => [...prev, data]);
+          setNewProduct({ sku: '', name: '', vendorId: '', wholesalePrice: '', retailPrice: '', stock: '', itemKind: kind });
+          setSuccess(kind === 'service' ? 'Service added' : 'Product added successfully');
+          setTimeout(() => setSuccess(null), 3000);
+        } catch (err) {
+          setError(`Error adding product: ${err.message}`);
+        }
+      };
+
+      const handleImport = async () => {
+        if (!file) {
+          setError('No file selected');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const json = XLSX.utils.sheet_to_json(sheet);
+            let successCount = 0;
+            for (const item of json) {
+              const product = {
+                sku: item.SKU,
+                name: item.Name,
+                vendor_id: item.VendorID ? parseInt(item.VendorID) : null,
+                retail_price: parseFloat(item.RetailPrice) || 0,
+                wholesale_price: parseFloat(item.WholesalePrice) || null,
+                stock: parseInt(item.Stock) || 0,
+                company_id: parseInt(localStorage.getItem('selectedCompanyId') || '1')
+              };
+              try {
+                const res = await fetch(`${BASE_URL}/products`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(product)
+                });
+                if (res.ok) {
+                  const newProduct = await res.json();
+                  setProducts(prev => [...prev, newProduct]);
+                  successCount++;
+                }
+              } catch (err) {
+                console.error('Error importing product:', err);
+              }
+            }
+            setSuccess(`Imported ${successCount} products`);
+            setTimeout(() => setSuccess(null), 3000);
+            setFile(null);
+            document.getElementById('fileInput').value = '';
+          } catch (err) {
+            setError(`Error processing file: ${err.message}`);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      };
+
+      const handleBulkEdit = async (e) => {
+        e.preventDefault();
+        if (selectedProductIds.length === 0) {
+          setError('No products selected');
+          return;
+        }
+        const updates = {};
+        if (bulkEdit.retailPrice) {
+          updates.retail_price = {
+            type: bulkEdit.retailPriceType,
+            value: parseFloat(bulkEdit.retailPrice)
+          };
+        }
+        if (bulkEdit.wholesalePrice) {
+          updates.wholesale_price = {
+            type: bulkEdit.wholesalePriceType,
+            value: parseFloat(bulkEdit.wholesalePrice)
+          };
+        }
+        if (bulkEdit.vendorId) {
+          updates.vendor_id = parseInt(bulkEdit.vendorId) || null;
+        }
+        if (Object.keys(updates).length === 0) {
+          setError('No changes specified');
+          return;
+        }
+        try {
+          const res = await fetch(`${BASE_URL}/products/bulk-update`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productIds: selectedProductIds, updates })
+          });
+          if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`HTTP ${res.status}: ${errorText}`);
+          }
+          const updatedProducts = await res.json();
+          setProducts(prev =>
+            prev.map(p => {
+              const updated = updatedProducts.find(up => up.id === p.id);
+              return updated || p;
+            })
+          );
+          setShowBulkEditModal(false);
+          setSelectedProductIds([]);
+          setBulkEdit({ retailPriceType: 'percentage', retailPrice: '', wholesalePriceType: 'percentage', wholesalePrice: '', vendorId: '' });
+          setSuccess(`Updated ${selectedProductIds.length} products`);
+          setTimeout(() => setSuccess(null), 3000);
+        } catch (err) {
+          setError(`Bulk update failed: ${err.message}`);
+        }
+      };
+
+      const deleteProduct = async (productId) => {
+        try {
+          const res = await fetch(`${BASE_URL}/products/${productId}?company_id=${companyId()}`, {
+            method: 'DELETE'
+          });
+          if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`HTTP ${res.status}: ${errorText}`);
+          }
+          setProducts(prev => prev.filter(p => p.id !== productId));
+        } catch (err) {
+          setError(`Error deleting product: ${err.message}`);
+        }
+      };
+
+      const updateProduct = async (editingProductId, formData) => {
+        const retailPrice = parseFloat(formData.get('retail_price'));
+        if (isNaN(retailPrice)) {
+          setError('Retail price must be a valid number');
+          return;
+        }
+        const product = {
+          sku: formData.get('sku'),
+          name: formData.get('name'),
+          vendor_id: formData.get('vendor_id') ? parseInt(formData.get('vendor_id')) : null,
+          retail_price: retailPrice,
+          wholesale_price: formData.get('wholesale_price') ? parseFloat(formData.get('wholesale_price')) : null,
+          stock: formData.get('item_kind') === 'service' ? null : (formData.get('stock') ? parseInt(formData.get('stock')) : 0),
+          company_id: companyId(),
+          item_kind: formData.get('item_kind') === 'service' ? 'service' : 'product'
+        };
+        try {
+          const res = await fetch(`${BASE_URL}/products/${editingProductId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(product)
+          });
+          if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`HTTP ${res.status}: ${errorText}`);
+          }
+          const updatedProduct = await res.json();
+          setProducts(prev =>
+            prev.map(p => (p.id === updatedProduct.id ? updatedProduct : p))
+          );
+          setEditingProductId(null);
+          setSuccess('Product updated successfully');
+          setTimeout(() => setSuccess(null), 3000);
+        } catch (err) {
+          setError(`Error updating product: ${err.message}`);
+        }
+      };
+
+      if (isLoading) {
+        return (
+          <main className="container mx-auto p-6 flex-grow">
+            <h2 className="text-3xl font-bold mb-6">Products &amp; services</h2>
+            <p>Loading…</p>
+          </main>
+        );
+      }
+
+      return (
+        <main className="container mx-auto p-6 flex-grow">
+          <h2 className="text-3xl font-bold mb-6">Products &amp; services</h2>
+          {error && (
+            <div className="p-4 mb-6 text-red-600 bg-red-100 rounded-lg shadow-sm">
+              Error: {error}
+            </div>
+          )}
+          {success && (
+            <div className="p-4 mb-6 text-green-600 bg-green-100 rounded-lg shadow-sm">
+              {success}
+            </div>
+          )}
+          <div className="form-container mb-6">
+            <h2 className="text-2xl font-bold mb-6">Add product or service</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="add-kind" className="block text-sm font-medium text-gray-700">Type</label>
+                <select
+                  id="add-kind"
+                  value={newProduct.itemKind}
+                  onChange={e => setNewProduct({ ...newProduct, itemKind: e.target.value })}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="product">Product (inventory)</option>
+                  <option value="service">Service (no stock)</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="add-sku" className="block text-sm font-medium text-gray-700">SKU</label>
+                <input
+                  id="add-sku"
+                  type="text"
+                  value={newProduct.sku}
+                  onChange={e => setNewProduct({ ...newProduct, sku: e.target.value })}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  required
+                  placeholder="e.g., ABC-123"
+                />
+              </div>
+              <div>
+                <label htmlFor="add-name" className="block text-sm font-medium text-gray-700">Product Name</label>
+                <input
+                  id="add-name"
+                  type="text"
+                  value={newProduct.name}
+                  onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  required
+                  placeholder="e.g., Widget X"
+                />
+              </div>
+              <div>
+                <label htmlFor="add-wholesalePrice" className="block text-sm font-medium text-gray-700">Wholesale Price</label>
+                <input
+                  id="add-wholesalePrice"
+                  type="number"
+                  value={newProduct.wholesalePrice}
+                  onChange={e => setNewProduct({ ...newProduct, wholesalePrice: e.target.value })}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  step="0.01"
+                  min="0"
+                  required
+                  placeholder="e.g., 10.00"
+                />
+              </div>
+              <div>
+                <label htmlFor="add-retailPrice" className="block text-sm font-medium text-gray-700">Retail Price</label>
+                <input
+                  id="add-retailPrice"
+                  type="number"
+                  value={newProduct.retailPrice}
+                  onChange={e => setNewProduct({ ...newProduct, retailPrice: e.target.value })}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  step="0.01"
+                  min="0"
+                  required
+                  placeholder="e.g., 20.00"
+                />
+              </div>
+              {newProduct.itemKind !== 'service' && (
+              <div>
+                <label htmlFor="add-stock" className="block text-sm font-medium text-gray-700">Inventory (Optional)</label>
+                <input
+                  id="add-stock"
+                  type="number"
+                  value={newProduct.stock}
+                  onChange={e => setNewProduct({ ...newProduct, stock: e.target.value })}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  min="0"
+                  placeholder="e.g., 100"
+                />
+              </div>
+              )}
+              <div>
+                <label htmlFor="add-vendorId" className="block text-sm font-medium text-gray-700">Vendor (Optional)</label>
+                <select
+                  id="add-vendorId"
+                  value={newProduct.vendorId}
+                  onChange={e => setNewProduct({ ...newProduct, vendorId: e.target.value })}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">No Vendor</option>
+                  {vendors.map(vendor => (
+                    <option key={vendor.id} value={vendor.id}>{vendor.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="mt-4">
+              <button
+                onClick={addProduct}
+                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+              >
+                {newProduct.itemKind === 'service' ? 'Add Service' : 'Add Product'}
+              </button>
+            </div>
+          </div>
+
+          <div className="form-container mb-6">
+            <h3 className="text-lg font-semibold mb-2">Import Products</h3>
+            <div className="flex items-center gap-4">
+              <input
+                id="fileInput"
+                type="file"
+                accept=".xlsx"
+                onChange={e => setFile(e.target.files[0])}
+                className="border p-2 w-full rounded-md"
+              />
+              <button
+                onClick={handleImport}
+                disabled={!file}
+                className={`bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 ${!file ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                Upload
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mt-2">Upload an XLSX file with columns: SKU, Name, VendorID, RetailPrice, WholesalePrice, Stock (optional).</p>
+          </div>
+
+          <div className="table-container mb-6">
+            <div className="flex items-center gap-4 mb-4">
+              <select
+                value={kindFilter}
+                onChange={e => setKindFilter(e.target.value)}
+                className="border-gray-300 rounded-md shadow-sm"
+              >
+                <option value="all">All</option>
+                <option value="product">Products</option>
+                <option value="service">Services</option>
+              </select>
+              <input
+                type="text"
+                placeholder="Search by SKU, Name, or Vendor"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+              <button
+                onClick={() => setShowBulkEditModal(true)}
+                disabled={selectedProductIds.length === 0}
+                className={`bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 ${selectedProductIds.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                Bulk Edit ({selectedProductIds.length})
+              </button>
+            </div>
+            {sortedProducts.length === 0 ? (
+              <p className="p-4 bg-white rounded-lg shadow-md">No products in database</p>
+            ) : (
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <input
+                        type="checkbox"
+                        checked={selectedProductIds.length === sortedProducts.length && sortedProducts.length > 0}
+                        onChange={handleSelectAll}
+                        className="rounded"
+                      />
+                    </th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('sku')}>
+                      SKU {sortKey === 'sku' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('name')}>
+                      Name {sortKey === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('vendorName')}>
+                      Vendor {sortKey === 'vendorName' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('retail_price')}>
+                      Retail Price {sortKey === 'retail_price' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('wholesale_price')}>
+                      Wholesale Price {sortKey === 'wholesale_price' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('stock')}>
+                      Stock {sortKey === 'stock' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {sortedProducts.map(product => (
+                    <tr key={product.id} className="hover:bg-gray-100">
+                      <td className="px-2 py-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedProductIds.includes(product.id)}
+                          onChange={() => handleSelectProduct(product.id)}
+                          className="rounded"
+                        />
+                      </td>
+                      <td className="px-2 py-2 whitespace-nowrap">{product.sku}</td>
+                      <td className="px-2 py-2">{product.name}</td>
+                      <td className="px-2 py-2">{(product.item_kind || 'product') === 'service' ? 'Service' : 'Product'}</td>
+                      <td className="px-2 py-2">{getVendorName(product.vendor_id)}</td>
+                      <td className="px-2 py-2">${product.retail_price.toFixed(2)}</td>
+                      <td className="px-2 py-2">
+                        {product.wholesale_price ? product.wholesale_price.toFixed(2) : ''}
+                      </td>
+                      <td className="px-2 py-2">{product.stock || 0}</td>
+                      <td className="px-2 py-2 whitespace-nowrap">
+                        <button
+                          className="bg-blue-500 text-white px-2 py-1 rounded mr-2 hover:bg-blue-600"
+                          onClick={() => setEditingProductId(product.id)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                          onClick={() => {
+                            if (confirm('Are you sure you want to delete this product?')) {
+                              deleteProduct(product.id);
+                            }
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {editingProductId && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+              <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+                <h2 className="text-lg font-semibold mb-4">Edit item</h2>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.target);
+                    updateProduct(editingProductId, formData);
+                  }}
+                >
+                  <div className="mb-4">
+                    <label htmlFor="item_kind" className="block text-sm font-medium text-gray-700">Type</label>
+                    <select
+                      id="item_kind"
+                      name="item_kind"
+                      defaultValue={products.find(p => p.id === editingProductId)?.item_kind || 'product'}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="product">Product (inventory)</option>
+                      <option value="service">Service (no stock)</option>
+                    </select>
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="sku" className="block text-sm font-medium text-gray-700">SKU</label>
+                    <input
+                      type="text"
+                      id="sku"
+                      name="sku"
+                      defaultValue={products.find(p => p.id === editingProductId)?.sku || ''}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      defaultValue={products.find(p => p.id === editingProductId)?.name || ''}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="vendor_id" className="block text-sm font-medium text-gray-700">Vendor</label>
+                    <select
+                      id="vendor_id"
+                      name="vendor_id"
+                      defaultValue={products.find(p => p.id === editingProductId)?.vendor_id || ''}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">No Vendor</option>
+                      {vendors.map(vendor => (
+                        <option key={vendor.id} value={vendor.id}>{vendor.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="retail_price" className="block text-sm font-medium text-gray-700">Retail Price</label>
+                    <input
+                      type="number"
+                      id="retail_price"
+                      name="retail_price"
+                      defaultValue={products.find(p => p.id === editingProductId)?.retail_price || 0}
+                      step="0.01"
+                      min="0"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="wholesale_price" className="block text-sm font-medium text-gray-700">Wholesale Price</label>
+                    <input
+                      type="number"
+                      id="wholesale_price"
+                      name="wholesale_price"
+                      defaultValue={products.find(p => p.id === editingProductId)?.wholesale_price || ''}
+                      step="0.01"
+                      min="0"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="stock" className="block text-sm font-medium text-gray-700">Stock</label>
+                    <input
+                      type="number"
+                      id="stock"
+                      name="stock"
+                      defaultValue={products.find(p => p.id === editingProductId)?.stock || 0}
+                      min="0"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditingProductId(null)}
+                      className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+                      Save
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {showBulkEditModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+              <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+                <h3 className="text-lg font-semibold mb-4">Bulk Edit Products</h3>
+                <form onSubmit={handleBulkEdit}>
+                  <div className="mb-4">
+                    <label htmlFor="bulkRetailPrice" className="block text-sm font-medium text-gray-700">Retail Price Change</label>
+                    <select
+                      id="bulkRetailPriceType"
+                      value={bulkEdit.retailPriceType}
+                      onChange={e => setBulkEdit({ ...bulkEdit, retailPriceType: e.target.value })}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="percentage">Percentage</option>
+                      <option value="fixed">Fixed Amount</option>
+                    </select>
+                    <input
+                      type="number"
+                      id="bulkRetailPrice"
+                      value={bulkEdit.retailPrice}
+                      onChange={e => setBulkEdit({ ...bulkEdit, retailPrice: e.target.value })}
+                      step="0.01"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="bulkWholesalePrice" className="block text-sm font-medium text-gray-700">Wholesale Price Change</label>
+                    <select
+                      id="bulkWholesalePriceType"
+                      value={bulkEdit.wholesalePriceType}
+                      onChange={e => setBulkEdit({ ...bulkEdit, wholesalePriceType: e.target.value })}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="percentage">Percentage</option>
+                      <option value="fixed">Fixed Amount</option>
+                    </select>
+                    <input
+                      type="number"
+                      id="bulkWholesalePrice"
+                      value={bulkEdit.wholesalePrice}
+                      onChange={e => setBulkEdit({ ...bulkEdit, wholesalePrice: e.target.value })}
+                      step="0.01"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="bulkVendor" className="block text-sm font-medium text-gray-700">Vendor</label>
+                    <select
+                      id="bulkVendor"
+                      value={bulkEdit.vendorId}
+                      onChange={e => setBulkEdit({ ...bulkEdit, vendorId: e.target.value })}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">No Change</option>
+                      {vendors.map(vendor => (
+                        <option key={vendor.id} value={vendor.id}>{vendor.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowBulkEditModal(false)}
+                      className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+                      Save
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </main>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<ProductsPage />);
+  </script>
+  <script>
+
+        } else {
+          console.warn('No navigation links found');
+        }
+      };
+
+      // Load colors from localStorage or use defaults
+      const loadColors = () => {
+        const savedHeaderColor = localStorage.getItem(headerKey) || defaultHeaderColor;
+        const savedLinkColor = localStorage.getItem(linkKey) || defaultLinkColor;
+        applyColors(savedHeaderColor, savedLinkColor);
+        if (headerColorPicker) {
+          headerColorPicker.value = savedHeaderColor;
+        }
+        if (linkColorPicker) {
+          linkColorPicker.value = savedLinkColor;
+        }
+      };
+
+      // Save colors to localStorage
+      const saveColors = (headerColor, linkColor) => {
+        if (headerColor) {
+          localStorage.setItem(headerKey, headerColor);
+          console.log(`Saved header color: ${headerColor} for key: ${headerKey}`);
+        }
+        if (linkColor) {
+          localStorage.setItem(linkKey, linkColor);
+          console.log(`Saved link color: ${linkColor} for key: ${linkKey}`);
+        }
+      };
+
+      // Initialize colors
+      loadColors();
+
+      // Event listeners for color pickers
+      if (headerColorPicker) {
+        headerColorPicker.addEventListener('change', (e) => {
+          const newColor = e.target.value;
+          applyColors(newColor, localStorage.getItem(linkKey) || defaultLinkColor);
+          saveColors(newColor, null);
+        });
+      } else {
+        console.warn('Header color picker not found');
+      }
+
+      if (linkColorPicker) {
+        linkColorPicker.addEventListener('change', (e) => {
+          const newColor = e.target.value;
+          applyColors(localStorage.getItem(headerKey) || defaultHeaderColor, newColor);
+          saveColors(null, newColor);
+        });
+      } else {
+        console.warn('Link color picker not found');
+      }
+
+      // Event listener for reset button
+      if (resetButton) {
+        resetButton.addEventListener('click', () => {
+          localStorage.removeItem(headerKey);
+          localStorage.removeItem(linkKey);
+          applyColors(defaultHeaderColor, defaultLinkColor);
+          saveColors(defaultHeaderColor, defaultLinkColor);
+          if (headerColorPicker) {
+            headerColorPicker.value = defaultHeaderColor;
+          }
+          if (linkColorPicker) {
+            linkColorPicker.value = defaultLinkColor;
+          }
+          console.log('Reset colors to defaults');
+        });
+      } else {
+        console.warn('Reset button not found');
+      }
+    });
+  </script>
+</body>
+</html>

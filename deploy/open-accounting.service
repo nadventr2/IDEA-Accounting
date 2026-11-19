@@ -1,0 +1,20 @@
+[Unit]
+Description=Open Accounting
+After=network.target
+
+[Service]
+Type=simple
+User=accounting
+Group=accounting
+WorkingDirectory=/opt/open-accounting
+Environment=PORT=3003
+Environment=HOST=127.0.0.1
+Environment=DATABASE_PATH=/var/lib/open-accounting/accounting.db
+Environment=UPLOAD_DIR=/var/lib/open-accounting/uploads
+Environment=BACKUP_DIR=/var/lib/open-accounting/backups
+Environment=EASYCART_ENABLED=0
+ExecStart=/usr/bin/node server/server_new.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

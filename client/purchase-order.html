@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <base href="/proxy/3003/">
+  <title>Purchase Orders - Open Accounting</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.22.9/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <link href="/output.css" rel="stylesheet">
+  <style>
+    body { 
+      background-color: #f3f4f6; 
+      color: #000; 
+      font-family: Arial, sans-serif; 
+      margin: 0; 
+      padding-top: 100px; /* Increased for clear title visibility */
+    }
+    .fixed { position: fixed; }
+    .top-0 { top: 0; }
+    .left-0 { left: 0; }
+    .w-full { width: 100%; }
+    .bg-blue-600 { background-color: #2563eb; }
+    .text-white { color: #fff; }
+    .p-4 { padding: 1rem; }
+    .flex { display: flex; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-4 { gap: 1rem; }
+    .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .z-10 { z-index: 10; }
+    .h-12 { height: 3rem; }
+    .mr-4 { margin-right: 1rem; }
+    .text-2xl { font-size: 1.5rem; }
+    .font-bold { font-weight: 700; }
+    .px-4 { padding-left: 1rem; padding-right: 1rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .rounded-md { border-radius: 0.375rem; }
+    .bg-white { background-color: #fff; }
+    .text-gray-700 { color: #374151; }
+    .hover\\:bg-gray-200:hover { background-color: #e5e7eb; }
+    .hover\\:underline:hover { text-decoration: underline; }
+
+    /* Content */
+    .container { max-width: 1024px; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .p-6 { padding: 1.5rem; }
+    .text-3xl { font-size: 1.875rem; }
+    .mb-6 { margin-bottom: 1.5rem; }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead { background-color: #f9fafb; }
+    th, td { padding: 0.5rem; text-align: left; font-size: 0.875rem; }
+    th { color: #6b7280; font-size: 0.75rem; text-transform: uppercase; }
+    tbody tr { border-bottom: 1px solid #e5e7eb; }
+    button { padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer; }
+    button:hover { opacity: 0.9; }
+    input, textarea { width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; }
+    .item-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+    .item-table th, .item-table td { border: 1px solid #e5e7eb; padding: 0.5rem; }
+    .item-table th { background-color: #f9fafb; color: #6b7280; font-size: 0.75rem; text-transform: uppercase; }
+
+    .content-max-width {
+  max-width: 1024px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+  </style>
+   <link rel="stylesheet" href="/app-shell.css" />
+  <link rel="stylesheet" href="/kpi-common.css" />
+  <script src="/app-shell.js" defer></script>
+  <script src="/kpi-common.js" defer></script>
+</head>
+<body>
+  <!-- FIXED HEADER -->
+  <div id="header" class="fixed top-0 left-0 w-full bg-blue-600 text-white p-4 flex flex-wrap items-center justify-between gap-4 shadow-md z-10">
+    <div class="flex items-center">
+      <a href="/"><img src="/logo.png" alt="Company Logo" class="h-12 mr-4" /></a>
+      <h1 class="text-2xl font-bold">Open Accounting</h1>
+    </div>
+    <nav class="flex flex-wrap gap-4">
+      <a href="/" class="bg-white text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200">Settings</a>
+      <a href="/estimates.html" class="px-4 hover:underline">Estimates</a>
+      <a href="/invoices.html" class="px-4 hover:underline">Invoices</a>
+      <a href="/sales.html" class="px-4 hover:underline">Sales</a>
+      <a href="/add-vendor.html" class="px-4 hover:underline">Add Vendor</a>
+      <a href="/add-products.html" class="px-4 hover:underline">Add Product</a>
+      <a href="/purchase-order.html" class="px-4 hover:underline">Purchase Order</a>
+      <a href="/packing-slip.html" class="px-4 font-bold">Packing Slips</a>
+      <a href="/transaction-history.html" class="px-4 hover:underline">Transaction History</a>
+      <a href="/customer-list.html" class="px-4 hover:underline">Customer List</a>
+      <a href="/receive-inventory.html" class="px-4 hover:underline">Receive Inventory</a>
+      <a href="/inventory.html" class="px-4 hover:underline">Inventory</a>
+      <a href="/bills.html" class="px-4 hover:underline">Bills</a>
+      <a href="/sales-tax.html" class="px-4 hover:underline">Sales Tax</a>
+      <a href="/reports.html" class="px-4 hover:underline">Reports</a>
+    </nav>
+  </div>
+
+  <div id="root"></div>
+
+  <footer class="bg-gray-800 text-white p-4 mt-auto">
+    <div class="container mx-auto">
+      <div class="flex justify-between items-center">
+        <p>© 2025 My Company. All rights reserved.</p>
+    </div>
+    </div>
+  </footer>
+
+  <script type="text/babel">
+    window.addEventListener('error', (e) => { console.error('%cGLOBAL JAVASCRIPT ERROR →', 'color:red;font-size:20px', e.error); });
+    window.addEventListener('unhandledrejection', (e) => { console.error('%cPROMISE REJECTION →', 'color:red;font-size:20px', e.reason); });
+    const { useState, useEffect, useCallback } = React;
+    const BASE_URL = window.location.origin
+    const PurchaseOrderPage = () => {
+      const [purchaseOrders, setPurchaseOrders] = useState([]);
+      const [vendors, setVendors] = useState([]);
+      const [customers, setCustomers] = useState([]);
+      const [products, setProducts] = useState([]);
+      const [sales, setSales] = useState([]);
+      const [searchQuery, setSearchQuery] = useState('');
+      const [sortKey, setSortKey] = useState('date_ordered');
+      const [sortDirection, setSortDirection] = useState('desc');
+      const [expandedPO, setExpandedPO] = useState(null);
+      const [editingPO, setEditingPO] = useState(null);
+      const [success, setSuccess] = useState(null);
+      const [error, setError] = useState(null);
+      const [isLoading, setIsLoading] = useState(true);
+      const [showProductDropdown, setShowProductDropdown] = useState(false);
+      const [createCustomerSearch, setCreateCustomerSearch] = useState('');
+      const [editCustomerSearch, setEditCustomerSearch] = useState('');
+      const [showCreateCustomerDropdown, setShowCreateCustomerDropdown] = useState(false);
+      const [showEditCustomerDropdown, setShowEditCustomerDropdown] = useState(false);
+      // New PO
+      const [newPO, setNewPO] = useState({
+        poNumber: '',
+        vendorId: '',
+        dropShipCustomerId: '',
+        dateOrdered: '',
+        expectedDelivery: '',
+        status: 'Pending',
+        items: [],
+        notes: '',
+        shippingAddress: '',
+      });
+      useEffect(() => {
+    if (newPO.dropShipCustomerId) {
+      const selectedCustomer = customers.find(
+        c => c.id === parseInt(newPO.dropShipCustomerId)
+      );
+      if (selectedCustomer?.shipping_address) {
+        // Only auto-fill if user hasn't typed anything custom yet
+        if (!newPO.shippingAddress || newPO.shippingAddress.trim() === '') {
+          setNewPO(prev => ({
+            ...prev,
+            shippingAddress: selectedCustomer.shipping_address
+          }));
+        }
+      }
+    } else {
+      // Clear if no customer selected
+      setNewPO(prev => ({ ...prev, shippingAddress: '' }));
+    }
+  }, [newPO.dropShipCustomerId, customers]);
+
+      // Item adding
+      const [newItem, setNewItem] = useState({ productId: '', productName: '', quantity: '', unitPrice: '' });
+      // Shared customer search (works for both create and edit)
+      const [customerSearch, setCustomerSearch] = useState('');
+      const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+      const getTodayDate = () => {
+        const d = new Date();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const yy = String(d.getFullYear()).slice(-2);
+        return { mmddyy: `${mm}${dd}${yy}`, yyyyMMdd: `${d.getFullYear()}-${mm}-${dd}` };
+      };
+const getNextPoNumber = () => {
+  const { mmddyy } = getTodayDate();
+  const todayPOs = (purchaseOrders || []).filter(po => 
+    po && po.po_number && typeof po.po_number === 'string' && po.po_number.startsWith(mmddyy)
+  );
+  return `${mmddyy}-${todayPOs.length + 1}`;
+};
+      const calculateTotal = items => {
+  if (!Array.isArray(items)) return '0.00';  // safe fallback if undefined/null/not array
+  return items.reduce((s, i) => s + i.quantity * parseFloat(i.unit_price || 0), 0).toFixed(2);
+};
+const fetchData = useCallback(async () => {
+  setIsLoading(true);
+  setError(null);  // Clear previous errors
+  try {
+    const companyId = localStorage.getItem('selectedCompanyId') || '1';
+    const [poRes, vendorRes, customerRes, productRes, salesRes] = await Promise.all([
+      fetch(`${BASE_URL}/api/purchase-order?company_id=${companyId}`),
+      fetch(`${BASE_URL}/api/vendors?company_id=${companyId}`),
+      fetch(`${BASE_URL}/api/customers?company_id=${companyId}`),
+      fetch(`${BASE_URL}/api/products?company_id=${companyId}`),
+      fetch(`${BASE_URL}/api/sales?company_id=${companyId}`)
+    ]);
+
+    // SAFE PARSING FOR ALL - ADD THESE LINES:
+    const poData = await poRes.json();
+    const vendorData = await vendorRes.json();
+    const customerData = await customerRes.json();
+    const productData = await productRes.json();
+    const salesData = await salesRes.json();
+
+    setPurchaseOrders(Array.isArray(poData) ? poData : []);
+    setVendors(Array.isArray(vendorData) ? vendorData : []);     // ✅ FIX
+    setCustomers(Array.isArray(customerData) ? customerData : []); // ✅ FIX
+    setProducts(Array.isArray(productData) ? productData : []);   // ✅ FIX
+    setSales(Array.isArray(salesData) ? salesData : []);         // ✅ FIX
+
+  } catch (err) {
+    console.error('fetchData error:', err);  // Better logging
+    setError(`Failed to load data: ${err.message}`);
+    // Set empty arrays as fallback
+    setPurchaseOrders([]);
+    setVendors([]);
+    setCustomers([]);
+    setProducts([]);
+    setSales([]);
+  }
+  setIsLoading(false);
+}, [fetchData]);  // Note: this should be [BASE_URL, companyId] but keeping your original
+      useEffect(() => { fetchData(); }, [fetchData]);
+useEffect(() => {
+  const { yyyyMMdd } = getTodayDate();
+  setNewPO(prev => ({
+    ...prev,
+    poNumber: getNextPoNumber(),
+    dateOrdered: yyyyMMdd,
+    expectedDelivery: yyyyMMdd  // ← add this line
+  }));
+}, [purchaseOrders]);
+      const getVendorName = id => vendors.find(v => v.id === parseInt(id))?.name || 'Unknown';
+      const getCustomerName = id => customers.find(c => c.id === parseInt(id))?.name || 'N/A';
+      const handleSort = (key) => {
+        if (sortKey === key) {
+          setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+          setSortKey(key);
+          setSortDirection('desc');
+        }
+      };
+ const sortedAndFilteredPOs = [...(Array.isArray(purchaseOrders) ? purchaseOrders : [])]
+  .filter(po => po && typeof po === 'object') // skip truly undefined/null entries
+  .sort((a, b) => {
+    // Safe access with fallback empty string
+    const aVal = sortKey === 'date_ordered' 
+      ? (a.date_ordered || '') 
+      : (a.po_number || '');
+    const bVal = sortKey === 'date_ordered' 
+      ? (b.date_ordered || '') 
+      : (b.po_number || '');
+    const result = aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+    return sortDirection === 'asc' ? result : -result;
+  })
+  .filter(po => {
+    if (!po) return false; // safety
+    const q = searchQuery.toLowerCase();
+    // Safe string checks
+    const poNum = (po.po_number || '').toString().toLowerCase();
+    const vendorName = getVendorName(po.vendor_id || '').toLowerCase();
+    const customerName = getCustomerName(po.drop_ship_customer_id || '').toLowerCase();
+    const status = (po.status || '').toLowerCase();
+
+    return poNum.includes(q) ||
+           vendorName.includes(q) ||
+           customerName.includes(q) ||
+           status.includes(q);
+  });
+      const addItem = () => {
+        if (!newItem.productId || !newItem.quantity || !newItem.unitPrice) {
+          setError('Please select a product and enter both quantity & price');
+          setTimeout(() => setError(null), 4000);
+          return;
+        }
+        setNewPO(prev => ({
+          ...prev,
+          items: [...prev.items, {
+            product_id: parseInt(newItem.productId),
+            quantity: parseInt(newItem.quantity),
+            unit_price: parseFloat(newItem.unitPrice).toFixed(2),
+            tempId: Date.now()
+          }]
+        }));
+        setNewItem({ productId: '', productName: '', quantity: '', unitPrice: '' });
+        setShowProductDropdown(false);
+      };
+const createPurchaseOrder = () => {
+  if (!newPO.vendorId || newPO.items.length === 0) {
+    setError('Vendor and at least one item required');
+    return;
+  }
+
+  let finalPoNumber = (newPO.poNumber || '').trim();
+  if (finalPoNumber) {
+    let counter = 1;
+    while (purchaseOrders.some(po => po && po.po_number === finalPoNumber)) {
+      finalPoNumber = `${newPO.poNumber.trim()}-${counter}`;
+      counter++;
+    }
+  }
+
+  fetch(`${BASE_URL}/api/purchase-order`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      po_number: finalPoNumber || null,
+      vendor_id: newPO.vendorId,
+      drop_ship_customer_id: newPO.dropShipCustomerId || null,
+      date_ordered: newPO.dateOrdered,
+      expected_delivery: newPO.expectedDelivery || null,
+      status: newPO.status,
+      notes: newPO.notes || null,
+      items: newPO.items.map(i => ({
+        product_id: i.product_id,
+        quantity: i.quantity,
+        unit_price: i.unit_price
+      })),
+      shipping_address: newPO.shippingAddress || null,
+      company_id: parseInt(localStorage.getItem('selectedCompanyId') || '1')
+    })
+  })
+    .then(res => {
+      if (!res.ok) {
+        return res.text().then(errText => {
+          throw new Error(`Server error ${res.status}: ${errText}`);
+        });
+      }
+      return res.json();
+    })
+    .then(data => {
+      console.log('PO created successfully:', data);
+      setPurchaseOrders(prev => [...prev, data]);
+      setNewPO(prev => ({
+        ...prev,
+        vendorId: '',
+        dropShipCustomerId: '',
+        items: [],
+        notes: '',
+        poNumber: getNextPoNumber(),
+        shippingAddress: ''
+      }));
+      setSuccess('Purchase Order created!');
+      setTimeout(() => setSuccess(null), 4000);
+    })
+    .catch(err => {
+      console.error('Create PO failed:', err);
+      setError('Create failed: ' + (err.message || 'Unknown error'));
+    });
+};
+
+const saveEdit = () => {
+  fetch(`${BASE_URL}/api/purchase-order/${editingPO.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      po_number: editingPO.po_number,
+      vendor_id: editingPO.vendor_id,
+      drop_ship_customer_id: editingPO.drop_ship_customer_id || null,
+      date_ordered: editingPO.date_ordered,
+      expected_delivery: editingPO.expected_delivery,
+      status: editingPO.status,
+      notes: editingPO.notes,
+      items: editingPO.items.map(i => ({
+        product_id: i.product_id,
+        quantity: i.quantity,
+        unit_price: i.unit_price
+      }))
+    })
+  })
+    .then(res => {
+      if (!res.ok) {
+        return res.text().then(errText => {
+          throw new Error(`Server error ${res.status}: ${errText}`);
+        });
+      }
+      return res.json();
+    })
+    .then(data => {
+      console.log('PO updated successfully:', data);
+      setPurchaseOrders(prev => prev.map(p => p.id === data.id ? data : p));
+      setEditingPO(null);
+      setSuccess('PO updated!');
+      setTimeout(() => setSuccess(null), 4000);
+    })
+    .catch(err => {
+      console.error('Update PO failed:', err);
+      setError('Update failed: ' + (err.message || 'Unknown error'));
+    });
+};
+
+const startEdit = (po) => {
+  setEditingPO({ ...po, items: po.items.map(i => ({ ...i })) });
+  const customer = customers.find(c => c.id === po.drop_ship_customer_id);
+  setEditCustomerSearch(customer ? customer.name : ''); // Pre-fill search
+  setExpandedPO(po.id);
+};
+
+      if (isLoading) return <main className="p-6 text-center text-2xl">Loading...</main>;
+      return (
+        <main className="p-6">
+          <h2 className="text-3xl font-bold mb-6">Purchase Orders</h2>
+          {error && <div className="p-4 mb-4 bg-red-100 text-red-700 rounded-lg">{error}</div>}
+          {success && <div className="p-4 mb-4 bg-green-100 text-green-700 rounded-lg">{success}</div>}
+          {/* CREATE NEW PO */}
+          <div className="bg-white p-8 rounded-lg shadow-lg mb-8">
+            <h3 className="text-2xl font-bold mb-6">Create New Purchase Order</h3>
+            {/* HEADER FIELDS */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+<div>
+  <label>PO Number</label>
+  <input 
+    value={newPO.poNumber}
+    onChange={e => setNewPO(prev => ({ ...prev, poNumber: e.target.value }))}
+    placeholder="Enter PO number (auto-generated)"
+    className="w-full px-4 py-2 border rounded-lg"
+  />
+<p style={{ marginTop: '0.25rem', fontSize: '0.875rem', color: '#9ca3af', fontStyle: 'italic' }}>
+  PO number is auto-generated (e.g. 011826-1) – edit if needed
+</p>
+</div>
+              <div>
+                <label>Vendor *</label>
+<select value={newPO.vendorId} onChange={e => setNewPO(p => ({ ...p, vendorId: e.target.value }))}>
+  <option value="">Select Vendor</option>
+  {(Array.isArray(vendors) ? vendors : []).map(v => (
+    <option key={v.id} value={v.id}>{v.name || 'Unnamed Vendor'}</option>
+  ))}
+</select>
+              </div>
+<div>
+  <label>Date Ordered</label>
+  <input 
+    type="date"
+    value={newPO.dateOrdered}
+    onChange={e => setNewPO(prev => ({ ...prev, dateOrdered: e.target.value }))}
+    className="w-full px-4 py-2 border rounded-lg"
+  />
+  <p style={{ marginTop: '0.25rem', fontSize: '0.875rem', color: '#9ca3af', fontStyle: 'italic' }}>
+  Date is auto-generated – edit if you need to enter an old PO.
+</p>
+</div>
+<div>
+  <label className="text-gray-700">Expected Delivery <span className="text-sm text-gray-500">(optional)</span></label>
+  <input
+    type="date"
+    value={newPO.expectedDelivery || ''}
+    onChange={e => setNewPO(p => ({ ...p, expectedDelivery: e.target.value || null }))}
+    className="w-full px-4 py-2 border rounded-lg focus:border-blue-500 focus:ring-blue-500"
+  />
+  <p style={{ marginTop: '0.25rem', fontSize: '0.875rem', color: '#9ca3af', fontStyle: 'italic' }}> Defaults to today, – can add later
+  </p>
+</div>
+            </div>
+            {/* DROP-SHIP SECTION */}
+            <div className="relative">
+              <input
+                type="text"
+                value={createCustomerSearch}
+                placeholder="Type customer name..."
+                onChange={(e) => {
+                  setCreateCustomerSearch(e.target.value);
+                  setShowCreateCustomerDropdown(true);
+                  setNewPO(prev => ({ ...prev, dropShipCustomerId: '' })); // clear only when searching new
+                }}
+                onFocus={() => setShowCreateCustomerDropdown(true)}
+                className="w-full px-4 py-2 border rounded-lg"
+              />
+              {showCreateCustomerDropdown && createCustomerSearch && (
+                <div className="absolute z-40 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {customers
+                    .filter(c => c.name.toLowerCase().includes(createCustomerSearch.toLowerCase()))
+                    .map(c => (
+                      <div
+                        key={c.id}
+                        className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
+                        onClick={() => {
+                          setNewPO(prev => ({ ...prev, dropShipCustomerId: c.id }));
+                          setCreateCustomerSearch(c.name);
+                          setShowCreateCustomerDropdown(false);
+                        }}
+                      >
+                        {c.name}
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="mt-4">
+  <label className="block text-sm font-medium text-gray-700">Shipping Address (for drop-ship)</label>
+  <textarea
+    value={newPO.shippingAddress || customers.find(c => c.id === parseInt(newPO.dropShipCustomerId))?.shipping_address || ''}
+    onChange={e => setNewPO(prev => ({ ...prev, shippingAddress: e.target.value }))}
+    rows={3}
+    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+    placeholder="Enter shipping address (overrides customer's default if drop-shipping)"
+  />
+    <p style={{ marginTop: '0.25rem', fontSize: '0.875rem', color: '#9ca3af', fontStyle: 'italic' }}>
+  Shipping Address is autogenerated if customer has one in the system – edit if you need to change or add one.
+</p>
+</div>
+          {/* ADD ITEMS SECTION - FIXED DROPDOWN */}
+          <div className="border-t pt-6">
+            <h4 className="text-lg font-semibold mb-4">Add Items</h4>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-4">
+              <div className="md:col-span-2">
+                <label>Product *</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Start typing product name or SKU..."
+                    value={newItem.productName || ''}
+                    onChange={(e) => {
+                      setNewItem(prev => ({ ...prev, productName: e.target.value, productId: '' }));
+                      setShowProductDropdown(true);
+                    }}
+                    onFocus={() => setShowProductDropdown(true)}
+                    className="w-full px-4 py-2 border rounded-lg"
+                  />
+                  {showProductDropdown && newItem.productName && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-2xl max-h-64 overflow-y-auto">
+                      {products
+                        .filter(p =>
+                          p.name.toLowerCase().includes(newItem.productName.toLowerCase()) ||
+                          p.sku.toLowerCase().includes(newItem.productName.toLowerCase())
+                        )
+                        .slice(0, 12)
+                        .map(p => (
+                          <div
+                            key={p.id}
+                            className="px-4 py-3 hover:bg-blue-50 cursor-pointer flex justify-between items-center border-b border-gray-100 last:border-b-0"
+                            onMouseDown={e => e.preventDefault()}
+                            onClick={() => {
+                              setNewItem({
+                                productId: p.id,
+                                productName: `${p.sku} – ${p.name}`,
+                                unitPrice: p.wholesale_price ? parseFloat(p.wholesale_price).toFixed(2) : '0.00'
+                              });
+                              setShowProductDropdown(false);
+                            }}
+                          >
+                            <div>
+                              <span className="font-semibold text-gray-800">{p.sku}</span>
+                              <span className="ml-3 text-gray-600">{p.name}</span>
+                            </div>
+                            {p.wholesale_price || 0 && (
+                              <span className="text-green-600 font-bold">
+                                ${parseFloat(p.wholesale_price || 0).toFixed(2)}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      {products.filter(p =>
+                        p.name.toLowerCase().includes(newItem.productName.toLowerCase()) ||
+                        p.sku.toLowerCase().includes(newItem.productName.toLowerCase())
+                      ).length === 0 && (
+                          <div className="px-4 py-3 text-center text-gray-500 italic">
+                            No products found
+                          </div>
+                        )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label>Quantity *</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={newItem.quantity || ''}
+                  onChange={e => setNewItem(p => ({ ...p, quantity: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label>Unit Price *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={newItem.unitPrice || ''}
+                  onChange={e => setNewItem(p => ({ ...p, unitPrice: e.target.value }))}
+                />
+              </div>
+            </div>
+            <button onClick={addItem} className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700">
+              Add Item
+            </button>
+            {/* Items Table */}
+            {newPO.items.length > 0 && (
+              <div className="mt-8">
+                <table className="item-table w-full">
+                  <thead>
+                    <tr>
+                      <th>SKU</th><th>Name</th><th>Qty</th><th>Price</th><th>Total</th><th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {newPO.items.map((item, i) => {
+                      const p = products.find(x => x.id === item.product_id) || { sku: '', name: 'Unknown' };
+                      return (
+                        <tr key={item.tempId || i}>
+                          <td>{p.sku}</td>
+                          <td>{p.name}</td>
+                          <td>{item.quantity}</td>
+                          <td>${item.unit_price}</td>
+                          <td>${(item.quantity * item.unit_price).toFixed(2)}</td>
+                          <td>
+                            <button
+                              onClick={() => setNewPO(prev => ({ ...prev, items: prev.items.filter((_, idx) => idx !== i) }))}
+                              className="text-red-600 hover:underline text-sm"
+                            >
+                              Remove
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colSpan="4" className="text-right font-bold text-lg">Total:</td>
+                      <td className="font-bold text-lg">${calculateTotal(newPO.items)}</td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
+            <div className="mt-8">
+              <label>Notes</label>
+              <textarea
+                value={newPO.notes}
+                onChange={e => setNewPO(p => ({ ...p, notes: e.target.value }))}
+                rows="3"
+                className="mt-2"
+              />
+            </div>
+            <button onClick={createPurchaseOrder} className="mt-8 bg-green-600 text-white px-8 py-4 rounded-lg text-lg font-bold hover:bg-green-700">
+              Create Purchase Order
+            </button>
+          </div>
+          {/* LIST OF POs */}
+          <input
+            type="text"
+            placeholder="Search POs..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full p-4 border rounded-lg mb-6"
+          />
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th onClick={() => handleSort('po_number')}>PO # {sortKey === 'po_number' && (sortDirection === 'asc' ? '↑' : '↓')}</th>
+                  <th>Vendor</th>
+                  <th>Customer</th>
+                  <th onClick={() => handleSort('date_ordered')}>Date {sortKey === 'date_ordered' && (sortDirection === 'asc' ? '↑' : '↓')}</th>
+                  <th>Status</th>
+                  <th>Total</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedAndFilteredPOs.length === 0 ? (
+                  <tr><td colSpan="7" className="p-8 text-center text-gray-500">No purchase orders found</td></tr>
+                ) : (
+                  sortedAndFilteredPOs.map(po => (
+                    <React.Fragment key={po.id}>
+                      <tr className="hover:bg-gray-50 cursor-pointer" onClick={() => setExpandedPO(expandedPO === po.id ? null : po.id)}>
+                        <td>{po.po_number}</td>
+                        <td>{getVendorName(po.vendor_id)}</td>
+                        <td>{getCustomerName(po.drop_ship_customer_id)}</td>
+                        <td>{po.date_ordered}</td>
+                        <td>{po.status}</td>
+                        <td>${calculateTotal(po.items)}</td>
+                        <td onClick={e => e.stopPropagation()}>
+                          <button onClick={() => startEdit(po)} className="bg-blue-600 text-white px-4 py-1 rounded text-sm mr-2">Edit</button>
+                          <button onClick={() => {
+                            if (confirm('Delete this PO?')) {
+                              fetch(`${BASE_URL}/api/purchase-order/${po.id}?company_id=${localStorage.getItem('selectedCompanyId') || '1'}`, { method: 'DELETE' })
+                                .then(() => setPurchaseOrders(prev => prev.filter(p => p.id !== po.id)));
+                            }
+                          }} className="bg-red-600 text-white px-4 py-1 rounded text-sm">Delete</button>
+                        </td>
+                      </tr>
+                      {expandedPO === po.id && (
+                        <tr className="po-details active">
+                          <td colSpan="7" className="p-0">
+                            {editingPO?.id === po.id ? (
+                              <div className="p-8 bg-gray-100">
+                                <h4 className="text-2xl font-bold mb-6">Editing PO #{po.po_number}</h4>
+
+                                {/* Header Fields */}
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                                  <div>
+                                    <label>PO Number</label>
+                                    <input value={editingPO.po_number} readOnly className="bg-gray-200" />
+                                  </div>
+                                  <div>
+                                    <label>Vendor *</label>
+                                    <select value={editingPO.vendor_id || ''} onChange={e => setEditingPO(p => ({ ...p, vendor_id: e.target.value }))}>
+                                      <option value="">Select Vendor</option>
+                                      {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label>Date Ordered</label>
+                                    <input type="date" value={editingPO.date_ordered || ''} onChange={e => setEditingPO(p => ({ ...p, date_ordered: e.target.value }))} />
+                                  </div>
+                                  <div>
+                                    <label>Expected Delivery</label>
+                                    <input
+                                      type="date"
+                                      value={editingPO.expected_delivery || ''}
+                                      onChange={e => setEditingPO(p => ({ ...p, expected_delivery: e.target.value || null }))}
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Drop Ship Customer + Editable Shipping Address */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                  <div>
+                                    <label>Drop Ship Customer (optional)</label>
+                                    <div className="relative">
+                                      <input
+                                        type="text"
+                                        value={editCustomerSearch || ''}
+                                        placeholder="Search customer..."
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          setEditCustomerSearch(value);
+                                          setShowEditCustomerDropdown(true);
+                                          if (value === '') {
+                                            setEditingPO(prev => ({ ...prev, drop_ship_customer_id: null, shipping_address: '' }));
+                                          }
+                                        }}
+                                        onFocus={() => setShowEditCustomerDropdown(true)}
+                                        className="w-full px-4 py-2 border rounded-lg"
+                                      />
+                                      {showEditCustomerDropdown && editCustomerSearch && (
+                                        <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                          {customers
+                                            .filter(c => c.name.toLowerCase().includes(editCustomerSearch.toLowerCase()))
+                                            .map(c => (
+                                              <div
+                                                key={c.id}
+                                                className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
+                                                onClick={() => {
+                                                  setEditingPO(prev => ({
+                                                    ...prev,
+                                                    drop_ship_customer_id: c.id,
+                                                    shipping_address: c.shipping_address || ''
+                                                  }));
+                                                  setEditCustomerSearch(c.name);
+                                                  setShowEditCustomerDropdown(false);
+                                                }}
+                                              >
+                                                {c.name}
+                                              </div>
+                                            ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label>Shipping Address (overrides customer default)</label>
+                                    <textarea
+                                      value={editingPO.shipping_address || ''}
+                                      onChange={e => setEditingPO(p => ({ ...p, shipping_address: e.target.value }))}
+                                      rows="3"
+                                      placeholder="Enter shipping address or leave blank to use customer's default"
+                                      className="w-full px-4 py-2 border border-gray-300 rounded-lg mt-1 focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Status */}
+                                <div className="mb-6">
+                                  <label>Status</label>
+                                  <select value={editingPO.status} onChange={e => setEditingPO(p => ({ ...p, status: e.target.value }))}>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Received">Received</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                  </select>
+                                </div>
+
+                                {/* Notes */}
+                                <div className="mb-6">
+                                  <label>Notes</label>
+                                  <textarea
+                                    value={editingPO.notes || ''}
+                                    onChange={e => setEditingPO(p => ({ ...p, notes: e.target.value }))}
+                                    rows="3"
+                                    className="w-full mt-2"
+                                  />
+                                </div>
+
+                                {/* Items Editing Section */}
+<div className="mt-8 border-t pt-6">
+  <h4 className="text-xl font-bold mb-4">Edit Items</h4>
+
+  {/* Current Items Table */}
+  <div className="overflow-x-auto mb-6">
+    <table className="min-w-full divide-y divide-gray-200">
+      <thead className="bg-gray-50">
+        <tr>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+        </tr>
+      </thead>
+      <tbody className="bg-white divide-y divide-gray-200">
+        {editingPO.items.map((item, index) => {
+          const product = products.find(p => p.id === item.product_id) || { sku: 'N/A', name: 'Unknown' };
+          const lineTotal = (item.quantity * parseFloat(item.unit_price || 0)).toFixed(2);
+
+          return (
+            <tr key={item.id || `edit-${index}`}>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.sku}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.name}</td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <input
+                  type="number"
+                  min="1"
+                  value={item.quantity}
+                  onChange={e => {
+                    const val = parseInt(e.target.value) || 1;
+                    const newItems = [...editingPO.items];
+                    newItems[index] = { ...newItems[index], quantity: val };
+                    setEditingPO({ ...editingPO, items: newItems });
+                  }}
+                  className="w-20 border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                />
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={item.unit_price}
+                  onChange={e => {
+                    const val = parseFloat(e.target.value).toFixed(2);
+                    const newItems = [...editingPO.items];
+                    newItems[index] = { ...newItems[index], unit_price: val };
+                    setEditingPO({ ...editingPO, items: newItems });
+                  }}
+                  className="w-28 border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                />
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${lineTotal}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button
+                  onClick={() => {
+                    const newItems = editingPO.items.filter((_, i) => i !== index);
+                    setEditingPO({ ...editingPO, items: newItems });
+                  }}
+                  className="text-red-600 hover:text-red-900 font-medium"
+                >
+                  Remove
+                </button>
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+      <tfoot>
+        <tr className="bg-gray-50">
+          <td colSpan="4" className="px-6 py-3 text-right font-bold text-gray-900">Grand Total</td>
+          <td className="px-6 py-3 text-gray-900 font-bold">
+            ${editingPO.items.reduce((sum, i) => sum + i.quantity * parseFloat(i.unit_price || 0), 0).toFixed(2)}
+          </td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  {/* Add New Item */}
+  <div className="border-t pt-6">
+    <h5 className="text-lg font-medium mb-3">Add New Item</h5>
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Product Search */}
+      <div className="md:col-span-2 relative">
+        <label className="block text-sm font-medium text-gray-700">Product</label>
+        <input
+          type="text"
+          placeholder="Search product name or SKU..."
+          value={newItem.productName || ''}
+          onChange={e => {
+            setNewItem({ ...newItem, productName: e.target.value, productId: '' });
+            setShowProductDropdown(true);
+          }}
+          onFocus={() => setShowProductDropdown(true)}
+          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+        />
+        {showProductDropdown && newItem.productName && (
+          <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto mt-1">
+            {products
+              .filter(p => 
+                p.name.toLowerCase().includes(newItem.productName.toLowerCase()) ||
+                p.sku.toLowerCase().includes(newItem.productName.toLowerCase())
+              )
+              .slice(0, 10)
+              .map(p => (
+                <div
+                  key={p.id}
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  onClick={() => {
+                    setNewItem({
+                      ...newItem,
+                      productId: p.id,
+                      productName: `${p.sku} – ${p.name}`,
+                      unitPrice: p.wholesale_price ? p.wholesale_price.toFixed(2) : '0.00'
+                    });
+                    setShowProductDropdown(false);
+                  }}
+                >
+                  <span className="font-medium">{p.sku}</span> – {p.name}
+                  {p.wholesale_price > 0 && <span className="ml-2 text-green-600">${p.wholesale_price.toFixed(2)}</span>}
+                </div>
+              ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Quantity</label>
+        <input
+          type="number"
+          min="1"
+          value={newItem.quantity || ''}
+          onChange={e => setNewItem({ ...newItem, quantity: e.target.value })}
+          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Unit Price</label>
+        <input
+          type="number"
+          step="0.01"
+          value={newItem.unitPrice || ''}
+          onChange={e => setNewItem({ ...newItem, unitPrice: e.target.value })}
+          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+        />
+      </div>
+    </div>
+
+    <button
+      type="button"
+      onClick={() => {
+        if (!newItem.productId || !newItem.quantity || !newItem.unitPrice) {
+          setError('Select product, quantity, and price');
+          setTimeout(() => setError(null), 3000);
+          return;
+        }
+        const newItemObj = {
+          product_id: parseInt(newItem.productId),
+          quantity: parseInt(newItem.quantity),
+          unit_price: parseFloat(newItem.unitPrice).toFixed(2)
+        };
+        setEditingPO(prev => ({
+          ...prev,
+          items: [...prev.items, newItemObj]
+        }));
+        setNewItem({ productId: '', productName: '', quantity: '', unitPrice: '' });
+        setShowProductDropdown(false);
+      }}
+      className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+    >
+      Add Item to PO
+    </button>
+  </div>
+</div>
+
+                                <div className="flex gap-4 mt-8">
+                                  <button onClick={saveEdit} className="bg-blue-600 text-white px-8 py-3 rounded font-bold hover:bg-blue-700">
+                                    Save Changes
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setEditingPO(null);
+                                      setEditCustomerSearch('');
+                                      setShowEditCustomerDropdown(false);
+                                    }}
+                                    className="bg-gray-600 text-white px-8 py-3 rounded font-bold hover:bg-gray-700"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <PurchaseOrderReceipt po={po} vendors={vendors} products={products} customers={customers} sales={sales} />
+                            )}
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </main>
+      );   // ← ONLY CHANGE #2: removed the stray </div> that was here before
+    };
+    const PurchaseOrderReceipt = ({ po, vendors, products, customers, sales }) => {
+      const vendor = vendors.find(v => v.id === parseInt(po.vendor_id)) || { name: 'Unknown', address: '' };
+      const customer = po.drop_ship_customer_id ? customers.find(c => c.id === parseInt(po.drop_ship_customer_id)) : null;
+      const items = po.items || [];
+      const total = items.reduce((sum, item) => sum + (item.quantity * parseFloat(item.unit_price || 0)), 0).toFixed(2);
+      const notes = po.notes || '';
+      const generatePDF = () => {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'letter' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const marginX = 14;
+  const contentW = pageW - marginX * 2;
+
+  // Header
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text((window.CompanyConfig && CompanyConfig.get && (CompanyConfig.get().legal_name || CompanyConfig.get().name)) || 'My Company', pageW / 2, 14, { align: 'center' });
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('', pageW / 2, 20, { align: 'center' });
+  doc.text('', pageW / 2, 25, { align: 'center' });
+  doc.text('', pageW / 2, 30, { align: 'center' });
+
+  let y = 40;
+  const writeWrapped = (label, value, lineH = 5) => {
+    const text = value ? `${label}${value}` : label;
+    const lines = doc.splitTextToSize(text, contentW).filter(l => String(l).trim() !== '');
+    doc.text(lines, marginX, y);
+    y += lineH * Math.max(1, lines.length) + 1;
+  };
+
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  writeWrapped('', `Purchase Order #${po.po_number}`, 7);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  writeWrapped('Vendor: ', vendor.name || 'Unknown');
+  if (vendor.address) {
+    writeWrapped('Vendor Address: ', String(vendor.address).replace(/\s*\n\s*/g, ', '));
+  }
+  if (customer) {
+    writeWrapped('Customer: ', customer.name || '');
+    const pdfShipAddr = String(po.shipping_address || customer.shipping_address || '')
+      .replace(/\r\n/g, '\n')
+      .replace(/\n+/g, '\n')
+      .trim();
+    if (pdfShipAddr) {
+      // Keep address multi-line but drop blank lines that created huge gaps
+      const addrLines = pdfShipAddr.split('\n').map(s => s.trim()).filter(Boolean);
+      doc.text('Shipping Address:', marginX, y);
+      y += 5;
+      addrLines.forEach(line => {
+        const wrapped = doc.splitTextToSize(line, contentW);
+        doc.text(wrapped, marginX, y);
+        y += 5 * wrapped.length;
+      });
+      y += 2;
+    }
+  }
+  writeWrapped('Date Ordered: ', po.date_ordered || '');
+  writeWrapped('Expected Delivery: ', po.expected_delivery || 'N/A');
+  writeWrapped('Status: ', po.status || '');
+  y += 4;
+
+  // Line items — fixed widths so SKU/prices never mid-wrap into "0" looking like zero cost
+  doc.autoTable({
+    startY: y,
+    margin: { left: marginX, right: marginX },
+    head: [['SKU', 'Product Name', 'Qty', 'Unit Price', 'Line Total']],
+    body: items.map(item => {
+      const product = products.find(p => p.id === item.product_id) || { name: 'Unknown', sku: '' };
+      const qty = Number(item.quantity) || 0;
+      const unitPrice = parseFloat(item.unit_price || 0);
+      const lineTotal = qty * unitPrice;
+      return [
+        String(product.sku || ''),
+        String(product.name || 'Unknown'),
+        String(qty),
+        `$${unitPrice.toFixed(2)}`,
+        `$${lineTotal.toFixed(2)}`
+      ];
+    }),
+    foot: [['', '', '', 'Total', `$${total}`]],
+    styles: {
+      fontSize: 8,
+      cellPadding: 2,
+      valign: 'top',
+      overflow: 'linebreak',
+      minCellHeight: 6
+    },
+    headStyles: {
+      fillColor: [37, 99, 235],
+      textColor: 255,
+      fontSize: 8,
+      fontStyle: 'bold',
+      overflow: 'linebreak',
+      halign: 'left'
+    },
+    footStyles: {
+      fillColor: [37, 99, 235],
+      textColor: 255,
+      fontStyle: 'bold',
+      fontSize: 9
+    },
+    columnStyles: {
+      0: { cellWidth: 28, fontSize: 7, overflow: 'linebreak' },       // SKU
+      1: { cellWidth: 'auto', fontSize: 8, overflow: 'linebreak' },    // Product (wrap only here)
+      2: { cellWidth: 14, halign: 'right', overflow: 'visible' },      // Qty — never wrap
+      3: { cellWidth: 22, halign: 'right', overflow: 'visible' },      // Unit Price
+      4: { cellWidth: 24, halign: 'right', overflow: 'visible' }       // Line Total
+    },
+    didParseCell: (data) => {
+      // Keep money/qty on one line so "$43.20" never becomes "$43.2" + "0"
+      if (data.section === 'body' && (data.column.index === 2 || data.column.index === 3 || data.column.index === 4)) {
+        data.cell.styles.overflow = 'visible';
+        data.cell.styles.cellWidth = data.column.index === 2 ? 14 : (data.column.index === 3 ? 22 : 24);
+      }
+      if (data.section === 'foot' && data.column.index === 4) {
+        data.cell.styles.overflow = 'visible';
+      }
+    }
+  });
+
+  // Notes
+  if (notes) {
+    let finalY = (doc.lastAutoTable && doc.lastAutoTable.finalY) || y;
+    finalY += 8;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Notes:', marginX, finalY);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    const splitNotes = doc.splitTextToSize(String(notes).trim(), contentW);
+    doc.text(splitNotes, marginX, finalY + 6);
+  }
+
+  doc.save(`PO_${po.po_number}.pdf`);
+};
+      // Column headers for paste preview (must match tab order used for Sheets)
+      const spreadsheetHeaders = [
+        '', 'Date', 'Payment', 'PO#', 'SKU', 'Qty', 'Unit Price', 'Line Total', 'Customer', 'Ship Address'
+      ];
+      const buildSpreadsheetRows = () => {
+        const customerObj = po.drop_ship_customer_id
+          ? customers.find(c => c.id === parseInt(po.drop_ship_customer_id, 10))
+          : null;
+        // Prefer PO override address, then customer default (single-line for spreadsheet paste)
+        const customerName = (customerObj?.name || '').trim();
+        const shippingAddress = String(
+          po.shipping_address || customerObj?.shipping_address || ''
+        )
+          .replace(/\r\n/g, '\n')
+          .replace(/\n+/g, ', ')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .slice(0, 255);
+        const salesArray = Array.isArray(sales) ? sales : [];
+        const latestSale = po.drop_ship_customer_id
+          ? salesArray
+            .filter(s => s.customer_id === parseInt(po.drop_ship_customer_id, 10))
+            .sort((a, b) => new Date(b.date) - new Date(a.date))[0]
+          : null;
+        const paymentMethod = latestSale?.payment_method || 'Check';
+        return items.map(item => {
+          const product = products.find(p => p.id === item.product_id) || { sku: '' };
+          const qty = Number(item.quantity) || 0;
+          const unit = parseFloat(item.unit_price || 0);
+          const totalCost = (qty * unit).toFixed(2);
+          return [
+            '',
+            po.date_ordered || '',
+            paymentMethod,
+            `*${po.po_number || ''}*`,
+            product.sku || '',
+            String(qty),
+            unit.toFixed(2),
+            totalCost,
+            customerName,
+            shippingAddress
+          ];
+        });
+      };
+      const generateSpreadsheetLine = () =>
+        buildSpreadsheetRows().map(cols => cols.join('\t')).join('\n');
+      const copyToClipboard = () => {
+        navigator.clipboard.writeText(generateSpreadsheetLine()).then(() => {
+          alert('Spreadsheet line(s) copied! Paste into Google Sheets and make the PO# column red.');
+        });
+      };
+      const sheetRows = buildSpreadsheetRows();
+      return (
+        <div className="p-8 bg-white">
+          <h4 className="text-2xl font-bold mb-6">Purchase Order #{po.po_number}</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-6">
+            <div><strong>Vendor:</strong> {vendor.name}</div>
+            {vendor.address && <div><strong>Vendor Address:</strong> {vendor.address}</div>}
+            {customer && <div><strong>Drop Ship To:</strong> {customer.name}</div>}
+            {(po.shipping_address || customer?.shipping_address) && (
+              <div>
+                <strong>Shipping Address:</strong>{' '}
+                {po.shipping_address || customer?.shipping_address}
+              </div>
+            )}
+            <div><strong>Date Ordered:</strong> {po.date_ordered}</div>
+            <div><strong>Expected Delivery:</strong> {po.expected_delivery || 'N/A'}</div>
+            <div><strong>Status:</strong> {po.status}</div>
+            <div><strong>Total:</strong> <span className="text-xl font-bold">${total}</span></div>
+          </div>
+          {notes && <div className="mb-6 p-4 bg-gray-50 rounded-lg"><strong>Notes:</strong> {notes}</div>}
+          <table className="item-table w-full mb-8">
+            <thead>
+              <tr>
+                <th>SKU</th><th>Product</th><th>Qty</th><th>Unit Price</th><th>Line Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((i, idx) => {
+                const p = products.find(x => x.id === i.product_id) || { sku: '', name: 'Unknown' };
+                const qty = Number(i.quantity) || 0;
+                const unit = parseFloat(i.unit_price || 0);
+                return (
+                  <tr key={idx}>
+                    <td>{p.sku}</td>
+                    <td>{p.name}</td>
+                    <td>{qty}</td>
+                    <td>${unit.toFixed(2)}</td>
+                    <td>${(qty * unit).toFixed(2)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colSpan="4" className="text-right font-bold text-lg">Grand Total:</td>
+                <td className="font-bold text-lg">${total}</td>
+              </tr>
+            </tfoot>
+          </table>
+          <div className="flex flex-wrap gap-4">
+            <button onClick={generatePDF} className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded font-medium">
+              Print / Save as PDF
+            </button>
+            <button onClick={copyToClipboard} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded font-medium">
+              Copy Spreadsheet Line
+            </button>
+          </div>
+          <div className="mt-6 text-sm bg-gray-50 p-4 rounded overflow-x-auto">
+            <strong>Spreadsheet paste preview</strong>
+            <span className="text-gray-500 text-xs ml-2">(copy uses tab-separated columns for Sheets)</span>
+            <table className="item-table w-full mt-3 text-xs" style={{ minWidth: '720px' }}>
+              <thead>
+                <tr>
+                  {spreadsheetHeaders.map((h, i) => (
+                    <th key={i} className="whitespace-nowrap bg-gray-200">{h || '·'}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {sheetRows.map((cols, ri) => (
+                  <tr key={ri}>
+                    {cols.map((cell, ci) => (
+                      <td key={ci} className="whitespace-nowrap align-top" style={{ maxWidth: ci === 9 ? '220px' : undefined, whiteSpace: ci === 9 ? 'normal' : 'nowrap' }}>
+                        {ci === 6 || ci === 7 ? `$${cell}` : cell}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {sheetRows.some(r => parseFloat(r[6]) === 0) && (
+              <p className="mt-2 text-amber-700 text-xs">
+                Note: one or more lines show Unit Price $0.00 — that is the stored cost on the PO line, not a size/unit field.
+              </p>
+            )}
+          </div>
+        </div>
+      );
+    };
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<PurchaseOrderPage />);
+  </script>
+  <script>
+
+      linkColorPicker.addEventListener('input', e => {
+        const c = e.target.value;
+        navLinks.forEach(l => l.style.color = c);
+        localStorage.setItem(linkKey, c);
+      });
+      localStorage.setItem('selectedCompanyId', '1');
+    });
+  </script>
+</body>
+
+</html>

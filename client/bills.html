@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bills Management</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.24.0/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    .min-h-screen { min-height: 100vh; }
+    .bg-gray-100 { background-color: #f3f4f6; }
+    .bg-blue-600 { background-color: #2563eb; }
+    .text-white { color: #fff; }
+    .p-4 { padding: 1rem; }
+    .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .container { max-width: 1280px; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-4 { gap: 1rem; }
+    .h-12 { height: 3rem; }
+    .mr-4 { margin-right: 1rem; }
+    .text-2xl { font-size: 1.5rem; }
+    .font-bold { font-weight: 700; }
+    .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .hover\:bg-blue-700:hover { background-color: #1d4ed8; }
+    .rounded-md { border-radius: 0.375rem; }
+    .bg-blue-700 { background-color: #1d4ed8; }
+    .p-6 { padding: 1.5rem; }
+    .flex-grow { flex-grow: 1; }
+    .text-3xl { font-size: 1.875rem; }
+    .mb-6 { margin-bottom: 1.5rem; }
+    .form-container { background-color: #fff; padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .grid { display: grid; }
+    .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+    .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .gap-4 { gap: 1rem; }
+    .text-sm { font-size: 0.875rem; }
+    .font-medium { font-weight: 500; }
+    .text-gray-700 { color: #374151; }
+    .mt-1 { margin-top: 0.25rem; }
+    .mb-1 { margin-bottom: 0.25rem; }
+    .w-full { width: 100%; }
+    .border-gray-300 { border-color: #d1d5db; }
+    .rounded-md { border-radius: 0.375rem; }
+    .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+    .focus\:ring-blue-500 { outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); }
+    .focus\:border-blue-500 { border-color: #3b82f6; }
+    .mt-4 { margin-top: 1rem; }
+    .text-lg { font-size: 1.125rem; }
+    .font-semibold { font-weight: 600; }
+    .mb-4 { margin-bottom: 1rem; }
+    .border { border: 1px solid #e5e7eb; }
+    .border-gray-200 { border-color: #e5e7eb; }
+    .p-2 { padding: 0.5rem; }
+    .bg-gray-50 { background-color: #f9fafb; }
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .text-left { text-align: left; }
+    .border-collapse { border-collapse: collapse; }
+    .bg-white { background-color: #fff; }
+    .text-red-600 { color: #dc2626; }
+    .bg-red-100 { background-color: #fee2e2; }
+    .text-green-600 { color: #16a34a; }
+    .bg-green-100 { background-color: #dcfce7; }
+    .text-yellow-600 { color: #ca8a04; }
+    .bg-yellow-100 { background-color: #fef9c3; }
+    .px-4 { padding-left: 1rem; padding-right: 1rem; }
+    .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+    .hover\:bg-red-700:hover { background-color: #b91c1c; }
+    .bg-red-600 { background-color: #dc2626; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .flex { display: flex; }
+    .justify-between { justify-content: space-between; }
+    .items-center { align-items: center; }
+    .space-x-2 > * + * { margin-left: 0.5rem; }
+    .min-w-full { min-width: 100%; }
+    .divide-y { border-bottom: 1px solid #e5e7eb; }
+    .divide-gray-200 { border-color: #e5e7eb; }
+    .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .text-xs { font-size: 0.75rem; }
+    .text-gray-500 { color: #6b7280; }
+    .uppercase { text-transform: uppercase; }
+    .tracking-wider { letter-spacing: 0.05em; }
+    .whitespace-nowrap { white-space: nowrap; }
+    .table-container { background-color: #fff; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .cursor-pointer { cursor: pointer; }
+    .bg-blue-100 { background-color: #dbeafe; }
+    .bg-gray-600 { background-color: #4b5563; }
+    .hover\:bg-gray-700:hover { background-color: #374151; }
+    .disabled\:bg-gray-300 { background-color: #d1d5db; }
+    .month-collapsed { display: none; }
+    .month-header:hover { color: #2563eb; }
+    .h-5 { height: 1.25rem; }
+    .w-5 { width: 1.25rem; }
+    .bg-blue-500 { background-color: #3b82f6; }
+    .hover\:bg-blue-600:hover { background-color: #2563eb; }
+    .bg-green-500 { background-color: #22c55e; }
+    .hover\:bg-green-600:hover { background-color: #16a34a; }
+    .bg-red-500 { background-color: #ef4444; }
+    .hover\:bg-red-600:hover { background-color: #dc2626; }
+  </style>
+  <link rel="stylesheet" href="/app-shell.css" />
+  <link rel="stylesheet" href="/kpi-common.css" />
+  <script src="/app-shell.js" defer></script>
+  <script src="/kpi-common.js" defer></script>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+  <header id="header" class="text-white p-4">
+    <div class="class"fixed top-0 left-0 w-full bg-blue-600 text-white p-4 flex flex-wrap items-center justify-between gap-4 shadow-md z-10">
+      <div class="flex items-center">
+        <a href="/"><img src="/logo.png" alt="Company Logo" class="h-12 mr-4" /></a>
+        <h1 class="text-2xl font-bold">Open Accounting</h1>
+      </div>
+      <nav id="nav" class="flex flex-wrap gap-4">
+        <a href="/" class="px-4 hover:underline">Settings</a>
+		<a href="/estimates.html" class="px-4 hover:underline">Estimates</a>
+        <a href="/invoices.html" class="px-4 hover:underline">Invoices</a>
+        <a href="/sales.html" class="px-4 hover:underline">Sales</a>
+        <a href="/add-vendor.html" class="px-4 hover:underline">Add Vendor</a>
+        <a href="/add-products.html" class="px-4 hover:underline">Add Product</a>
+        <a href="/purchase-order.html" class="px-4 hover:underline">Purchase Order</a>
+        <a href="/packing-slip.html" class="px-4 hover:underline">Packing Slips</a>
+        <a href="/transaction-history.html" class="px-4 hover:underline">Transaction History</a>
+        <a href="/customer-list.html" class="px-4 hover:underline">Customer List</a>
+        <a href="/receive-inventory.html" class="px-4 hover:underline">Receive Inventory</a>
+        <a href="/inventory.html" class="px-4 hover:underline">Inventory</a>
+        <a href="/bills.html" class="px-4 hover:underline">Bills</a>
+        <a href="/sales-tax.html" class="px-4 hover:underline">Sales Tax</a>
+        <a href="/reports.html" class="px-4 hover:underline">Reports</a>
+      </nav>
+    </div>
+  </header>
+  <div id="root" class="flex-grow"></div>
+    <footer class="bg-gray-800 text-white p-4 mt-8">
+    <div class="container mx-auto">
+      <p>© Open Accounting. All rights reserved.</p>
+    </div>
+  </footer>
+<script type="text/javascript">
+  var gk_isXlsx = false;
+  var gk_xlsxFileLookup = {};
+  var gk_fileData = {};
+  function filledCell(cell) {
+    return cell !== '' && cell != null;
+  }
+  function loadFileData(filename) {
+    if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+      try {
+        var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+        var firstSheetName = workbook.SheetNames[0];
+        var worksheet = workbook.Sheets[firstSheetName];
+        var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+        var filteredData = jsonData.filter(row => row.some(filledCell));
+        var headerRowIndex = filteredData.findIndex((row, index) => {
+          if (index + 1 >= filteredData.length) return false;
+          return row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length;
+        });
+        if (headerRowIndex === -1 || headerRowIndex > 25) {
+          headerRowIndex = 0;
+        }
+        var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
+        csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+        return csv;
+      } catch (e) {
+        console.error('Error processing XLSX:', e);
+        return "";
+      }
+    }
+    return gk_fileData[filename] || "";
+  }
+
+  // Match other pages: support code-server proxy and direct HTTPS :3003
+  const BASE_URL = (document.querySelector('base')?.getAttribute('href') || '').includes('proxy/3003')
+    ? '/api'
+    : '/api';
+  const fetchWithRetry = async (url, options, type, setter, retries = 3, delay = 1000) => {
+    console.log(`[FETCH] Starting ${type} from ${url}`);
+    const companyId = localStorage.getItem('selectedCompanyId') || '1';
+    const sep = url.includes('?') ? '&' : '?';
+    const urlWithCompany = `${url}${sep}company_id=${companyId}`;
+    for (let i = 0; i < retries; i++) {
+      try {
+        console.log(`[FETCH] Attempt ${i + 1} for ${type} at ${new Date().toISOString()}`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        const response = await fetch(urlWithCompany, {
+          ...options,
+          headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', ...options?.headers },
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        console.log(`[FETCH] Response for ${type}: status ${response.status}, headers:`, response.headers);
+        if (!response.ok) {
+          let errorText = 'No response text';
+          try {
+            errorText = await response.text() || 'Empty response';
+          } catch (textErr) {
+            console.warn(`[FETCH] Failed to read response text:`, textErr);
+          }
+          const error = new Error(`HTTP ${response.status}: ${errorText}`);
+          error.status = response.status;
+          if (response.status === 404) {
+            console.log(`[FETCH] 404 detected, skipping retries:`, error.message);
+            throw error;
+          }
+          throw error;
+        }
+        if (response.status === 204) {
+          console.log(`[FETCH] 204 No Content for ${type}, returning null`);
+          return null;
+        }
+        const contentType = response.headers.get('content-type');
+        if (contentType && !contentType.includes('application/json')) {
+          const text = await response.text().catch(() => 'No response text');
+          console.error(`[FETCH] Non-JSON response for ${type}: ${text.slice(0, 200)}`);
+          throw new Error(`Expected JSON, got ${contentType || 'unknown'}: ${text.slice(0, 200)}`);
+        }
+        const text = await response.text();
+        console.log(`[FETCH] Raw response for ${type}: ${text.slice(0, 200)}`);
+        const data = JSON.parse(text);
+        console.log(`[FETCH] Data for ${type}:`, JSON.stringify(data, null, 2));
+        if (!data && type !== 'delete') {
+          throw new Error(`Received empty response for ${type}`);
+        }
+        if (setter) {
+          const validatedData = Array.isArray(data) ? data : [data];
+          console.log(`[FETCH] Setting state for ${type}:`, validatedData.length, ' items');
+          setter(validatedData);
+        }
+        return data;
+      } catch (error) {
+        console.error(`[FETCH] Error for ${type} (attempt ${i + 1}):`, error.message, 'Status:', error.status, 'Error:', JSON.stringify(error));
+        if (error.status === 404 || error.message.includes('HTTP 404')) {
+          console.log(`[FETCH] 414 error caught, throwing immediately:`, error.message);
+          throw error;
+        }
+        if (i < retries - 1) {
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        throw error;
+      }
+    }
+  };
+
+  const { useState, useEffect } = React;
+  const ErrorBoundary = ({ children }) => {
+    const [error, setError] = useState(null);
+    useEffect(() => {
+      const errorHandler = (errorEvent) => {
+        console.error('ErrorBoundary caught:', errorEvent.error);
+        setError(errorEvent.error.message || 'An unexpected error occurred');
+      };
+      window.addEventListener('error', errorHandler);
+      return () => window.removeEventListener('error', errorHandler);
+    }, []);
+    if (error) {
+      return (
+        React.createElement('div', { className: 'p-4 text-red-600 bg-red-100 rounded-lg shadow-sm m-6' },
+          React.createElement('h2', { className: 'text-lg font-bold' }, `Error: ${error}`),
+          React.createElement('p', null, 'Please try refreshing the page or click below to retry.'),
+          React.createElement('button', {
+            className: 'mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700',
+            onClick: () => { setError(null); window.location.reload(); }
+          }, 'Retry')
+        )
+      );
+    }
+    return children;
+  };
+
+  const BillRow = ({ bill, vendors, purchaseOrders, expenseCategories, selectedBills, editingBillId, editingBillData, setEditingBillId, setEditingBillData, handleSelectBill, updateBill, payBill, deleteBill, getVendorName, getPurchaseOrderNumber, getExpenseCategoryName }) => {
+    return editingBillId === bill.id ? (
+      React.createElement('tr', { key: `${bill.id}-edit` },
+        React.createElement('td', { colSpan: 11, className: 'px-2 py-2' },
+          React.createElement('div', { className: 'bg-gray-50 p-4 rounded-lg' },
+            React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-4' },
+              React.createElement('div', null,
+                React.createElement('label', { htmlFor: `edit-billNumber-${bill.id}`, className: 'block text-sm font-medium text-gray-700' }, 'Bill Number (Optional)'),
+                React.createElement('input', {
+                  id: `edit-billNumber-${bill.id}`,
+                  type: 'text',
+                  value: editingBillData.billNumber,
+                  onChange: e => setEditingBillData({ ...editingBillData, billNumber: e.target.value }),
+                  className: 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500',
+                  placeholder: 'e.g., BILL-001'
+                })
+              ),
+              React.createElement('div', null,
+                React.createElement('label', { htmlFor: `edit-invoiceNumber-${bill.id}`, className: 'block text-sm font-medium text-gray-700' }, 'Invoice Number (Optional)'),
+                React.createElement('input', {
+                  id: `edit-invoiceNumber-${bill.id}`,
+                  type: 'text',
+                  value: editingBillData.invoiceNumber,
+                  onChange: e => setEditingBillData({ ...editingBillData, invoiceNumber: e.target.value }),
+                  className: 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500',
+                  placeholder: 'e.g., INV-001'
+                })
+              ),
+              React.createElement('div', null,
+                React.createElement('label', { htmlFor: `edit-vendorId-${bill.id}`, className: 'block text-sm font-medium text-gray-700' }, 'Vendor'),
+                React.createElement('select', {
+                  id: `edit-vendorId-${bill.id}`,
+                  value: editingBillData.vendorId,
+                  onChange: e => setEditingBillData({ ...editingBillData, vendorId: e.target.value }),
+                  className: 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500',
+                  required: true
+                },
+                  React.createElement('option', { value: '' }, 'Select Vendor'),
+                  vendors.map(vendor => React.createElement('option', { key: vendor.id, value: vendor.id }, vendor.name))
+                )
+              ),
+              React.createElement('div', null,
+                React.createElement('label', { htmlFor: `edit-purchaseOrderId-${bill.id}`, className: 'block text-sm font-medium text-gray-700' }, 'Purchase Order (Optional)'),
+                React.createElement('select', {
+                  id: `edit-purchaseOrderId-${bill.id}`,
+                  value: editingBillData.purchaseOrderId,
+                  onChange: e => setEditingBillData({ ...editingBillData, purchaseOrderId: e.target.value }),
+                  className: 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+                },
+                  React.createElement('option', { value: '' }, 'No Purchase Order'),
+                  purchaseOrders.map(po => React.createElement('option', { key: po.id, value: po.id }, po.po_number))
+                )
+              ),
+              React.createElement('div', null,
+                React.createElement('label', { htmlFor: `edit-expenseCategoryId-${bill.id}`, className: 'block text-sm font-medium text-gray-700' }, 'Expense Category (Optional)'),
+                React.createElement('select', {
+                  id: `edit-expenseCategoryId-${bill.id}`,
+                  value: editingBillData.expenseCategoryId,
+                  onChange: e => setEditingBillData({ ...editingBillData, expenseCategoryId: e.target.value, isInventoryBill: e.target.value === '' }),
+                  className: 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+                },
+                  React.createElement('option', { value: '' }, 'Inventory'),
+                  expenseCategories.map(category => React.createElement('option', { key: category.id, value: category.id }, category.name))
+                )
+              ),
+              React.createElement('div', null,
+                React.createElement('label', { htmlFor: `edit-amount-${bill.id}`, className: 'block text-sm font-medium text-gray-700' }, 'Amount'),
+                React.createElement('input', {
+                  id: `edit-amount-${bill.id}`,
+                  type: 'number',
+                  value: editingBillData.amount,
+                  onChange: e => setEditingBillData({ ...editingBillData, amount: e.target.value }),
+                  className: 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500',
+                  step: '0.01',
+                  min: '0',
+                  required: true,
+                  placeholder: 'e.g., 100.00'
+                })
+              ),
+              React.createElement('div', null,
+                React.createElement('label', { htmlFor: `edit-billDate-${bill.id}`, className: 'block text-sm font-medium text-gray-700' }, 'Bill Date'),
+                React.createElement('input', {
+                  id: `edit-billDate-${bill.id}`,
+                  type: 'date',
+                  value: editingBillData.billDate,
+                  onChange: e => setEditingBillData({ ...editingBillData, billDate: e.target.value }),
+                  className: 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500',
+                  required: true
+                })
+              ),
+              React.createElement('div', null,
+                React.createElement('label', { htmlFor: `edit-dueDate-${bill.id}`, className: 'block text-sm font-medium text-gray-700' }, 'Due Date (Optional)'),
+                React.createElement('input', {
+                  id: `edit-dueDate-${bill.id}`,
+                  type: 'date',
+                  value: editingBillData.dueDate,
+                  onChange: e => setEditingBillData({ ...editingBillData, dueDate: e.target.value }),
+                  className: 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+                })
+              ),
+              React.createElement('div', null,
+                React.createElement('label', { htmlFor: `edit-paid-${bill.id}`, className: 'block text-sm font-medium text-gray-700' }, 'Paid'),
+                React.createElement('input', {
+                  id: `edit-paid-${bill.id}`,
+                  type: 'checkbox',
+                  checked: editingBillData.paid,
+                  onChange: e => setEditingBillData({
+                    ...editingBillData,
+                    paid: e.target.checked,
+                    payment_date: e.target.checked ? (editingBillData.payment_date || new Date().toISOString().split('T')[0]) : ''
+                  }),
+                  className: 'mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
+                })
+              ),
+              editingBillData.paid && React.createElement('div', null,
+                React.createElement('label', { htmlFor: `edit-paymentDate-${bill.id}`, className: 'block text-sm font-medium text-gray-700' }, 'Payment Date'),
+                React.createElement('input', {
+                  id: `edit-paymentDate-${bill.id}`,
+                  type: 'date',
+                  value: editingBillData.payment_date,
+                  onChange: e => setEditingBillData({ ...editingBillData, payment_date: e.target.value }),
+                  className: 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500',
+                  required: true
+                })
+              )
+            ),
+            React.createElement('div', { className: 'mt-4 flex space-x-2' },
+              React.createElement('button', {
+                onClick: () => updateBill(bill.id, editingBillData),
+                className: 'bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700'
+              }, 'Save'),
+              React.createElement('button', {
+                onClick: () => {
+                  setEditingBillId(null);
+                  setEditingBillData(null);
+                },
+                className: 'bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700'
+              }, 'Cancel')
+            )
+          )
+        )
+      )
+    ) : (
+      React.createElement('tr', { key: bill.id, className: 'hover:bg-gray-100' },
+        React.createElement('td', { className: 'px-2 py-2' },
+          React.createElement('input', {
+            type: 'checkbox',
+            checked: selectedBills.includes(bill.id),
+            onChange: () => handleSelectBill(bill.id),
+            disabled: bill.paid || bill.payment_date,
+            className: 'h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
+          })
+        ),
+        React.createElement('td', { className: 'px-2 py-2 whitespace-nowrap' }, bill.bill_number || 'N/A'),
+        React.createElement('td', { className: 'px-2 py-2 whitespace-nowrap' }, bill.invoice_number || 'N/A'),
+        React.createElement('td', { className: 'px-2 py-2 whitespace-nowrap' }, getVendorName(bill.vendor_id)),
+        React.createElement('td', { className: 'px-2 py-2 whitespace-nowrap' }, getPurchaseOrderNumber(bill.purchase_order_id)),
+        React.createElement('td', { className: 'px-2 py-2 whitespace-nowrap' }, getExpenseCategoryName(bill)),
+        React.createElement('td', { className: 'px-2 py-2' }, `$${bill.amount.toFixed(2)}`),
+        React.createElement('td', { className: 'px-2 py-2 whitespace-nowrap' }, bill.bill_date),
+        React.createElement('td', { className: 'px-2 py-2 whitespace-nowrap' }, bill.due_date || 'N/A'),
+        React.createElement('td', { className: 'px-2 py-2' },
+          React.createElement('span', { className: bill.paid || bill.payment_date ? 'text-green-600' : 'text-red-600' },
+            bill.paid || bill.payment_date ? 'Yes' : 'No'
+          )
+        ),
+        React.createElement('td', { className: 'px-2 py-2 whitespace-nowrap' },
+          React.createElement('button', {
+            onClick: () => {
+              setEditingBillId(bill.id);
+              setEditingBillData({
+                vendorId: bill.vendor_id ? String(bill.vendor_id) : '',
+                purchaseOrderId: bill.purchase_order_id ? String(bill.purchase_order_id) : '',
+                expenseCategoryId: bill.expense_category_id ? String(bill.expense_category_id) : '',
+                amount: bill.amount ? String(bill.amount) : '',
+                billDate: bill.bill_date || '',
+                dueDate: bill.due_date || '',
+                paid: !!bill.paid || !!bill.payment_date,
+                billNumber: bill.bill_number || '',
+                invoiceNumber: bill.invoice_number || '',
+                isInventoryBill: !!bill.is_inventory_bill,
+                payment_date: bill.payment_date || ''
+              });
+            },
+            className: 'bg-blue-500 text-white p-1 rounded mr-2 hover:bg-blue-600'
+          }, 'Edit'),
+          React.createElement('button', {
+            onClick: () => payBill(bill),
+            className: 'bg-green-500 text-white p-1 rounded mr-2 hover:bg-green-600',
+            disabled: bill.paid || bill.payment_date
+          }, 'Pay'),
+          React.createElement('button', {
+            onClick: () => {
+              if (window.confirm('Are you sure you want to delete this bill?')) {
+                deleteBill(bill.id);
+              }
+            },
+            className: 'bg-red-500 text-white p-1 rounded hover:bg-red-600'
+          }, 'Delete')
+        )
+      )
+    );
+  };
+
+  const BillsPage = () => {
+    const [bills, setBills] = useState([]);
+    const [vendors, setVendors] = useState([]);
+    const [purchaseOrders, setPurchaseOrders] = useState([]);
+    const [expenseCategories, setExpenseCategories] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [sortConfig, setSortConfig] = useState({ key: 'dueDate', direction: 'desc' });
+    const [editingBillId, setEditingBillId] = useState(null);
+    const [editingBillData, setEditingBillData] = useState(null);
+    const [newBill, setNewBill] = useState({
+      vendorId: '',
+      purchaseOrderId: '',
+      expenseCategoryId: '',
+      amount: '',
+      billDate: new Date().toISOString().split('T')[0],
+      dueDate: '',
+      paid: false,
+      billNumber: '',
+      invoiceNumber: '',
+      isInventoryBill: false,
+      payment_date: '',
+      company_id: parseInt(localStorage.getItem('selectedCompanyId') || '1')
+    });
+    const [selectedBills, setSelectedBills] = useState([]);
+    const [error, setError] = useState(null);
+    const [success, setSuccess] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [currentMonth, setCurrentMonth] = useState(null);
+    const [collapsedMonths, setCollapsedMonths] = useState([]);
+
+    const handleSort = (key) => {
+      setSortConfig(prev => ({
+        key,
+        direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+      }));
+    };
+
+    const sortBills = (bills, key, direction) => {
+      const sorted = [...bills];
+      const isAsc = direction === 'asc' ? 1 : -1;
+      sorted.sort((a, b) => {
+        if (key === 'vendorName') {
+          return getVendorName(a.vendor_id).toLowerCase().localeCompare(getVendorName(b.vendor_id).toLowerCase()) * isAsc;
+        }
+        if (key === 'poNumber') {
+          return getPurchaseOrderNumber(a.purchase_order_id).toLowerCase().localeCompare(getPurchaseOrderNumber(b.purchase_order_id).toLowerCase()) * isAsc;
+        }
+        if (key === 'expenseCategory') {
+          return getExpenseCategoryName(a).toLowerCase().localeCompare(getExpenseCategoryName(b).toLowerCase()) * isAsc;
+        }
+        if (key === 'billNumber') {
+          const aValue = (a.bill_number || 'N/A').toLowerCase();
+          const bValue = (b.bill_number || 'N/A').toLowerCase();
+          return aValue.localeCompare(bValue) * isAsc;
+        }
+        if (key === 'invoiceNumber') {
+          const aValue = (a.invoice_number || 'N/A').toLowerCase();
+          const bValue = (b.invoice_number || 'N/A').toLowerCase();
+          return aValue.localeCompare(bValue) * isAsc;
+        }
+        if (key === 'billDate') {
+          return (new Date(a.bill_date || '1970-01-01') - new Date(b.bill_date || '1970-01-01')) * isAsc;
+        }
+        if (key === 'dueDate') {
+          return (new Date(a.due_date || '9999-12-31') - new Date(b.due_date || '9999-12-31')) * isAsc;
+        }
+        if (key === 'paid') {
+          return ((a.paid || a.payment_date ? 1 : 0) - (b.paid || b.payment_date ? 1 : 0)) * isAsc;
+        }
+        const aValue = a[key] != null ? a[key] : 0;
+        const bValue = b[key] != null ? b[key] : 0;
+        return (aValue - bValue) * isAsc;
+      });
+      return sorted;
+    };
+
+    useEffect(() => {
+      const fetchData = async () => {
+        setIsLoading(true);
+        try {
+          await Promise.all([
+            fetchWithRetry(`${BASE_URL}/bills`, { headers: { 'Accept': 'application/json' } }, 'bills', setBills),
+            fetchWithRetry(`${BASE_URL}/vendors`, { headers: { 'Accept': 'application/json' } }, 'vendors', setVendors),
+            fetchWithRetry(`${BASE_URL}/purchase-order`, { headers: { 'Accept': 'application/json' } }, 'purchase orders', setPurchaseOrders),
+            fetchWithRetry(`${BASE_URL}/expense_categories`, { headers: { 'Accept': 'application/json' } }, 'expense categories', setExpenseCategories)
+          ]);
+          setIsLoading(false);
+          console.log('[BILLS_PAGE] Fetched expenseCategories:', expenseCategories);
+          console.log('[BILLS_PAGE] Fetched bills:', bills);
+        } catch (err) {
+          setError(`Failed to load data: ${err.message}`);
+          setIsLoading(false);
+        }
+      };
+      fetchData();
+      const handleCompanyChange = () => {
+        setBills([]);
+        setVendors([]);
+        setPurchaseOrders([]);
+        setExpenseCategories([]);
+        setSearchQuery('');
+        setSortConfig({ key: 'dueDate', direction: 'desc' });
+        setEditingBillId(null);
+        setEditingBillData(null);
+        setNewBill({
+          vendorId: '',
+          purchaseOrderId: '',
+          expenseCategoryId: '',
+          amount: '',
+          billDate: new Date().toISOString().split('T')[0],
+          dueDate: '',
+          paid: false,
+          billNumber: '',
+          invoiceNumber: '',
+          isInventoryBill: false,
+          payment_date: '',
+          company_id: parseInt(localStorage.getItem('selectedCompanyId') || '1')
+        });
+        setSelectedBills([]);
+        setError(null);
+        setSuccess(null);
+        setCurrentMonth(null);
+        setCollapsedMonths([]);
+        fetchData();
+      };
+      window.addEventListener('companyChange', handleCompanyChange);
+      return () => window.removeEventListener('companyChange', handleCompanyChange);
+    }, []);
+
+    useEffect(() => {
+      if (bills.length > 0 && !currentMonth) {
+        const validBills = bills.filter(bill => bill.bill_date && !isNaN(new Date(bill.bill_date).getTime()));
+        const latestBillDate = validBills.length > 0
+          ? validBills.reduce((latest, bill) => {
+              const billDate = new Date(bill.bill_date);
+              return billDate > latest ? billDate : latest;
+            }, new Date(validBills[0].bill_date))
+          : new Date();
+        const monthKey = `${latestBillDate.getFullYear()}-${String(latestBillDate.getMonth() + 1).padStart(2, '0')}`;
+        console.log(`[PAGINATION] Setting initial currentMonth: ${monthKey}`);
+        setCurrentMonth(monthKey);
+      }
+    }, [bills]);
+
+    const getVendorName = (vendorId) => {
+      const vendor = vendors.find(v => v.id === parseInt(vendorId));
+      return vendor ? vendor.name : 'No Vendor';
+    };
+
+    const getPurchaseOrderNumber = (purchaseOrderId) => {
+      const po = purchaseOrders.find(p => p.id === parseInt(purchaseOrderId));
+      return po ? po.po_number : 'No PO';
+    };
+
+    const getExpenseCategoryName = (bill) => {
+      if (!bill) {
+        console.log('[BILLS_GET_EXPENSE_CATEGORY] Invalid bill object');
+        return 'Unknown';
+      }
+      const billNumbers = ['BILL-1749625593433', 'BILL-1749973538923', 'BILL-1749625717903', 'BILL-1749625768310', 'BILL-1749782556009', 'BILL-1749189060334', '32726-1', 'BILL-1749195653279', '32727b'];
+      if (billNumbers.includes(bill.bill_number)) {
+        console.log('[BILLS_GET_EXPENSE_CATEGORY] Bill', bill.bill_number, 'is_inventory_bill:', bill.is_inventory_bill, 'expense_category_id:', bill.expense_category_id);
+      }
+      if (bill.is_inventory_bill === true || bill.is_inventory_bill === 1 || bill.is_inventory_bill === '1') {
+        return 'Inventory';
+      }
+      if (!expenseCategories || expenseCategories.length === 0) {
+        console.log('[BILLS_GET_EXPENSE_CATEGORY] expenseCategories empty for bill', bill.bill_number);
+        return 'Uncategorized';
+      }
+      const category = expenseCategories.find(c => c.id === parseInt(bill.expense_category_id));
+      if (!category && bill.expense_category_id) {
+        console.log('[BILLS_GET_EXPENSE_CATEGORY] No category found for bill', bill.bill_number, 'with expense_category_id', bill.expense_category_id);
+      }
+      const categoryName = category ? category.name : 'Uncategorized';
+      if (billNumbers.includes(bill.bill_number)) {
+        console.log('[BILLS_GET_EXPENSE_CATEGORY] Bill', bill.bill_number, 'categorized as:', categoryName);
+      }
+      return categoryName;
+    };
+
+    const handleSelectBill = (billId) => {
+      setSelectedBills(prev => prev.includes(billId) ? prev.filter(id => id !== billId) : [...prev, billId]);
+    };
+
+    const getSelectedBillsVendorId = () => {
+      const selected = bills.filter(b => selectedBills.includes(b.id));
+      if (selected.length === 0) return null;
+      const vendorId = selected[0].vendor_id;
+      const allSameVendor = selected.every(b => b.vendor_id === vendorId);
+      return allSameVendor ? vendorId : null;
+    };
+
+    const getSelectedBillsTotal = () => {
+      return bills
+        .filter(b => selectedBills.includes(b.id))
+        .reduce((sum, b) => sum + (b.amount || 0), 0)
+        .toFixed(2);
+    };
+
+    const addExpenseCategory = async () => {
+      const categoryName = prompt('Enter new expense category name:');
+      if (!categoryName || categoryName.trim() === '') {
+        setError('Category name cannot be empty');
+        return;
+      }
+      try {
+        const companyId = localStorage.getItem('selectedCompanyId') || '1';
+        const res = await fetch(`${BASE_URL}/expense_categories`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({
+            name: categoryName.trim(),
+            company_id: parseInt(companyId)
+          })
+        });
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errorText || 'Failed to add category'}`);
+        }
+        const data = await res.json();
+        setExpenseCategories(prev => [...prev, data]);
+        setSuccess('Category added successfully!');
+        setTimeout(() => setSuccess(null), 3000);
+      } catch (err) {
+        setError(`Failed to add category: ${err.message}`);
+      }
+    };
+
+    const payAllBills = async () => {
+      const vendorId = getSelectedBillsVendorId();
+      if (!vendorId) {
+        setError('Select bills from the same vendor to pay all.');
+        return;
+      }
+      if (!window.confirm(`Are you sure you want to mark ${selectedBills.length} bill(s) as paid for ${getVendorName(vendorId)}?`)) {
+        return;
+      }
+      const checkNumber = prompt('Enter check number for all bills (optional):', '');
+      if (checkNumber === null) return;
+      const today = new Date().toISOString().split('T')[0];
+      try {
+        const selected = bills.filter(b => selectedBills.includes(b.id));
+        const updatedBills = [];
+        for (const bill of selected) {
+          const updatedBillData = {
+            vendorId: bill.vendor_id ? String(bill.vendor_id) : '',
+            purchaseOrderId: bill.purchase_order_id ? String(bill.purchase_order_id) : '',
+            expenseCategoryId: bill.expense_category_id ? String(bill.expense_category_id) : '',
+            amount: bill.amount ? String(bill.amount) : '',
+            billDate: bill.bill_date || today,
+            dueDate: bill.due_date || '',
+            paid: true,
+            billNumber: bill.bill_number || '',
+            invoiceNumber: bill.invoice_number || '',
+            isInventoryBill: !!bill.is_inventory_bill,
+            payment_date: today
+          };
+          console.log(`[PAY_ALL] Attempting to update bill ${bill.id} with data:`, updatedBillData);
+          const updatedBill = await updateBill(bill.id, updatedBillData);
+          if (updatedBill) {
+            updatedBills.push(updatedBill);
+          } else {
+            console.warn(`[PAY_ALL] Failed to update bill ${bill.id}`);
+          }
+        }
+        if (updatedBills.length === 0) {
+          throw new Error('No bills were successfully updated');
+        }
+        await fetchWithRetry(`${BASE_URL}/bills`, { headers: { 'Accept': 'application/json' } }, 'bills', setBills);
+        generatePaidBillsPDF(updatedBills, checkNumber);
+        setSelectedBills([]);
+        setSuccess(`Paid ${updatedBills.length} bills successfully!`);
+        setTimeout(() => setSuccess(null), 3000);
+      } catch (err) {
+        console.error('[PAY_ALL] Error:', err);
+        setError(`Failed to pay bills: ${err.message}`);
+      }
+    };
+
+    const generatePaidBillsPDF = (paidBills, checkNumber) => {
+      const vendorId = paidBills[0].vendor_id;
+      const vendorName = getVendorName(vendorId);
+      const totalAmount = paidBills.reduce((sum, b) => sum + (b.amount || 0), 0).toFixed(2);
+      const date = new Date().toISOString().split('T')[0];
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      const _co = (window.CompanyConfig && CompanyConfig.get) ? (CompanyConfig.get() || {}) : {};
+      const companyText = _co.legal_name || _co.name || 'My Company';
+      const companyWidth = doc.getTextWidth(companyText);
+      doc.text(companyText, (doc.internal.pageSize.width - companyWidth) / 2, 15);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      const addressText = (_co && _co.settings && _co.settings.address) || '';
+      const addressWidth = doc.getTextWidth(addressText);
+      doc.text(addressText, (doc.internal.pageSize.width - addressWidth) / 2, 22);
+      const phoneText = (_co && _co.settings && _co.settings.phone) ? ('Phone: ' + _co.settings.phone) : '';
+      const phoneWidth = doc.getTextWidth(phoneText);
+      doc.text(phoneText, (doc.internal.pageSize.width - phoneWidth) / 2, 29);
+      const websiteText = (_co && _co.website) || '';
+      const websiteWidth = doc.getTextWidth(websiteText);
+      doc.text(websiteText, (doc.internal.pageSize.width - websiteWidth) / 2, 36);
+      doc.setFontSize(16);
+      doc.text('Paid Bills Summary', 20, 46);
+      doc.setFontSize(12);
+      doc.text(`Vendor: ${vendorName}`, 20, 56);
+      doc.text(`Payment Date: ${date}`, 20, 66);
+      doc.text(`Check Number: ${checkNumber || 'N/A'}`, 20, 76);
+      doc.autoTable({
+        startY: 86,
+        head: [['Bill Number', 'Invoice Number', 'Vendor', 'PO#', 'Amount ($)']],
+        body: paidBills.map(bill => [
+          bill.bill_number || 'N/A',
+          bill.invoice_number || 'N/A',
+          getVendorName(bill.vendor_id),
+          getPurchaseOrderNumber(bill.purchase_order_id),
+          parseFloat(bill.amount).toFixed(2)
+        ]),
+        foot: [['', '', '', 'Total', totalAmount]],
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [37, 99, 235] },
+        margin: { top: 20 }
+      });
+      doc.save(`Paid_Bills_${vendorName.replace(/\s+/g, '_')}_${date}.pdf`);
+    };
+
+    const getMonthKey = (billDate) => {
+      if (!billDate || isNaN(Date.parse(billDate))) {
+        console.warn(`[PAGINATION] Invalid bill_date: ${billDate}, skipping bill`);
+        return null;
+      }
+      const [year, month] = billDate.split('-').map(Number);
+      const date = new Date(year, month - 1, 1);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      if (monthKey === '2025-03') {
+        console.log(`[PAGINATION] Bill assigned to March 2025: bill_date=${billDate}`);
+      }
+      return monthKey;
+    };
+
+    const groupBillsByMonth = (bills) => {
+      const months = {};
+      bills.forEach(bill => {
+        const monthKey = getMonthKey(bill.bill_date);
+        if (monthKey) {
+          if (!months[monthKey]) {
+            months[monthKey] = [];
+          }
+          months[monthKey].push(bill);
+        }
+      });
+      const monthGroups = Object.keys(months)
+        .map(month => ({
+          month,
+          bills: months[month],
+          date: new Date(`${month}-01`)
+        }))
+        .sort((a, b) => b.date - a.date)
+        .map(({ month, bills }) => ({ month, bills }));
+      console.log('[PAGINATION] Month groups:', monthGroups.map(g => ({ month: g.month, count: g.bills.length })));
+      return monthGroups;
+    };
+
+    const handleMonthNavigation = (direction) => {
+      const months = groupBillsByMonth(bills).map(m => m.month);
+      const currentIndex = months.indexOf(currentMonth);
+      console.log(`[PAGINATION] Navigating ${direction}, currentMonth: ${currentMonth}, currentIndex: ${currentIndex}, months:`, months);
+      if (direction === 'next' && currentIndex < months.length - 1) {
+        const nextMonth = months[currentIndex + 1];
+        setCurrentMonth(nextMonth);
+        setCollapsedMonths(prev => [...new Set([...prev, ...months.slice(0, currentIndex + 1).filter(m => m !== nextMonth)])]);
+      } else if (direction === 'prev' && currentIndex > 0) {
+        const prevMonth = months[currentIndex - 1];
+        setCurrentMonth(prevMonth);
+        setCollapsedMonths(prev => prev.filter(m => m !== prevMonth));
+      } else {
+        console.warn(`[PAGINATION] Invalid navigation: ${direction}, currentIndex: ${currentIndex}`);
+      }
+    };
+
+    const toggleMonth = (month) => {
+      setCollapsedMonths(prev => {
+        const newCollapsed = prev.includes(month) ? prev.filter(m => m !== month) : [...prev, month];
+        console.log(`[PAGINATION] Toggled month ${month}, collapsedMonths:`, newCollapsed);
+        return newCollapsed;
+      });
+    };
+
+    const addBill = async (billData) => {
+      if (!billData.vendorId || !billData.amount || !billData.billDate) {
+        setError('Vendor, amount, and bill date are required');
+        return { success: false, isInvalid: true };
+      }
+      const amount = parseFloat(billData.amount);
+      if (isNaN(amount) || amount <= 0) {
+        setError('Amount must be a positive number');
+        return { success: false, isInvalid: true };
+      }
+      if (billData.paid && !billData.payment_date) {
+        setError('Payment date is required when marking a bill as paid');
+        return { success: false, isInvalid: true };
+      }
+      try {
+        const companyId = localStorage.getItem('selectedCompanyId') || '1';
+        const payload = {
+          vendor_id: parseInt(billData.vendorId),
+          purchase_order_id: billData.purchaseOrderId ? parseInt(billData.purchaseOrderId) : null,
+          bill_number: billData.billNumber || null,
+          invoice_number: billData.invoiceNumber || null,
+          amount: amount,
+          bill_date: billData.billDate,
+          due_date: billData.dueDate || null,
+          is_inventory_bill: billData.isInventoryBill || false,
+          expense_category_id: billData.expenseCategoryId ? parseInt(billData.expenseCategoryId) : null,
+          paid: !!billData.paid,
+          payment_date: billData.paid ? billData.payment_date : null,
+          company_id: parseInt(companyId)
+        };
+        console.log(`[ADD_BILL] Creating bill with payload:`, JSON.stringify(payload, null, 2));
+        const data = await fetchWithRetry(`${BASE_URL}/bills`, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        }, 'add_bill', null);
+        console.log(`[ADD_BILL] Created bill:`, data);
+        setBills(prev => [...prev, data.bill]);
+        return { success: true, isInvalid: false };
+      } catch (err) {
+        console.error(`[ADD_BILL] Error creating bill:`, err.message, err);
+        setError(`Failed to add bill: ${err.message.includes('SQLITE_ERROR') ? 'Database error - please contact support' : err.message}`);
+        return { success: false, isInvalid: false };
+      }
+    };
+
+    const handleAddBill = async () => {
+      const result = await addBill(newBill);
+      if (result.success) {
+        setSuccess('Bill added successfully!');
+        setTimeout(() => setSuccess(null), 3000);
+        setNewBill({
+          vendorId: '',
+          purchaseOrderId: '',
+          expenseCategoryId: '',
+          amount: '',
+          billDate: new Date().toISOString().split('T')[0],
+          dueDate: '',
+          paid: false,
+          billNumber: '',
+          invoiceNumber: '',
+          isInventoryBill: false,
+          payment_date: '',
+          company_id: parseInt(localStorage.getItem('selectedCompanyId') || '1')
+        });
+        await fetchWithRetry(`${BASE_URL}/bills`, { headers: { 'Accept': 'application/json' } }, 'bills', setBills);
+      }
+    };
+
+    const updateBill = async (billId, billData) => {
+      if (!billData.vendorId || !billData.amount || !billData.billDate) {
+        setError('Vendor, amount, and bill date are required');
+        return null;
+      }
+      const amount = parseFloat(billData.amount);
+      if (isNaN(amount) || amount <= 0) {
+        setError('Amount must be a positive number');
+        return null;
+      }
+      try {
+        const companyId = localStorage.getItem('selectedCompanyId') || '1';
+        const payload = {
+          vendor_id: parseInt(billData.vendorId),
+          purchase_order_id: billData.purchaseOrderId ? parseInt(billData.purchaseOrderId) : null,
+          bill_number: billData.billNumber || null,
+          invoice_number: billData.invoiceNumber || null,
+          amount: amount,
+          bill_date: billData.billDate,
+          due_date: billData.dueDate || null,
+          is_inventory_bill: billData.isInventoryBill,
+          expense_category_id: billData.expenseCategoryId ? parseInt(billData.expenseCategoryId) : null,
+          paid: !!billData.paid,
+          payment_date: billData.paid ? billData.payment_date : null,
+          company_id: parseInt(companyId)
+        };
+        console.log(`[UPDATE_BILL] Updating bill ${billId} with payload:`, payload);
+        const data = await fetchWithRetry(`${BASE_URL}/bills/${billId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(payload)
+        }, 'update_bill', null);
+        console.log(`[UPDATE_BILL] Updated bill ${billId}:`, data);
+        await fetchWithRetry(`${BASE_URL}/bills`, { headers: { 'Accept': 'application/json' } }, 'bills', setBills);
+        setEditingBillId(null);
+        setEditingBillData(null);
+        setSuccess('Bill updated successfully!');
+        setTimeout(() => setSuccess(null), 3000);
+        return data;
+      } catch (err) {
+        console.error(`[UPDATE_BILL] Error updating bill ${billId}:`, err);
+        setError(`Failed to update bill: ${err.message.includes('SQLITE_ERROR') ? 'Database error - please contact support' : err.message}`);
+        return null;
+      }
+    };
+
+    const payBill = async (bill) => {
+      if (!window.confirm(`Mark this bill ${bill.bill_number || 'ID ' + bill.id} for ${getVendorName(bill.vendor_id)} as paid?`)) {
+        return;
+      }
+      const checkNumber = prompt('Enter check number (optional):', '');
+      if (checkNumber === null) return;
+      const today = new Date().toISOString().split('T')[0];
+      const updatedBillData = {
+        vendorId: bill.vendor_id ? String(bill.vendor_id) : '',
+        purchaseOrderId: bill.purchase_order_id ? String(bill.purchase_order_id) : '',
+        expenseCategoryId: bill.expense_category_id ? String(bill.expense_category_id) : '',
+        amount: bill.amount ? String(bill.amount) : '',
+        billDate: bill.bill_date || today,
+        dueDate: bill.due_date || '',
+        paid: true,
+        billNumber: bill.bill_number || '',
+        invoiceNumber: bill.invoice_number || '',
+        isInventoryBill: !!bill.is_inventory_bill,
+        payment_date: today
+      };
+      console.log(`[PAY_BILL] Attempting to update bill ${bill.id} with data:`, updatedBillData);
+      const updatedBill = await updateBill(bill.id, updatedBillData);
+      if (updatedBill) {
+        await fetchWithRetry(`${BASE_URL}/bills`, { headers: { 'Accept': 'application/json' } }, 'bills', setBills);
+        generatePaidBillsPDF([updatedBill], checkNumber);
+      }
+    };
+
+    const deleteBill = async (id) => {
+      try {
+        await fetchWithRetry(`${BASE_URL}/bills/${id}`, { method: 'DELETE' }, 'delete_bill', null);
+        setBills(prev => prev.filter(b => b.id !== id));
+        setSelectedBills(prev => prev.filter(billId => billId !== id));
+        setSuccess('Bill deleted successfully!');
+        setTimeout(() => setSuccess(null), 3000);
+      } catch (err) {
+        setError(`Failed to delete bill: ${err.message}`);
+      }
+    };
+
+    if (isLoading) {
+      return (
+        React.createElement('main', { className: 'container mx-auto p-6 flex-grow' },
+          React.createElement('h2', { className: 'text-3xl font-bold mb-6' }, 'Manage Bills'),
+          React.createElement('p', null, 'Loading bills...')
+        )
+      );
+    }
+
+    const invalidDateBills = bills.filter(bill => !bill.bill_date || isNaN(new Date(bill.bill_date).getTime()));
+    const monthGroups = groupBillsByMonth(bills).map(group => ({
+      ...group,
+      bills: group.bills.filter(bill => (
+        getVendorName(bill.vendor_id).toLowerCase().includes(searchQuery.toLowerCase()) ||
+        getPurchaseOrderNumber(bill.purchase_order_id).toLowerCase().includes(searchQuery.toLowerCase()) ||
+        getExpenseCategoryName(bill).toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (bill.bill_number || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (bill.invoice_number || '').toLowerCase().includes(searchQuery.toLowerCase())
+      ))
+    }));
+
+    const currentIndex = currentMonth ? monthGroups.findIndex(m => m.month === currentMonth) : 0;
+
+    return (
+      React.createElement(ErrorBoundary, null,
+        React.createElement('main', { className: 'container mx-auto p-6 flex-grow' },
+          React.createElement('h2', { className: 'text-3xl font-bold mb-6' }, 'Manage Bills'),
+          error && React.createElement('div', { className: 'p-4 mb-6 text-red-600 bg-red-100 rounded-lg shadow-sm' }, `Error: ${error}`),
+          success && React.createElement('div', { className: 'p-4 mb-6 text-green-600 bg-green-100 rounded-lg shadow-sm' }, success),
+          React.createElement('div', { className: 'form-container mb-6' },
+            React.createElement('h3', { className: 'text-lg font-semibold mb-2' }, 'Add Bill'),
+            React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-4' },
+              React.createElement('div', null,
+                React.createElement('label', { htmlFor: 'add-vendorId', className: 'block text-sm font-medium text-gray-700' }, 'Vendor'),
+                React.createElement('select', {
+                  id: 'add-vendorId',
+                  value: newBill.vendorId,
+                  onChange: e => setNewBill({ ...newBill, vendorId: e.target.value }),
+                  className: 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500',
+                  required: true
+                },
+                  React.createElement('option', { value: '' }, 'Select Vendor'),
+                  vendors.map(vendor => React.createElement('option', { key: vendor.id, value: vendor.id }, vendor.name))
+                )
+              ),
+              React.createElement('div', null,
+                React.createElement('label', { htmlFor: 'add-purchaseOrderId', className: 'block text-sm font-medium text-gray-700' }, 'Purchase Order (Optional)'),
+                React.createElement('select', {
+                  id: 'add-purchaseOrderId',
+                  value: newBill.purchaseOrderId,
+                  onChange: e => setNewBill({ ...newBill, purchaseOrderId: e.target.value }),
+                  className: 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+                },
+                  React.createElement('option', { value: '' }, 'No Purchase Order'),
+                  purchaseOrders.map(po => React.createElement('option', { key: po.id, value: po.id }, po.po_number))
+                )
+              ),
+              React.createElement('div', null,
+                React.createElement('label', { htmlFor: 'add-expenseCategoryId', className: 'block text-sm font-medium text-gray-700' }, 'Expense Category (Optional)'),
+                React.createElement('select', {
+                  id: 'add-expenseCategoryId',
+                  value: newBill.expenseCategoryId,
+                  onChange: e => setNewBill({ ...newBill, expenseCategoryId: e.target.value, isInventoryBill: e.target.value === '' }),
+                  className: 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+                },
+                  React.createElement('option', { value: '' }, 'Inventory'),
+                  expenseCategories.map(category => React.createElement('option', { key: category.id, value: category.id }, category.name))
+                ),
+                React.createElement('button', {
+                  onClick: addExpenseCategory,
+                  className: 'mt-2 bg-blue-500 text-white px-4 py-1 rounded-md hover:bg-blue-600'
+                }, 'Add Category')
+              ),
+              React.createElement('div', null,
+                React.createElement('label', { htmlFor: 'add-amount', className: 'block text-sm font-medium text-gray-700' }, 'Amount'),
+                React.createElement('input', {
+                  id: 'add-amount',
+                  type: 'number',
+                  value: newBill.amount,
+                  onChange: e => setNewBill({ ...newBill, amount: e.target.value }),
+                  className: 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500',
+                  step: '0.01',
+                  min: '0',
+                  required: true,
+                  placeholder: 'e.g., 100.00'
+                })
+              ),
+              React.createElement('div', null,
+                React.createElement('label', { htmlFor: 'add-billDate', className: 'block text-sm font-medium text-gray-700' }, 'Bill Date'),
+                React.createElement('input', {
+                  id: 'add-billDate',
+                  type: 'date',
+                  value: newBill.billDate,
+                  onChange: e => setNewBill({ ...newBill, billDate: e.target.value }),
+                  className: 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500',
+                  required: true
+                })
+              ),
+              React.createElement('div', null,
+                React.createElement('label', { htmlFor: 'add-dueDate', className: 'block text-sm font-medium text-gray-700' }, 'Due Date (Optional)'),
+                React.createElement('input', {
+                  id: 'add-dueDate',
+                  type: 'date',
+                  value: newBill.dueDate,
+                  onChange: e => setNewBill({ ...newBill, dueDate: e.target.value }),
+                  className: 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+                })
+              ),
+              React.createElement('div', null,
+                React.createElement('label', { htmlFor: 'add-billNumber', className: 'block text-sm font-medium text-gray-700' }, 'Bill Number (Optional)'),
+                React.createElement('input', {
+                  id: 'add-billNumber',
+                  type: 'text',
+                  value: newBill.billNumber,
+                  onChange: e => setNewBill({ ...newBill, billNumber: e.target.value }),
+                  className: 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500',
+                  placeholder: 'e.g., BILL-001'
+                })
+              ),
+              React.createElement('div', null,
+                React.createElement('label', { htmlFor: 'add-invoiceNumber', className: 'block text-sm font-medium text-gray-700' }, 'Invoice Number (Optional)'),
+                React.createElement('input', {
+                  id: 'add-invoiceNumber',
+                  type: 'text',
+                  value: newBill.invoiceNumber,
+                  onChange: e => setNewBill({ ...newBill, invoiceNumber: e.target.value }),
+                  className: 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500',
+                  placeholder: 'e.g., INV-001'
+                })
+              ),
+              React.createElement('div', null,
+                React.createElement('label', { htmlFor: 'add-paid', className: 'block text-sm font-medium text-gray-700' }, 'Paid'),
+                React.createElement('input', {
+                  id: 'add-paid',
+                  type: 'checkbox',
+                  checked: newBill.paid,
+                  onChange: e => setNewBill({
+                    ...newBill,
+                    paid: e.target.checked,
+                    payment_date: e.target.checked ? (newBill.payment_date || new Date().toISOString().split('T')[0]) : ''
+                  }),
+                  className: 'mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
+                })
+              ),
+              newBill.paid && React.createElement('div', null,
+                React.createElement('label', { htmlFor: 'add-paymentDate', className: 'block text-sm font-medium text-gray-700' }, 'Payment Date'),
+                React.createElement('input', {
+                  id: 'add-paymentDate',
+                  type: 'date',
+                  value: newBill.payment_date,
+                  onChange: e => setNewBill({ ...newBill, payment_date: e.target.value }),
+                  className: 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500',
+                  required: true
+                })
+              )
+            ),
+            React.createElement('div', { className: 'mt-4' },
+              React.createElement('button', {
+                onClick: handleAddBill,
+                className: 'bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700'
+              }, 'Add Bill')
+            )
+          ),
+          React.createElement('div', { className: 'table-container mb-6' },
+            React.createElement('div', { className: 'flex items-center gap-4 mb-4 flex-wrap' },
+              React.createElement('input', {
+                type: 'text',
+                placeholder: 'Search by Vendor, PO, Category, Bill Number, or Invoice Number...',
+                value: searchQuery,
+                onChange: e => setSearchQuery(e.target.value),
+                className: 'mt-1 block w-full md:w-1/2 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+              }),
+              React.createElement('button', {
+                onClick: () => setSearchQuery(''),
+                className: 'bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700'
+              }, 'Clear Search'),
+              getSelectedBillsVendorId() && React.createElement('button', {
+                onClick: payAllBills,
+                className: 'bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600'
+              }, `Pay All ($${getSelectedBillsTotal()})`),
+              currentIndex > 0 && React.createElement('button', {
+                onClick: () => handleMonthNavigation('prev'),
+                className: 'bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700'
+              }, 'Next Month'),
+              currentIndex < monthGroups.length - 1 && React.createElement('button', {
+                onClick: () => handleMonthNavigation('next'),
+                className: 'bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700'
+              }, 'Previous Month')
+            ),
+            invalidDateBills.length > 0 && React.createElement('div', { className: 'p-4 mb-6 text-yellow-600 bg-yellow-100 rounded-lg shadow-sm' },
+              React.createElement('h3', { className: 'text-lg font-semibold' }, 'Bills with Invalid Dates'),
+              React.createElement('p', null, `${invalidDateBills.length} bill(s) have invalid or missing dates and are not shown in the month groups. Please edit these bills to assign a valid date.`),
+              React.createElement('ul', { className: 'list-disc pl-5' },
+                invalidDateBills.map(bill => React.createElement('li', { key: bill.id }, `Bill #${bill.bill_number || bill.id} (Vendor: ${getVendorName(bill.vendor_id)})`))
+              )
+            ),
+            monthGroups.length === 0 && invalidDateBills.length === 0 ? (
+              React.createElement('p', { className: 'p-4 bg-white rounded-lg shadow-md' }, 'No bills in database. Add a bill using the form above.')
+            ) : (
+              monthGroups.map((group, index) => {
+                const [year, month] = group.month.split('-').map(Number);
+                const displayMonth = new Date(year, month - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+                console.log(`[PAGINATION] Rendering month: ${group.month} as ${displayMonth}`);
+                return (
+                  React.createElement('div', { key: group.month },
+                    React.createElement('h3', {
+                      className: 'month-header text-lg font-semibold mb-2 cursor-pointer',
+                      onClick: () => toggleMonth(group.month)
+                    }, `${displayMonth}${collapsedMonths.includes(group.month) ? ' (Expand)' : ' (Collapse)'}`),
+                    React.createElement('div', { className: collapsedMonths.includes(group.month) || group.month !== currentMonth ? 'hidden' : 'block' },
+                      group.bills.length === 0 ? (
+                        React.createElement('p', { className: 'p-4 bg-white rounded-lg shadow-md' }, `No bills match the search criteria for ${displayMonth}.`)
+                      ) : (
+                        React.createElement('table', { className: 'min-w-full divide-y divide-gray-200' },
+                          React.createElement('thead', { className: 'bg-gray-50' },
+                            React.createElement('tr', null,
+                              React.createElement('th', { className: 'px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider' },
+                                React.createElement('input', {
+                                  type: 'checkbox',
+                                  onChange: e => {
+                                    const monthBills = group.bills.filter(b => !b.paid && !b.payment_date).map(b => b.id);
+                                    if (e.target.checked) {
+                                      setSelectedBills(prev => [...new Set([...prev, ...monthBills])]);
+                                    } else {
+                                      setSelectedBills(prev => prev.filter(id => !monthBills.includes(id)));
+                                    }
+                                  },
+                                  checked: group.bills.filter(b => !b.paid && !b.payment_date).every(b => selectedBills.includes(b.id)) && group.bills.some(b => !b.paid && !b.payment_date)
+                                })
+                              ),
+                              React.createElement('th', { className: 'px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer', onClick: () => handleSort('billNumber') },
+                                `Bill Number ${sortConfig.key === 'billNumber' && (sortConfig.direction === 'asc' ? '↑' : '↓')}`
+                              ),
+                              React.createElement('th', { className: 'px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer', onClick: () => handleSort('invoiceNumber') },
+                                `Invoice Number ${sortConfig.key === 'invoiceNumber' && (sortConfig.direction === 'asc' ? '↑' : '↓')}`
+                              ),
+                              React.createElement('th', { className: 'px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer', onClick: () => handleSort('vendorName') },
+                                `Vendor ${sortConfig.key === 'vendorName' && (sortConfig.direction === 'asc' ? '↑' : '↓')}`
+                              ),
+                              React.createElement('th', { className: 'px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer', onClick: () => handleSort('poNumber') },
+                                `Purchase Order ${sortConfig.key === 'poNumber' && (sortConfig.direction === 'asc' ? '↑' : '↓')}`
+                              ),
+                              React.createElement('th', { className: 'px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer', onClick: () => handleSort('expenseCategory') },
+                                `Category ${sortConfig.key === 'expenseCategory' && (sortConfig.direction === 'asc' ? '↑' : '↓')}`
+                              ),
+                              React.createElement('th', { className: 'px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer', onClick: () => handleSort('amount') },
+                                `Amount ${sortConfig.key === 'amount' && (sortConfig.direction === 'asc' ? '↑' : '↓')}`
+                              ),
+                              React.createElement('th', { className: 'px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer', onClick: () => handleSort('billDate') },
+                                `Bill Date ${sortConfig.key === 'billDate' && (sortConfig.direction === 'asc' ? '↑' : '↓')}`
+                              ),
+                              React.createElement('th', { className: 'px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer', onClick: () => handleSort('dueDate') },
+                                `Due Date ${sortConfig.key === 'dueDate' && (sortConfig.direction === 'asc' ? '↑' : '↓')}`
+                              ),
+                              React.createElement('th', { className: 'px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer', onClick: () => handleSort('paid') },
+                                `Paid ${sortConfig.key === 'paid' && (sortConfig.direction === 'asc' ? '↑' : '↓')}`
+                              ),
+                              React.createElement('th', { className: 'px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider' }, 'Actions')
+                            )
+                          ),
+                          React.createElement('tbody', { className: 'bg-white divide-y divide-gray-200' },
+                            sortBills(group.bills, sortConfig.key, sortConfig.direction).map(bill => (
+                              React.createElement(BillRow, {
+                                key: bill.id,
+                                bill,
+                                vendors,
+                                purchaseOrders,
+                                expenseCategories,
+                                selectedBills,
+                                editingBillId,
+                                editingBillData,
+                                setEditingBillId,
+                                setEditingBillData,
+                                handleSelectBill,
+                                updateBill,
+                                payBill,
+                                deleteBill,
+                                getVendorName,
+                                getPurchaseOrderNumber,
+                                getExpenseCategoryName
+                              })
+                            ))
+                          )
+                        )
+                      )
+                    ),
+                    index === currentIndex && React.createElement('div', { className: 'month-navigation mt-4 flex gap-4' },
+                      currentIndex > 0 && React.createElement('button', {
+                        onClick: () => handleMonthNavigation('prev'),
+                        className: 'bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700'
+                      }, 'Next Month'),
+                      currentIndex < monthGroups.length - 1 && React.createElement('button', {
+                        onClick: () => handleMonthNavigation('next'),
+                        className: 'bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700'
+                      }, 'Previous Month')
+                    )
+                  )
+                );
+              })
+            )
+          )
+        )
+      )
+    );
+  };
+
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(React.createElement(BillsPage));
+</script>
+</body>
+</html>

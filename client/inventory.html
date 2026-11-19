@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory - Open Accounting</title>
+  <style>
+    :root {
+      --blue: #1d4ed8;
+      --blue-dark: #1e3a8a;
+      --green: #059669;
+      --red: #dc2626;
+      --amber: #d97706;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-500: #6b7280;
+      --gray-700: #374151;
+      --gray-900: #111827;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--gray-100);
+      color: var(--gray-900);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: var(--blue);
+      color: #fff;
+      padding: 0.75rem 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      box-shadow: 0 2px 8px rgba(0,0,0,.12);
+    }
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .brand { display: flex; align-items: center; gap: 0.75rem; }
+    .brand img { height: 40px; }
+    .brand h1 { font-size: 1.15rem; margin: 0; font-weight: 700; }
+    nav { display: flex; flex-wrap: wrap; gap: 0.35rem 0.75rem; }
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.85rem;
+      padding: 0.2rem 0.35rem;
+      border-radius: 4px;
+    }
+    nav a:hover, nav a.active { background: rgba(255,255,255,.15); }
+    main {
+      flex: 1;
+      max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.25rem 1rem 2.5rem;
+    }
+    @media (min-width: 1800px) {
+      main { max-width: 1800px; }
+    }
+    h2 { margin: 0 0 1rem; font-size: 1.75rem; }
+    .toolbar {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+      margin-bottom: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.85rem;
+      align-items: flex-end;
+    }
+    .field { display: flex; flex-direction: column; gap: 0.25rem; min-width: 140px; flex: 1; }
+    .field.grow { flex: 2; min-width: 200px; }
+    .field label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+    .field select, .field input {
+      padding: 0.5rem 0.65rem;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      background: #fff;
+    }
+    .btn {
+      border: none;
+      border-radius: 6px;
+      padding: 0.55rem 1rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: var(--blue);
+      color: #fff;
+      white-space: nowrap;
+    }
+    .btn:hover { background: var(--blue-dark); }
+    .btn.secondary { background: var(--gray-200); color: var(--gray-700); }
+    .btn.secondary:hover { background: #d1d5db; }
+    .btn.green { background: var(--green); }
+    .btn.green:hover { background: #047857; }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn.sm { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
+    .kpi-grid {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .kpi {
+      background: #fff;
+      border-radius: 10px;
+      padding: 0.9rem 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+      border-left: 4px solid var(--blue);
+      min-width: 140px;
+      flex: 1 1 0;
+    }
+    .kpi.green { border-left-color: var(--green); }
+    .kpi.amber { border-left-color: var(--amber); }
+    .kpi.red { border-left-color: var(--red); }
+    .kpi .label { font-size: 0.72rem; color: var(--gray-500); font-weight: 600; text-transform: uppercase; }
+    .kpi .value { font-size: 1.3rem; font-weight: 700; margin-top: 0.2rem; }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+      overflow: hidden;
+    }
+    .table-scroll { overflow-x: auto; max-height: calc(100vh - 340px); overflow-y: auto; }
+    table.inv {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      table-layout: fixed; /* predictable column widths; name takes the leftover */
+    }
+    table.inv th, table.inv td {
+      padding: 0.55rem 0.7rem;
+      border-bottom: 1px solid var(--gray-200);
+      vertical-align: middle;
+    }
+    table.inv th {
+      position: sticky;
+      top: 0;
+      background: var(--gray-50);
+      text-align: left;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      color: var(--gray-500);
+      cursor: pointer;
+      user-select: none;
+      z-index: 1;
+      white-space: nowrap;
+    }
+    /* Fixed widths for compact columns; name column gets the rest */
+    table.inv th:nth-child(1), table.inv td:nth-child(1) { width: 11rem; }   /* SKU */
+    table.inv th:nth-child(2), table.inv td:nth-child(2) { width: auto; }     /* Name — flexible */
+    table.inv th:nth-child(3), table.inv td:nth-child(3) { width: 6.5rem; }   /* Wholesale */
+    table.inv th:nth-child(4), table.inv td:nth-child(4) { width: 6.5rem; }   /* Retail */
+    table.inv th:nth-child(5), table.inv td:nth-child(5) { width: 6.5rem; }   /* On hand */
+    table.inv th:nth-child(6), table.inv td:nth-child(6) { width: 7rem; }     /* Value */
+    table.inv th:nth-child(7), table.inv td:nth-child(7) { width: 5.5rem; }   /* Actions */
+    @media (min-width: 1400px) {
+      table.inv th:nth-child(1), table.inv td:nth-child(1) { width: 12.5rem; }
+      table.inv th:nth-child(3), table.inv td:nth-child(3),
+      table.inv th:nth-child(4), table.inv td:nth-child(4) { width: 7rem; }
+      table.inv th:nth-child(5), table.inv td:nth-child(5) { width: 7rem; }
+      table.inv th:nth-child(6), table.inv td:nth-child(6) { width: 8rem; }
+    }
+    table.inv th.num, table.inv td.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    table.inv th.no-sort { cursor: default; }
+    table.inv tbody tr:hover { background: #f8fafc; }
+    table.inv tbody tr.dirty { background: #fffbeb; }
+    table.inv tbody tr.zero { color: var(--gray-500); }
+    table.inv tbody tr.low td.stock-cell { color: var(--amber); font-weight: 600; }
+    table.inv input.stock-input {
+      width: 5rem;
+      max-width: 100%;
+      text-align: right;
+      padding: 0.3rem 0.4rem;
+      border: 1px solid var(--gray-200);
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    table.inv input.stock-input:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 2px rgba(37,99,235,.2);
+    }
+    .sku {
+      font-family: ui-monospace, monospace;
+      font-size: 0.85rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .name-cell {
+      overflow: hidden;
+      max-width: 0; /* with table-layout:fixed, forces flex-like shrink for auto column */
+    }
+    .name-inner {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      min-width: 0;
+      width: 100%;
+    }
+    .name-text {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .name-cell .chip {
+      flex: 0 0 auto;
+      margin-left: 0;
+    }
+    .msg {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 0.85rem;
+      font-size: 0.95rem;
+    }
+    .msg.error { background: #fef2f2; color: var(--red); border: 1px solid #fecaca; }
+    .msg.ok { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+    .muted { color: var(--gray-500); font-size: 0.85rem; }
+    .loading { text-align: center; padding: 3rem; color: var(--gray-500); }
+    .actions-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: flex-end;
+      padding: 0.75rem 1rem;
+      border-top: 1px solid var(--gray-200);
+      background: var(--gray-50);
+    }
+    footer {
+      background: #1f2937;
+      color: #e5e7eb;
+      padding: 0.85rem 1rem;
+      font-size: 0.85rem;
+    }
+    footer .inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .hidden { display: none !important; }
+    .chip {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.1rem 0.4rem;
+      border-radius: 999px;
+      background: #fef3c7;
+      color: #92400e;
+      margin-left: 0.35rem;
+    }
+    .chip.out { background: #fee2e2; color: #991b1b; }
+  </style>
+  <link rel="stylesheet" href="/app-shell.css" />
+  <script src="/app-shell.js" defer></script>
+  <link rel="stylesheet" href="/kpi-common.css" />
+  <script src="/kpi-common.js" defer></script>
+</head>
+<body>
+  <!-- Header provided by app-shell.js (shared sticky bar) -->
+  <header id="header" class="app-legacy-header" hidden></header>
+
+  <main>
+    <h2>Inventory Management</h2>
+    <p class="muted" style="margin-top:-0.5rem;margin-bottom:1rem;">
+      Edit on-hand stock, search/sort products, and see wholesale inventory value.
+      Stock is saved to the product record used by sales and COGS.
+    </p>
+
+    <div class="toolbar">
+      <div class="field" style="flex:0 0 180px;">
+        <label>Company</label>
+        <select id="companySelect">
+          <option value="1">My Company</option>
+          <option value="2">My Company</option>
+        </select>
+      </div>
+      <div class="field grow">
+        <label>Search</label>
+        <input type="search" id="searchInput" placeholder="SKU or product name…" autocomplete="off" />
+      </div>
+      <div class="field" style="flex:0 0 160px;">
+        <label>Filter</label>
+        <select id="stockFilter">
+          <option value="all">All products</option>
+          <option value="in_stock">In stock (&gt; 0)</option>
+          <option value="low">Low stock (1–5)</option>
+          <option value="out">Out of stock</option>
+          <option value="dirty">Unsaved changes</option>
+        </select>
+      </div>
+      <button class="btn secondary" type="button" id="reloadBtn">Reload</button>
+      <button class="btn green" type="button" id="saveAllBtn" disabled>Save all changes</button>
+    </div>
+
+    <div id="msg" class="msg hidden"></div>
+    <div id="loading" class="loading">Loading inventory…</div>
+
+    <div id="body" class="hidden">
+      <div class="kpi-grid" id="kpiGrid"></div>
+      <div class="card">
+        <div class="table-scroll">
+          <table class="inv" id="invTable">
+            <thead>
+              <tr>
+                <th data-sort="sku">SKU</th>
+                <th data-sort="name">Name</th>
+                <th class="num" data-sort="wholesale_price">Wholesale</th>
+                <th class="num" data-sort="retail_price">Retail</th>
+                <th class="num" data-sort="stock">On hand</th>
+                <th class="num" data-sort="value">Value (WH)</th>
+                <th class="num no-sort">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="invBody"></tbody>
+          </table>
+        </div>
+        <div class="actions-bar">
+          <span class="muted" id="rowCount"></span>
+          <button class="btn green" type="button" id="saveAllBtn2" disabled>Save all changes</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="inner">
+      <span>© Open Accounting — Inventory</span>
+      <span class="muted" id="statusLine"></span>
+    </div>
+  </footer>
+
+  <script>
+(function () {
+  'use strict';
+
+  var API = window.location.origin + '/api';
+  var state = {
+    companyId: localStorage.getItem('selectedCompanyId') || '1',
+    products: [],
+    drafts: {},   // id -> stock number (only if changed)
+    sortKey: 'sku',
+    sortDir: 'asc',
+    loading: false,
+  };
+
+  function $(id) { return document.getElementById(id); }
+
+  function money(n) {
+    var v = Number(n || 0);
+    return (v < 0 ? '-$' : '$') + Math.abs(v).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
+
+  function num(n, digits) {
+    var v = Number(n);
+    if (!isFinite(v)) return '—';
+    return v.toLocaleString(undefined, {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    });
+  }
+
+  function showMsg(text, type) {
+    var el = $('msg');
+    if (!text) {
+      el.className = 'msg hidden';
+      el.textContent = '';
+      return;
+    }
+    el.className = 'msg ' + (type === 'ok' ? 'ok' : 'error');
+    el.textContent = text;
+  }
+
+  function stockOf(p) {
+    if (Object.prototype.hasOwnProperty.call(state.drafts, p.id)) {
+      return Number(state.drafts[p.id]);
+    }
+    return Number(p.stock || 0);
+  }
+
+  function isDirty(p) {
+    return Object.prototype.hasOwnProperty.call(state.drafts, p.id) &&
+      Number(state.drafts[p.id]) !== Number(p.stock || 0);
+  }
+
+  function dirtyCount() {
+    return state.products.filter(isDirty).length;
+  }
+
+  function updateSaveButtons() {
+    var n = dirtyCount();
+    var label = n ? ('Save all changes (' + n + ')') : 'Save all changes';
+    $('saveAllBtn').disabled = n === 0;
+    $('saveAllBtn2').disabled = n === 0;
+    $('saveAllBtn').textContent = label;
+    $('saveAllBtn2').textContent = label;
+  }
+
+  function filteredList() {
+    var q = ($('searchInput').value || '').trim().toLowerCase();
+    var filter = $('stockFilter').value;
+    var list = state.products.slice();
+
+    if (q) {
+      list = list.filter(function (p) {
+        return String(p.sku || '').toLowerCase().indexOf(q) !== -1 ||
+          String(p.name || '').toLowerCase().indexOf(q) !== -1;
+      });
+    }
+
+    list = list.filter(function (p) {
+      var s = stockOf(p);
+      if (filter === 'in_stock') return s > 0;
+      if (filter === 'low') return s > 0 && s <= 5;
+      if (filter === 'out') return s <= 0;
+      if (filter === 'dirty') return isDirty(p);
+      return true;
+    });
+
+    var key = state.sortKey;
+    var dir = state.sortDir === 'asc' ? 1 : -1;
+    list.sort(function (a, b) {
+      var av, bv;
+      if (key === 'value') {
+        av = stockOf(a) * Number(a.wholesale_price || 0);
+        bv = stockOf(b) * Number(b.wholesale_price || 0);
+      } else if (key === 'stock') {
+        av = stockOf(a);
+        bv = stockOf(b);
+      } else if (key === 'wholesale_price' || key === 'retail_price') {
+        av = Number(a[key] || 0);
+        bv = Number(b[key] || 0);
+      } else {
+        av = String(a[key] == null ? '' : a[key]).toLowerCase();
+        bv = String(b[key] == null ? '' : b[key]).toLowerCase();
+      }
+      if (av < bv) return -1 * dir;
+      if (av > bv) return 1 * dir;
+      return 0;
+    });
+
+    return list;
+  }
+
+  function renderKpis() {
+    var products = state.products;
+    var totalSku = products.length;
+    var units = 0;
+    var valueWh = 0;
+    var valueRetail = 0;
+    var out = 0;
+    var low = 0;
+    products.forEach(function (p) {
+      var s = stockOf(p);
+      units += s;
+      valueWh += s * Number(p.wholesale_price || 0);
+      valueRetail += s * Number(p.retail_price || 0);
+      if (s <= 0) out += 1;
+      else if (s <= 5) low += 1;
+    });
+    $('kpiGrid').innerHTML =
+      '<div class="kpi"><div class="label">SKUs</div><div class="value">' + totalSku + '</div></div>' +
+      '<div class="kpi"><div class="label">Units on hand</div><div class="value">' + units.toLocaleString() + '</div></div>' +
+      '<div class="kpi green"><div class="label">Inventory value (cost)</div><div class="value">' + money(valueWh) + '</div></div>' +
+      '<div class="kpi"><div class="label">At retail</div><div class="value">' + money(valueRetail) + '</div></div>' +
+      '<div class="kpi amber"><div class="label">Low stock (1–5)</div><div class="value">' + low + '</div></div>' +
+      '<div class="kpi red"><div class="label">Out of stock</div><div class="value">' + out + '</div></div>';
+  }
+
+  function renderTable() {
+    var list = filteredList();
+    var tbody = $('invBody');
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="muted" style="text-align:center;padding:2rem;">No products match.</td></tr>';
+      $('rowCount').textContent = '0 rows';
+      updateSaveButtons();
+      return;
+    }
+
+    tbody.innerHTML = list.map(function (p) {
+      var s = stockOf(p);
+      var dirty = isDirty(p);
+      var cls = [];
+      if (dirty) cls.push('dirty');
+      if (s <= 0) cls.push('zero');
+      if (s > 0 && s <= 5) cls.push('low');
+      var badge = '';
+      if (s <= 0) badge = '<span class="chip out">OUT</span>';
+      else if (s <= 5) badge = '<span class="chip">LOW</span>';
+      var value = s * Number(p.wholesale_price || 0);
+      var fullName = escapeHtml(p.name || '');
+      return '<tr class="' + cls.join(' ') + '" data-id="' + p.id + '">' +
+        '<td class="sku" title="' + escapeHtml(p.sku || '') + '">' + escapeHtml(p.sku || '') + '</td>' +
+        '<td class="name-cell" title="' + fullName + '">' +
+          '<div class="name-inner"><span class="name-text">' + fullName + '</span>' + badge + '</div>' +
+        '</td>' +
+        '<td class="num">' + money(p.wholesale_price) + '</td>' +
+        '<td class="num">' + money(p.retail_price) + '</td>' +
+        '<td class="num stock-cell">' +
+          '<input class="stock-input" type="number" min="0" step="1" data-id="' + p.id + '" value="' + s + '" />' +
+        '</td>' +
+        '<td class="num">' + money(value) + '</td>' +
+        '<td class="num">' +
+          '<button type="button" class="btn green sm save-one" data-id="' + p.id + '"' + (dirty ? '' : ' disabled') + '>Save</button>' +
+        '</td>' +
+        '</tr>';
+    }).join('');
+
+    $('rowCount').textContent = list.length + ' of ' + state.products.length + ' products' +
+      (dirtyCount() ? ' · ' + dirtyCount() + ' unsaved' : '');
+    updateSaveButtons();
+
+    // Update sort indicators
+    document.querySelectorAll('table.inv th[data-sort]').forEach(function (th) {
+      var k = th.getAttribute('data-sort');
+      var base = th.textContent.replace(/[↑↓]\s*$/, '').trim();
+      if (k === state.sortKey) {
+        th.textContent = base + (state.sortDir === 'asc' ? ' ↑' : ' ↓');
+      } else {
+        th.textContent = base.replace(/\s*[↑↓]$/, '');
+      }
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function renderAll() {
+    renderKpis();
+    renderTable();
+  }
+
+  async function loadProducts() {
+    showMsg('');
+    $('loading').classList.remove('hidden');
+    $('body').classList.add('hidden');
+    state.loading = true;
+    try {
+      state.companyId = $('companySelect').value;
+      localStorage.setItem('selectedCompanyId', state.companyId);
+      var res = await fetch(API + '/products?company_id=' + encodeURIComponent(state.companyId), {
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+      });
+      if (!res.ok) {
+        var t = await res.text();
+        throw new Error('HTTP ' + res.status + ': ' + (t || res.statusText).slice(0, 200));
+      }
+      var data = await res.json();
+      if (!Array.isArray(data)) {
+        data = data.products || data.data || [];
+      }
+      state.products = data;
+      state.drafts = {};
+      $('statusLine').textContent = 'Loaded ' + data.length + ' products · ' + new Date().toLocaleString();
+      renderAll();
+      $('body').classList.remove('hidden');
+    } catch (err) {
+      console.error(err);
+      showMsg('Failed to load inventory: ' + err.message, 'error');
+    } finally {
+      $('loading').classList.add('hidden');
+      state.loading = false;
+    }
+  }
+
+  async function saveProduct(id) {
+    var p = state.products.find(function (x) { return String(x.id) === String(id); });
+    if (!p) throw new Error('Product not found');
+    var stock = Object.prototype.hasOwnProperty.call(state.drafts, id)
+      ? Number(state.drafts[id])
+      : Number(p.stock || 0);
+    if (!isFinite(stock) || stock < 0) throw new Error('Invalid stock for ' + p.sku);
+
+    var body = {
+      sku: p.sku,
+      name: p.name,
+      wholesale_price: p.wholesale_price != null ? p.wholesale_price : 0,
+      retail_price: p.retail_price != null ? p.retail_price : 0,
+      stock: Math.floor(stock),
+      vendor_id: p.vendor_id != null ? p.vendor_id : null,
+      company_id: p.company_id != null ? p.company_id : Number(state.companyId),
+    };
+
+    var res = await fetch(API + '/products/' + encodeURIComponent(id), {
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      var t = await res.text();
+      throw new Error('Save ' + p.sku + ' failed: HTTP ' + res.status + ' ' + (t || '').slice(0, 150));
+    }
+    var updated = await res.json();
+    state.products = state.products.map(function (x) {
+      return String(x.id) === String(id) ? updated : x;
+    });
+    delete state.drafts[id];
+    return updated;
+  }
+
+  async function saveOne(id) {
+    showMsg('');
+    try {
+      var u = await saveProduct(id);
+      showMsg('Saved stock for ' + u.sku + ' → ' + u.stock, 'ok');
+      renderAll();
+    } catch (err) {
+      showMsg(err.message, 'error');
+    }
+  }
+
+  async function saveAll() {
+    var dirtyIds = state.products.filter(isDirty).map(function (p) { return p.id; });
+    if (!dirtyIds.length) return;
+    showMsg('');
+    $('saveAllBtn').disabled = true;
+    $('saveAllBtn2').disabled = true;
+    var ok = 0;
+    var fail = 0;
+    var lastErr = '';
+    for (var i = 0; i < dirtyIds.length; i++) {
+      try {
+        await saveProduct(dirtyIds[i]);
+        ok += 1;
+      } catch (err) {
+        fail += 1;
+        lastErr = err.message;
+        console.error(err);
+      }
+    }
+    renderAll();
+    if (fail === 0) {
+      showMsg('Saved ' + ok + ' product stock level' + (ok === 1 ? '' : 's') + '.', 'ok');
+    } else {
+      showMsg('Saved ' + ok + ', failed ' + fail + '. Last error: ' + lastErr, 'error');
+    }
+  }
+
+  // Events
+  $('companySelect').value = state.companyId;
+  $('companySelect').addEventListener('change', loadProducts);
+  $('reloadBtn').addEventListener('click', loadProducts);
+  $('searchInput').addEventListener('input', renderTable);
+  $('stockFilter').addEventListener('change', renderTable);
+  $('saveAllBtn').addEventListener('click', saveAll);
+  $('saveAllBtn2').addEventListener('click', saveAll);
+
+  document.querySelectorAll('table.inv th[data-sort]').forEach(function (th) {
+    th.addEventListener('click', function () {
+      var key = th.getAttribute('data-sort');
+      if (!key) return;
+      if (state.sortKey === key) {
+        state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        state.sortKey = key;
+        state.sortDir = key === 'stock' || key === 'value' || key.indexOf('price') !== -1 ? 'desc' : 'asc';
+      }
+      renderTable();
+    });
+  });
+
+  $('invBody').addEventListener('input', function (e) {
+    var t = e.target;
+    if (!t.classList.contains('stock-input')) return;
+    var id = t.getAttribute('data-id');
+    var v = t.value === '' ? 0 : parseInt(t.value, 10);
+    if (!isFinite(v) || v < 0) return;
+    var p = state.products.find(function (x) { return String(x.id) === String(id); });
+    if (!p) return;
+    if (v === Number(p.stock || 0)) {
+      delete state.drafts[id];
+    } else {
+      state.drafts[id] = v;
+    }
+    // light update without full re-render of inputs (keep focus)
+    var row = t.closest('tr');
+    if (row) {
+      row.classList.toggle('dirty', isDirty(p));
+      row.classList.toggle('zero', v <= 0);
+      row.classList.toggle('low', v > 0 && v <= 5);
+      var valCell = row.children[5];
+      if (valCell) valCell.textContent = money(v * Number(p.wholesale_price || 0));
+      var btn = row.querySelector('.save-one');
+      if (btn) btn.disabled = !isDirty(p);
+    }
+    renderKpis();
+    updateSaveButtons();
+    $('rowCount').textContent = filteredList().length + ' of ' + state.products.length + ' products' +
+      (dirtyCount() ? ' · ' + dirtyCount() + ' unsaved' : '');
+  });
+
+  $('invBody').addEventListener('click', function (e) {
+    var btn = e.target.closest('.save-one');
+    if (!btn) return;
+    saveOne(btn.getAttribute('data-id'));
+  });
+
+  // Enter key saves current row
+  $('invBody').addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return;
+    var t = e.target;
+    if (!t.classList.contains('stock-input')) return;
+    e.preventDefault();
+    saveOne(t.getAttribute('data-id'));
+  });
+
+  loadProducts();
+})();
+  </script>
+</body>
+</html>

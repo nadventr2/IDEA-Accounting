@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base href="/proxy/3003/">
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer List - My Company</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.22.9/babel.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    .min-h-screen { min-height: 100vh; }
+    .bg-gray-100 { background-color: #f3f4f6; }
+    .bg-blue-600 { background-color: #2563eb; }
+    .text-white { color: #fff; }
+    .p-4 { padding: 1rem; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-4 { gap: 1rem; }
+    .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .container { max-width: 1280px; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .h-12 { height: 3rem; }
+    .mr-4 { margin-right: 1rem; }
+    .text-2xl { font-size: 1.5rem; }
+    .font-bold { font-weight: 700; }
+    .px-4 { padding-left: 1rem; padding-right: 1rem; }
+    .hover:underline { text-decoration: underline; }
+    .p-6 { padding: 1.5rem; }
+    .flex-grow { flex-grow: 1; }
+    .text-3xl { font-size: 1.875rem; }
+    .mb-6 { margin-bottom: 1.5rem; }
+    .form-container { background-color: #fff; padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .bg-green-600 { background-color: #16a34a; }
+    .bg-green-100 { background-color: #dcfce7; }
+    .hover\:bg-green-700:hover { background-color: #15803d; }
+    .text-xs { font-size: 0.75rem; }
+    .border { border-width: 1px; }
+    .border-gray-200 { border-color: #e5e7eb; }
+    .rounded-md { border-radius: 0.375rem; }
+    .flex-grow { flex-grow: 1; }
+    .cursor-not-allowed { cursor: not-allowed; }
+    .opacity-50 { opacity: 0.5; }
+    .grid { display: grid; }
+    .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+    .md:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .gap-4 { gap: 1rem; }
+    .text-sm { font-size: 0.875rem; }
+    .font-medium { font-weight: 500; }
+    .text-gray-700 { color: #374151; }
+    .text-gray-500 { color: #6b7280; }
+    .mt-1 { margin-top: 0.25rem; }
+    .mb-1 { margin-bottom: 0.25rem; }
+    .w-full { width: 100%; }
+    .border-gray-300 { border-color: #d1d5db; }
+    .rounded-md { border-radius: 0.375rem; }
+    .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+    .focus:ring-blue-500 { outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); }
+    .focus:border-blue-500 { border-color: #3b82f6; }
+    .mt-4 { margin-top: 1rem; }
+    .mb-4 { margin-bottom: 1rem; }
+    .text-lg { font-size: 1.125rem; }
+    .font-semibold { font-weight: 600; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .min-w-full { min-width: 100%; }
+    .divide-y { border-bottom: 1px solid #e5e7eb; }
+    .divide-gray-200 { border-color: #e5e7eb; }
+    .bg-gray-50 { background-color: #f9fafb; }
+    .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .text-left { text-align: left; }
+    .text-xs { font-size: 0.75rem; }
+    .uppercase { text-transform: uppercase; }
+    .tracking-wider { letter-spacing: 0.05em; }
+    .bg-white { background-color: #fff; }
+    .whitespace-nowrap { white-space: nowrap; }
+    .text-green-600 { color: #16a34a; }
+    .text-red-600 { color: #dc2626; }
+    .table-container { background-color: #fff; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .hover:bg-gray-100 { background-color: #f9fafb; }
+    .bg-blue-500 { background-color: #3b82f6; }
+    .bg-blue-600 { background-color: #2563eb; }
+    .bg-red-500 { background-color: #ef4444; }
+    .bg-gray-600 { background-color: #4b5563; }
+    .hover:bg-blue-600 { background-color: #2563eb; }
+    .hover:bg-red-600 { background-color: #dc2626; }
+    .hover:bg-gray-700 { background-color: #374151; }
+    .space-x-2 > * + * { margin-left: 0.5rem; }
+    .fixed { position: fixed; }
+    .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+    .bg-black { background-color: #000; }
+    .bg-opacity-50 { background-opacity: 0.5; }
+    .justify-center { justify-content: center; }
+    .rounded-lg { border-radius: 0.5rem; }
+    .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    .max-w-md { max-width: 28rem; }
+    .h-40 { height: 10rem; }
+    .opacity-50 { opacity: 0.5; }
+    .cursor-not-allowed { cursor: not-allowed; }
+    .table-container {
+  background-color: #fff;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  overflow-x: hidden;
+  margin-bottom: 1.5rem;
+}
+
+table {
+  width: 100%;
+  table-layout: fixed;           /* enforces column widths strictly */
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 0.75rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Column widths — total ≈ 100% */
+th:nth-child(1), td:nth-child(1) { width: 16%; }  /* Name */
+th:nth-child(2), td:nth-child(2) { width: 16%; }  /* Email */
+th:nth-child(3), td:nth-child(3) { width: 12%; }  /* Phone — narrow */
+th:nth-child(4), td:nth-child(4) { width: 25%; }  /* Billing Address */
+th:nth-child(5), td:nth-child(5) { width: 22%; }  /* Shipping Address */
+th:nth-child(6), td:nth-child(6) { 
+  width: 160px;                   /* FIXED PIXEL WIDTH — enough for Edit + Delete + gap */
+  min-width: 160px;
+  max-width: 160px;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* Actions cell: buttons side-by-side, no wrap */
+td:nth-child(6) {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+  padding: 0.75rem 0.25rem;     /* less side padding to fit */
+}
+
+/* Addresses wrap */
+td:nth-child(4), td:nth-child(5) {
+  white-space: pre-wrap;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* Smaller screens — keep Actions safe */
+@media (max-width: 1024px) {
+  th:nth-child(6), td:nth-child(6) {
+    width: 140px;
+    min-width: 140px;
+    max-width: 140px;
+  }
+  th, td {
+    padding: 0.6rem 0.4rem;
+  }
+}
+  </style>
+  <link rel="stylesheet" href="/app-shell.css" />
+  <link rel="stylesheet" href="/kpi-common.css" />
+  <script src="/app-shell.js" defer></script>
+  <script src="/kpi-common.js" defer></script>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+  <header id="header" class="text-white p-4">
+  <div class="class="fixed top-0 left-0 w-full bg-blue-600 text-white p-4 flex flex-wrap items-center justify-between gap-4 shadow-md z-10">
+    <div class="flex items-center">
+        <a href="/"><img src="/logo.png" alt="Company Logo" class="h-12 mr-4" /></a>
+        <h1 class="text-2xl font-bold">Open Accounting</h1>
+      </div>
+      <nav id="nav" class="flex flex-wrap gap-4">
+        <a href="/" class="bg-white text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200">Settings</a>
+        <a href="/estimates.html" class="px-4 hover:underline">Estimates</a>
+        <a href="/invoices.html" class="px-4 hover:underline">Invoices</a>
+        <a href="/sales.html" class="px-4 hover:underline">Sales</a>
+        <a href="/add-vendor.html" class="px-4 hover:underline">Add Vendor</a>
+        <a href="/add-products.html" class="px-4 hover:underline">Add Product</a>
+        <a href="/purchase-order.html" class="px-4 hover:underline">Purchase Order</a>
+        <a href="/packing-slip.html" class="px-4 hover:underline">Packing Slips</a>
+        <a href="/transaction-history.html" class="px-4 hover:underline">Transaction History</a>
+        <a href="/customer-list.html" class="px-4 hover:underline">Customer List</a>
+        <a href="/receive-inventory.html" class="px-4 hover:underline">Receive Inventory</a>
+        <a href="/inventory.html" class="px-4 hover:underline">Inventory</a>
+        <a href="/bills.html" class="px-4 hover:underline">Bills</a>
+        <a href="/sales-tax.html" class="px-4 hover:underline">Sales Tax</a>
+        <a href="/reports.html" class="px-4 hover:underline">Reports</a>
+      </nav>
+    </div>
+  </header>
+  <div id="root" class="flex-grow"></div>
+    <footer class="bg-gray-800 text-white p-4 mt-8">
+    <div class="container mx-auto">
+      <p>© Open Accounting. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script type="text/javascript">
+    var gk_isXlsx = false;
+    var gk_xlsxFileLookup = {};
+    var gk_fileData = {};
+    function filledCell(cell) {
+      return cell !== '' && cell != null;
+    }
+    function loadFileData(filename) {
+      if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+        try {
+          var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+          var firstSheetName = workbook.SheetNames[0];
+          var worksheet = workbook.Sheets[firstSheetName];
+          var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+          var filteredData = jsonData.filter(row => row.some(filledCell));
+          var headerRowIndex = filteredData.findIndex((row, index) =>
+            row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+          );
+          if (headerRowIndex === -1 || headerRowIndex > 25) {
+            headerRowIndex = 0;
+          }
+          var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
+          csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+          return csv;
+        } catch (e) {
+          console.error(e);
+          return "";
+        }
+      }
+      return gk_fileData[filename] || "";
+    }
+  </script>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    // Prefer proxy base when <base href="/proxy/3003/"> is set (codeserver / reverse proxy)
+    const BASE_URL = (document.querySelector('base')?.getAttribute('href') || '').includes('proxy/3003')
+      ? '/api'
+      : (window.location.origin + '/api');
+
+    const EditCustomerModal = ({ editingCustomerId, customers, setEditingCustomerId, updateCustomer }) => {
+      const editingCustomer = customers.find(c => c.id === editingCustomerId);
+      const initialBill = editingCustomer?.billing_address || '';
+      const initialShip = (editingCustomer?.shipping_address || '').trim();
+      const [editForm, setEditForm] = useState({
+        name: editingCustomer?.name || '',
+        email: editingCustomer?.email || '',
+        phone: editingCustomer?.phone || '',
+        billing_address: initialBill,
+        shipping_address: initialShip || initialBill || '',
+        company_id: localStorage.getItem('selectedCompanyId') || '1',
+        shippingFollowsBilling: !initialShip || initialShip === initialBill
+      });
+
+      const handleChange = (field, value) => {
+        setEditForm(prev => {
+          const next = { ...prev, [field]: value };
+          if (field === 'billing_address' && prev.shippingFollowsBilling) {
+            next.shipping_address = value;
+          }
+          if (field === 'shipping_address') {
+            next.shippingFollowsBilling =
+              value.trim() === '' || value === prev.billing_address;
+          }
+          return next;
+        });
+      };
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        const bill = (editForm.billing_address || '').trim();
+        const ship = (editForm.shipping_address || '').trim() || bill;
+        console.log('Submitting controlled edit:', editForm);
+        updateCustomer({ ...editForm, billing_address: bill, shipping_address: ship });
+      };
+
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h3 className="text-lg font-semibold mb-4">Edit Customer</h3>
+            <form onSubmit={handleSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700">Name</label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={e => handleChange('name', e.target.value)}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700">Email (Optional)</label>
+                <input
+                  type="email"
+                  value={editForm.email}
+                  onChange={e => handleChange('email', e.target.value)}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700">Phone (Optional)</label>
+                <input
+                  type="text"
+                  value={editForm.phone}
+                  onChange={e => handleChange('phone', e.target.value)}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700">Billing Address</label>
+                <textarea
+                  value={editForm.billing_address}
+                  onChange={e => handleChange('billing_address', e.target.value)}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 h-40"
+                  required
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700">Shipping Address (Optional)</label>
+                <textarea
+                  value={editForm.shipping_address}
+                  onChange={e => handleChange('shipping_address', e.target.value)}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 h-40"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingCustomerId(null)}
+                  className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    };
+
+    const CustomerListPage = () => {
+      const [customers, setCustomers] = useState([]);
+      const [searchQuery, setSearchQuery] = useState('');
+      const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' });
+      const [editingCustomerId, setEditingCustomerId] = useState(null);
+      const [error, setError] = useState(null);
+      const [success, setSuccess] = useState(null);
+      const [fileError, setFileError] = useState(null);
+      const [isLoading, setIsLoading] = useState(true);
+      const [isImporting, setIsImporting] = useState(false);
+      const [file, setFile] = useState(null);
+      const [newCustomer, setNewCustomer] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        billing_address: '',
+        shipping_address: '',
+        isNameAutofilled: true,
+        // When true, billing changes auto-copy into shipping (user can edit shipping to stop)
+        shippingFollowsBilling: true
+      });
+      const [labelAddressType, setLabelAddressType] = useState('billing'); // billing | shipping
+      const [labelExporting, setLabelExporting] = useState(false);
+      const [dupLoading, setDupLoading] = useState(false);
+      const [dupData, setDupData] = useState(null);
+      const [dupTab, setDupTab] = useState('email'); // email | phone | address | name
+      const [mergeBusy, setMergeBusy] = useState(false);
+
+      const companyId = () => localStorage.getItem('selectedCompanyId') || '1';
+
+      const fetchWithRetry = async (url, options, type, setter, retries = 3, delay = 1000) => {
+        console.log(`[FETCH] Starting ${type} from ${url}`);
+        for (let i = 0; i < retries; i++) {
+          try {
+            console.log(`[FETCH] Attempt ${i + 1} for ${type}`);
+            const response = await fetch(url, {
+              ...options,
+              headers: { 'Accept': 'application/json', ...options?.headers },
+              signal: AbortSignal.timeout(15000)
+            });
+            console.log(`[FETCH] Response for ${type}: status ${response.status}, ok: ${response.ok}`);
+            if (!response.ok) {
+              const errorText = await response.text().catch(() => 'No response text');
+              console.error(`[FETCH] HTTP error for ${type}: ${response.status} - ${errorText}`);
+              throw new Error(`HTTP ${response.status}: ${errorText || 'Unknown server error'}`);
+            }
+            const contentType = response.headers.get('content-type');
+            console.log(`[FETCH] Content-Type for ${type}: ${contentType}`);
+            if (!contentType?.includes('application/json')) {
+              const text = await response.text().catch(() => 'No response text');
+              console.error(`[FETCH] Non-JSON response for ${type}: ${contentType || 'unknown'} - ${text.slice(0, 200)}`);
+              throw new Error(`Expected JSON, got ${contentType || 'unknown'}: ${text.slice(0, 200)}`);
+            }
+            const data = await response.json();
+            console.log(`[FETCH] Data for ${type}:`, data);
+            if (!data) {
+              console.error(`[FETCH] Empty response for ${type}`);
+              throw new Error(`Received empty response for ${type}`);
+            }
+            if (setter) {
+              console.log(`[FETCH] Setting state for ${type}`);
+              setter(data);
+            }
+            setIsLoading(false);
+            return data;
+          } catch (error) {
+            console.error(`[FETCH] Error for ${type} (attempt ${i + 1}):`, error.message);
+            if (i < retries - 1) {
+              await new Promise(res => setTimeout(res, delay));
+            } else {
+              setError(`Failed to load ${type}`);
+              setIsLoading(false);
+              throw error;
+            }
+          }
+        }
+      };
+
+      useEffect(() => {
+        console.log('Fetching customers...');
+        fetchWithRetry(`${BASE_URL}/customers?company_id=${companyId()}`, { method: 'GET' }, 'customers', setCustomers);
+      }, []);
+
+      const loadDuplicates = async () => {
+        setDupLoading(true);
+        setError(null);
+        try {
+          const res = await fetch(`${BASE_URL}/customers/duplicates?company_id=${companyId()}`);
+          if (!res.ok) {
+            const t = await res.text();
+            throw new Error(t || 'Failed to find duplicates');
+          }
+          const data = await res.json();
+          setDupData(data);
+          setSuccess(
+            `Duplicate scan: ${data.summary.email_groups} email, ${data.summary.phone_groups} phone, ` +
+            `${data.summary.address_groups} address, ${data.summary.name_groups} name group(s)`
+          );
+          setTimeout(() => setSuccess(null), 6000);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setDupLoading(false);
+        }
+      };
+
+      const mergeGroup = async (group, keepId) => {
+        const mergeIds = group.customers.map(c => c.id).filter(id => id !== keepId);
+        if (!keepId || mergeIds.length === 0) return;
+        const names = group.customers.map(c => `#${c.id} ${c.name}`).join(', ');
+        if (!window.confirm(
+          `Merge into customer #${keepId}?\n\nWill absorb: ${mergeIds.join(', ')}\n\n` +
+          `All sales/invoices/packing slips reassigned. Merged records deleted.\n\n${names}`
+        )) return;
+        setMergeBusy(true);
+        setError(null);
+        try {
+          const res = await fetch(`${BASE_URL}/customers/merge`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              keep_id: keepId,
+              merge_ids: mergeIds,
+              company_id: parseInt(companyId(), 10)
+            })
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.error || 'Merge failed');
+          setSuccess(data.message || 'Merged');
+          setTimeout(() => setSuccess(null), 5000);
+          // refresh list + rescan
+          const list = await fetch(`${BASE_URL}/customers?company_id=${companyId()}`).then(r => r.json());
+          setCustomers(list);
+          await loadDuplicates();
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setMergeBusy(false);
+        }
+      };
+
+      const handleSort = (key) => {
+        let direction = 'asc';
+        if (sortConfig.key === key && sortConfig.direction === 'asc') {
+          direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+      };
+
+      const sortedCustomers = [...customers].sort((a, b) => {
+        let aValue = a[sortConfig.key] || '';
+        let bValue = b[sortConfig.key] || '';
+        if (typeof aValue === 'string') aValue = aValue.toLowerCase();
+        if (typeof bValue === 'string') bValue = bValue.toLowerCase();
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      }).filter(c => {
+        const query = searchQuery.toLowerCase();
+        return (
+          c.name.toLowerCase().includes(query) ||
+          (c.email && c.email.toLowerCase().includes(query)) ||
+          (c.phone && c.phone.toLowerCase().includes(query)) ||
+          (c.billing_address && c.billing_address.toLowerCase().includes(query)) ||
+          (c.shipping_address && c.shipping_address.toLowerCase().includes(query))
+        );
+      });
+
+      const addCustomer = async () => {
+        if (!newCustomer.name || !newCustomer.billing_address) {
+          setError('Name and Billing Address are required');
+          return;
+        }
+        if (newCustomer.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newCustomer.email)) {
+          setError('Invalid email format');
+          return;
+        }
+        const company_id = localStorage.getItem('selectedCompanyId') || '1';
+        const bill = newCustomer.billing_address.trim();
+        const ship = (newCustomer.shipping_address || '').trim() || bill;
+        const customerData = {
+          name: newCustomer.name.trim(),
+          email: newCustomer.email.trim() || null,
+          phone: newCustomer.phone.trim() || null,
+          billing_address: bill,
+          shipping_address: ship,
+          company_id
+        };
+        console.log('Adding new customer:', customerData);
+        try {
+          const res = await fetch(`${BASE_URL}/customers`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(customerData)
+          });
+          if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || 'Failed to add customer');
+          }
+          const data = await res.json();
+          setCustomers(prev => [...prev, data]);
+          setNewCustomer({
+            name: '',
+            email: '',
+            phone: '',
+            billing_address: '',
+            shipping_address: '',
+            isNameAutofilled: true,
+            shippingFollowsBilling: true
+          });
+          setSuccess('Customer added successfully');
+          setError(null);
+          setTimeout(() => setSuccess(null), 4000);
+        } catch (err) {
+          setError(err.message);
+        }
+      };
+
+      const updateCustomer = async (customer) => {
+        try {
+          const res = await fetch(`${BASE_URL}/customers/${editingCustomerId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(customer)
+          });
+          if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || 'Failed to update customer');
+          }
+          const data = await res.json();
+          setCustomers(prev => prev.map(c => c.id === editingCustomerId ? data : c));
+          setEditingCustomerId(null);
+          setSuccess('Customer updated successfully');
+          setError(null);
+          setTimeout(() => setSuccess(null), 4000);
+        } catch (err) {
+          setError(err.message);
+        }
+      };
+
+      const deleteCustomer = async (customerId) => {
+        try {
+          const res = await fetch(`${BASE_URL}/customers/${customerId}`, { method: 'DELETE' });
+          if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || 'Failed to delete customer');
+          }
+          setCustomers(prev => prev.filter(c => c.id !== customerId));
+          setSuccess('Customer deleted successfully');
+          setError(null);
+          setTimeout(() => setSuccess(null), 4000);
+        } catch (err) {
+          setError(err.message);
+        }
+      };
+
+      const handleBillingAddressChange = (e) => {
+        const address = e.target.value;
+        const lines = address.split('\n').filter(line => line.trim());
+        let name = newCustomer.name;
+        if (newCustomer.isNameAutofilled && lines.length > 0) {
+          name = lines[0].trim();
+        }
+        setNewCustomer(prev => ({
+          ...prev,
+          billing_address: address,
+          name,
+          // Auto-copy billing → shipping until user edits shipping
+          shipping_address: prev.shippingFollowsBilling ? address : prev.shipping_address
+        }));
+      };
+
+      const handleShippingAddressChange = (e) => {
+        const address = e.target.value;
+        setNewCustomer(prev => ({
+          ...prev,
+          shipping_address: address,
+          // Stop auto-copy once user types a different shipping address
+          shippingFollowsBilling: address.trim() === '' || address === prev.billing_address
+        }));
+      };
+
+      const handleFileChange = (e) => {
+        setFile(e.target.files[0]);
+        setFileError(null);
+      };
+
+      const handleImport = async () => {
+        if (!file) return;
+        setIsImporting(true);
+        try {
+          const reader = new FileReader();
+          reader.onload = async (e) => {
+            const data = e.target.result;
+            const workbook = XLSX.read(data, { type: 'binary' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            const headers = json[0].map(h => h.toLowerCase().trim());
+            const customersToImport = json.slice(1).map(row => {
+              const customer = {};
+              headers.forEach((header, index) => {
+                customer[header] = row[index] || null;
+              });
+              return customer;
+            }).filter(c => c.name && c.billing_address);
+
+            if (customersToImport.length === 0) {
+              setFileError('No valid customers found in the file');
+              return;
+            }
+
+            try {
+              const res = await fetch(`${BASE_URL}/customers/import`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(customersToImport.map(c => {
+                  const bill = (c.billing_address || '').trim();
+                  const ship = (c.shipping_address || '').trim() || bill;
+                  return {
+                  name: c.name.trim(),
+                  email: c.email?.trim() || null,
+                  phone: c.phone?.trim() || null,
+                  billing_address: bill,
+                  shipping_address: ship || bill,
+                  company_id: localStorage.getItem('selectedCompanyId') || '1'
+                };}))
+              });
+              if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || 'Failed to import customers');
+              }
+              const result = await res.json();
+              if (result.inserted) {
+                setCustomers(prev => [...prev, ...result.inserted]);
+              }
+              if (result.errors && result.errors.length > 0) {
+                setFileError(`Imported ${result.inserted.length}, but had errors: ${result.errors.join(', ')}`);
+              } else {
+                setSuccess('Customers imported successfully');
+              }
+              setFile(null);
+            } catch (err) {
+              setFileError(err.message);
+            }
+          };
+          reader.readAsBinaryString(file);
+        } catch (err) {
+          setFileError('Failed to read file');
+        } finally {
+          setIsImporting(false);
+        }
+      };
+
+      const handleNameChange = (e) => {
+        setNewCustomer({ ...newCustomer, name: e.target.value, isNameAutofilled: false });
+      };
+
+      const US_STATE_NAMES = {
+        ALABAMA: 'AL', ALASKA: 'AK', ARIZONA: 'AZ', ARKANSAS: 'AR', CALIFORNIA: 'CA',
+        COLORADO: 'CO', CONNECTICUT: 'CT', DELAWARE: 'DE', FLORIDA: 'FL', GEORGIA: 'GA',
+        HAWAII: 'HI', IDAHO: 'ID', ILLINOIS: 'IL', INDIANA: 'IN', IOWA: 'IA', KANSAS: 'KS',
+        KENTUCKY: 'KY', LOUISIANA: 'LA', MAINE: 'ME', MARYLAND: 'MD', MASSACHUSETTS: 'MA',
+        MICHIGAN: 'MI', MINNESOTA: 'MN', MISSISSIPPI: 'MS', MISSOURI: 'MO', MONTANA: 'MT',
+        NEBRASKA: 'NE', NEVADA: 'NV', 'NEW HAMPSHIRE': 'NH', 'NEW JERSEY': 'NJ',
+        'NEW MEXICO': 'NM', 'NEW YORK': 'NY', 'NORTH CAROLINA': 'NC', 'NORTH DAKOTA': 'ND',
+        OHIO: 'OH', OKLAHOMA: 'OK', OREGON: 'OR', PENNSYLVANIA: 'PA', 'RHODE ISLAND': 'RI',
+        'SOUTH CAROLINA': 'SC', 'SOUTH DAKOTA': 'SD', TENNESSEE: 'TN', TEXAS: 'TX',
+        UTAH: 'UT', VERMONT: 'VT', VIRGINIA: 'VA', WASHINGTON: 'WA', 'WEST VIRGINIA': 'WV',
+        WISCONSIN: 'WI', WYOMING: 'WY', 'DISTRICT OF COLUMBIA': 'DC',
+      };
+
+      /** Collapse whitespace; never leave ,, or trailing/leading commas */
+      const cleanSpaces = (s) => {
+        let t = String(s || '');
+        t = t.replace(/\s+/g, ' ');
+        // collapse any run of commas/spaces to a single ", "
+        t = t.replace(/[\s,]*,[\s,]*/g, ', ');
+        t = t.replace(/^(,\s*)+|(,\s*)+$/g, '');
+        return t.trim();
+      };
+
+      /** Absolute ban on double commas */
+      const killDoubleCommas = (s) => {
+        let t = String(s || '');
+        while (t.indexOf(',,') !== -1) t = t.replace(/,+/g, ',');
+        t = t.replace(/,\s*,/g, ',');
+        t = t.replace(/[\s,]*,[\s,]*/g, ', ');
+        t = t.replace(/^(,\s*)+|(,\s*)+$/g, '');
+        return t.trim();
+      };
+
+      const formatCityStateZip = (city, st, zip) => {
+        // City name must never carry a comma (that's what caused EVERETT,, WA)
+        city = cleanSpaces(city).replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
+        st = String(st || '').toUpperCase().trim().replace(/,/g, '');
+        if (st.length > 2) st = US_STATE_NAMES[st] || st.replace(/[^A-Z]/g, '').slice(0, 2);
+        zip = String(zip || '').trim().replace(/,/g, '');
+        if (!city && !st && !zip) return '';
+        let out = '';
+        if (city && st && zip) out = city + ', ' + st + ' ' + zip;
+        else if (city && st) out = city + ', ' + st;
+        else out = cleanSpaces([city, st, zip].filter(Boolean).join(' '));
+        return killDoubleCommas(out);
+      };
+
+      /**
+       * From text with no name: optional company (before first house #), street, city/ST/zip.
+       */
+      const parseAddressBody = (body) => {
+        body = cleanSpaces(body);
+        if (!body) return { company: '', street: '', cityStateZip: '' };
+
+        // Normalize full state names before ZIP: "FLINT, MICHIGAN 48503" / "ELIDA, OHIO 45807"
+        Object.keys(US_STATE_NAMES).forEach((full) => {
+          const re = new RegExp(',?\\s*' + full + '\\s+(\\d{5}(?:-\\d{4})?)\\s*$', 'i');
+          body = body.replace(re, ', ' + US_STATE_NAMES[full] + ' $1');
+        });
+        // "Rhode Island 02874" without comma
+        Object.keys(US_STATE_NAMES).forEach((full) => {
+          const re = new RegExp('\\s+' + full + '\\s+(\\d{5}(?:-\\d{4})?)\\s*$', 'i');
+          body = body.replace(re, ' ' + US_STATE_NAMES[full] + ' $1');
+        });
+
+        // Explicit: street, city, ST ZIP
+        let m = body.match(/^(.+?),\s*([^,]+),\s*([A-Z]{2})\s+(\d{5}(?:-\d{4})?)\s*$/i);
+        if (m) {
+          return peelCompany(m[1].trim(), formatCityStateZip(m[2], m[3], m[4]));
+        }
+        // street, ST ZIP  (city stuck before comma: "AVE ELIDA, OH 45807")
+        m = body.match(/^(.+?),\s*([A-Z]{2})\s+(\d{5}(?:-\d{4})?)\s*$/i);
+        if (m) {
+          // Split city off end of street part
+          const left = m[1].trim();
+          const st = m[2];
+          const zip = m[3];
+          const tokens = left.split(/\s+/).filter(Boolean);
+          const streetEnd = /^(DR|DRIVE|ST|STREET|RD|ROAD|AVE|AVENUE|LN|LANE|CT|COURT|BLVD|WAY|PKWY|HWY|LOOP|CIR|CIRCLE|PL|PLACE|APT|UNIT|RM|STE|SUITE|PO|BOX)$/i;
+          const directional = /^(N|S|E|W|NE|NW|SE|SW|NORTH|SOUTH|EAST|WEST)$/i;
+          const cityWords = [];
+          let i = tokens.length - 1;
+          while (i >= 0 && cityWords.length < 3) {
+            const t = tokens[i];
+            if (/^\d/.test(t) || /^#/.test(t) || /^[A-Z]$/i.test(t)) break;
+            if (streetEnd.test(t) || directional.test(t)) break;
+            cityWords.unshift(t);
+            i--;
+          }
+          if (!cityWords.length && tokens.length) {
+            cityWords.push(tokens[tokens.length - 1]);
+            i = tokens.length - 2;
+          }
+          const street = tokens.slice(0, i + 1).join(' ');
+          return peelCompany(street, formatCityStateZip(cityWords.join(' '), st, zip));
+        }
+        // street, city ST ZIP  (one comma before city)
+        m = body.match(/^(.+?),\s*([^,]+?)\s+([A-Z]{2})\s+(\d{5}(?:-\d{4})?)\s*$/i);
+        if (m && m[2].trim().split(/\s+/).length <= 4) {
+          return peelCompany(m[1].trim(), formatCityStateZip(m[2], m[3], m[4]));
+        }
+
+        // Trailing ST ZIP (US)
+        m = body.match(/^(.*?)\s+([A-Z]{2})\s+(\d{5}(?:-\d{4})?)\s*$/i);
+        if (m) {
+          const before = m[1].trim().replace(/,\s*$/, '');
+          const st = m[2].toUpperCase();
+          const zip = m[3];
+          // If "City," right before state (comma form already partially handled)
+          const commaCity = before.match(/^(.*),\s*([^,]+)$/);
+          if (commaCity) {
+            return peelCompany(commaCity[1].trim(), formatCityStateZip(commaCity[2], st, zip));
+          }
+          const tokens = before.split(/\s+/).filter(Boolean);
+          const streetEnd = /^(DR|DRIVE|ST|STREET|RD|ROAD|AVE|AVENUE|LN|LANE|CT|COURT|BLVD|WAY|PKWY|HWY|LOOP|CIR|CIRCLE|PL|PLACE|TRL|TRAIL|TER|TERRACE|APT|APARTMENT|UNIT|RM|STE|SUITE|PO|BOX|PKWY)$/i;
+          const directional = /^(N|S|E|W|NE|NW|SE|SW|NORTH|SOUTH|EAST|WEST)$/i;
+          const cityWords = [];
+          let i = tokens.length - 1;
+          while (i >= 0 && cityWords.length < 3) {
+            const t = tokens[i];
+            if (/^\d/.test(t) || /^#/.test(t) || /^[A-Z]$/i.test(t)) break;
+            if (streetEnd.test(t)) break;
+            if (directional.test(t)) break;
+            cityWords.unshift(t);
+            i--;
+          }
+          if (!cityWords.length && tokens.length) {
+            cityWords.push(tokens[tokens.length - 1]);
+            i = tokens.length - 2;
+          }
+          let street = tokens.slice(0, i + 1).join(' ');
+          const city = cityWords.join(' ');
+          // Remove city from street if duplicated at end
+          if (street && city && street.toLowerCase().endsWith(city.toLowerCase())) {
+            street = street.slice(0, street.length - city.length).trim();
+          }
+          return peelCompany(street, formatCityStateZip(city, st, zip));
+        }
+
+        // Canada
+        m = body.match(/^(.*?)\s+([A-Z]{2})\s+([A-Z]\d[A-Z]\s?\d[A-Z]\d)\s*(?:CANADA)?\s*$/i);
+        if (m) {
+          const before = m[1].trim();
+          const tokens = before.split(/\s+/).filter(Boolean);
+          const streetEnd = /^(DR|DRIVE|ST|STREET|RD|ROAD|AVE|AVENUE|LN|LANE|CT|COURT|BLVD|WAY|PKWY|APT|UNIT|STE|SUITE)$/i;
+          const cityWords = [];
+          let i = tokens.length - 1;
+          while (i >= 0 && cityWords.length < 3) {
+            const t = tokens[i];
+            if (/^\d/.test(t) || streetEnd.test(t)) break;
+            cityWords.unshift(t);
+            i--;
+          }
+          if (!cityWords.length && tokens.length) {
+            cityWords.push(tokens[tokens.length - 1]);
+            i = tokens.length - 2;
+          }
+          return peelCompany(
+            tokens.slice(0, i + 1).join(' '),
+            formatCityStateZip(cityWords.join(' '), m[2], m[3].toUpperCase().replace(/\s+/, ' '))
+          );
+        }
+
+        return peelCompany(body, '');
+      };
+
+      /** Text before first house number / PO Box → company line; rest → street */
+      const peelCompany = (streetPart, cityStateZip) => {
+        streetPart = killDoubleCommas(cleanSpaces(streetPart));
+        cityStateZip = killDoubleCommas(cleanSpaces(cityStateZip));
+        if (!streetPart) return { company: '', street: '', cityStateZip };
+
+        const tokens = streetPart.split(/\s+/);
+        let idx = tokens.findIndex((t) =>
+          /^\d/.test(t) || /^PO$/i.test(t) || /^P\.?O\.?$/i.test(t) || /^BOX$/i.test(t)
+        );
+        if (idx <= 0) {
+          return { company: '', street: streetPart, cityStateZip };
+        }
+        if (idx === 1 && /^(N|S|E|W|NE|NW|SE|SW)$/i.test(tokens[0])) {
+          return { company: '', street: streetPart, cityStateZip };
+        }
+        const company = tokens.slice(0, idx).join(' ');
+        const street = tokens.slice(idx).join(' ');
+        const looksBiz = /\b(LLC|L\.L\.C|INC|CORP|CO|LTD|COMPANY|CENTER|CENTRE|INDUSTRIES|FABRICATORS|BANK|CREDIT|FINANCIAL|SHOP|PARK)\b/i.test(company)
+          || (company.length > 3 && company === company.toUpperCase() && company.split(/\s+/).length >= 2);
+        if (looksBiz || company.split(/\s+/).length >= 2) {
+          return {
+            company: killDoubleCommas(cleanSpaces(company)),
+            street: killDoubleCommas(cleanSpaces(street)),
+            cityStateZip,
+          };
+        }
+        return { company: '', street: streetPart, cityStateZip };
+      };
+
+      /** Remove city name from end of street so it only appears on the city line */
+      const stripCityFromStreet = (street, cityStateZip) => {
+        street = killDoubleCommas(cleanSpaces(street));
+        cityStateZip = killDoubleCommas(cleanSpaces(cityStateZip));
+        if (!street || !cityStateZip) return { street, cityStateZip };
+        const cityOnly = cityStateZip.split(',')[0].trim();
+        if (!cityOnly) return { street, cityStateZip };
+        // Strip trailing ", City" or " City"
+        const reComma = new RegExp(',\\s*' + cityOnly.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*$', 'i');
+        const reSpace = new RegExp('\\s+' + cityOnly.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*$', 'i');
+        street = street.replace(reComma, '').replace(reSpace, '');
+        street = killDoubleCommas(cleanSpaces(street));
+        return { street, cityStateZip };
+      };
+
+      const looksLikeStreetLine = (s) => {
+        s = cleanSpaces(s);
+        if (!s) return false;
+        if (/^\d/.test(s)) return true;
+        if (/\b(AVE|AVENUE|ST|STREET|RD|ROAD|DR|DRIVE|BLVD|LN|LANE|WAY|CT|COURT|PL|PLACE|HWY|PKWY|LOOP|CIR)\b/i.test(s)) return true;
+        if (/\b[A-Z]{2}\s+\d{5}/i.test(s)) return true;
+        return false;
+      };
+
+      const looksLikePersonOrBizName = (s) => {
+        s = cleanSpaces(s);
+        if (!s || looksLikeStreetLine(s)) return false;
+        if (/\d{5}/.test(s)) return false;
+        // avoid pure phone / junk
+        if (/^\+?\d[\d\s\-().]{6,}$/.test(s)) return false;
+        return s.split(/\s+/).length <= 8;
+      };
+
+      /**
+       * Build label fields:
+       *   line1: name (person or business)
+       *   line2: company / c/o (optional)
+       *   line3: street
+       *   line4: City, ST ZIP
+       *
+       * Also handles bad data entry where name field is a street and the
+       * multi-line address holds Name / Street / City (e.g. Sophia Brandon).
+       */
+      const buildLabelLines = (customer, addressType) => {
+        let name = cleanSpaces(customer.name || '');
+        let raw = addressType === 'shipping'
+          ? (customer.shipping_address || customer.shippingAddress || '')
+          : (customer.billing_address || customer.billingAddress || '');
+        raw = String(raw || '').replace(/\r/g, '\n').trim();
+        if (!raw || raw === 'N/A') return null;
+
+        let lines = raw.split('\n').map((l) => cleanSpaces(l)).filter(Boolean);
+
+        // --- Fix swapped name/address (common import mistake) ---
+        // name = "18825 Van Ness Ave", billing =
+        //   Sophia Brandon
+        //   1132 W 166th St
+        //   Gardena CA 90247
+        if (
+          lines.length >= 2 &&
+          looksLikeStreetLine(name) &&
+          looksLikePersonOrBizName(lines[0])
+        ) {
+          name = lines[0];
+          lines = lines.slice(1);
+        } else if (
+          lines.length >= 3 &&
+          looksLikePersonOrBizName(lines[0]) &&
+          looksLikeStreetLine(lines[1]) &&
+          (looksLikeStreetLine(name) || !name)
+        ) {
+          name = lines[0];
+          lines = lines.slice(1);
+        }
+
+        // Strip leading name line / prefix from remaining address lines
+        if (lines.length && name) {
+          if (lines[0].toLowerCase() === name.toLowerCase()) {
+            lines = lines.slice(1);
+          } else if (lines[0].toLowerCase().startsWith(name.toLowerCase() + ' ')) {
+            lines[0] = cleanSpaces(lines[0].slice(name.length));
+            if (!lines[0]) lines = lines.slice(1);
+          }
+        }
+
+        let company = '';
+        let street = '';
+        let cityStateZip = '';
+
+        if (lines.length >= 3) {
+          const last = lines[lines.length - 1];
+          const mid = lines[lines.length - 2];
+          // City on its own line + ST ZIP on last, or "City ST ZIP" on last
+          if (/^[A-Z]{2}\s+\d{5}/i.test(last) && looksLikePersonOrBizName(mid) && !looksLikeStreetLine(mid)) {
+            cityStateZip = formatCityStateZip(mid, last.split(/\s+/)[0], last.split(/\s+/).slice(1).join(' '));
+            street = lines.slice(0, -2).join(' ');
+          } else if (/\b[A-Z]{2}\s+\d{5}/i.test(last) || /\b[A-Z]{2}\s+[A-Z]\d[A-Z]/i.test(last)) {
+            // Last line is "City ST ZIP" or full address tail
+            if (!looksLikeStreetLine(last) || /^[A-Za-z].*[A-Z]{2}\s+\d{5}/i.test(last) && !/^\d/.test(last)) {
+              // "Gardena CA 90247"
+              const only = parseAddressBody(last);
+              if (only.cityStateZip && !only.street) {
+                cityStateZip = only.cityStateZip;
+                street = lines.slice(0, -1).join(' ');
+              } else {
+                const full = parseAddressBody(lines.join(' '));
+                company = full.company;
+                street = full.street;
+                cityStateZip = full.cityStateZip;
+              }
+            } else {
+              const full = parseAddressBody(lines.join(' '));
+              company = full.company;
+              street = full.street;
+              cityStateZip = full.cityStateZip;
+            }
+            // Prefer structured multi-line: all but last = street, last = city line
+            if (lines.length === 2 || (lines.length >= 2 && !/^\d/.test(last) && /\d{5}/.test(last))) {
+              const pe = parseAddressBody(last);
+              if (pe.cityStateZip) {
+                cityStateZip = pe.cityStateZip;
+                // street lines only — do not re-join with city
+                let streetParts = lines.slice(0, -1);
+                // if first remaining looks like company (no leading digit), peel it
+                if (streetParts.length >= 2 && !/^\d/.test(streetParts[0]) && /^\d/.test(streetParts[1])) {
+                  company = streetParts[0];
+                  streetParts = streetParts.slice(1);
+                }
+                street = streetParts.join(' ');
+                const pe2 = peelCompany(street, cityStateZip);
+                if (pe2.company && !company) company = pe2.company;
+                street = pe2.street || street;
+              }
+            }
+          } else {
+            const full = parseAddressBody(lines.join(' '));
+            company = full.company;
+            street = full.street;
+            cityStateZip = full.cityStateZip;
+          }
+        } else if (lines.length === 2) {
+          // Street / City ST ZIP
+          const peLast = parseAddressBody(lines[1]);
+          if (peLast.cityStateZip && (!peLast.street || peLast.street.length < 4)) {
+            cityStateZip = peLast.cityStateZip;
+            const pe = peelCompany(lines[0], cityStateZip);
+            company = pe.company;
+            street = pe.street;
+          } else {
+            const full = parseAddressBody(lines.join(' '));
+            company = full.company;
+            street = full.street;
+            cityStateZip = full.cityStateZip;
+          }
+        } else {
+          const full = parseAddressBody(lines[0] || '');
+          company = full.company;
+          street = full.street;
+          cityStateZip = full.cityStateZip;
+        }
+
+        // If company equals name, don't duplicate
+        if (company && name && company.toLowerCase() === name.toLowerCase()) {
+          company = '';
+        }
+        const stripped = stripCityFromStreet(street, cityStateZip);
+        street = stripped.street;
+        cityStateZip = stripped.cityStateZip;
+        // Final scrub — never allow ,,
+        const outName = killDoubleCommas(name);
+        company = killDoubleCommas(company);
+        street = killDoubleCommas(street);
+        cityStateZip = killDoubleCommas(cityStateZip);
+
+        if (!outName && !company && !street && !cityStateZip) return null;
+        return { name: outName, company, street, cityStateZip };
+      };
+
+      /**
+       * Avery 5160 — CRM pitch; wrap long lines inside the label (never into the next column).
+       * If a label needs extra vertical space, skip the next cell(s) so we don't overprint them.
+       */
+      const exportAvery5160Pdf = () => {
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+          setError('PDF library failed to load. Hard-refresh the page and try again.');
+          return;
+        }
+        setLabelExporting(true);
+        setError(null);
+        setSuccess(null);
+        try {
+          const labels = sortedCustomers
+            .map((c) => buildLabelLines(c, labelAddressType))
+            .filter(Boolean)
+            .map((lab) => ({
+              name: killDoubleCommas(lab.name),
+              company: killDoubleCommas(lab.company),
+              street: killDoubleCommas(lab.street),
+              cityStateZip: killDoubleCommas(lab.cityStateZip),
+            }));
+          if (!labels.length) {
+            setError(
+              labelAddressType === 'shipping'
+                ? 'No shipping addresses found in the current list.'
+                : 'No billing addresses found in the current list.'
+            );
+            setLabelExporting(false);
+            return;
+          }
+
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
+
+          const labelW = 100;
+          const leftMargin = 30;
+          const topMargin = 50;
+          const colGap = 100;
+          const rowGap = 47;
+          const labelH = 25.4;
+          const colPitch = labelW + colGap;
+          const rowPitch = labelH + rowGap;
+          const maxTextW = labelW - 12;
+          const cols = 3;
+          const rowsPerPage = 10;
+
+          let col = 0;
+          let row = 0;
+          let pageIndex = 0;
+          let skippedCells = 0;
+          const occupied = new Set(); // "page:row:col"
+
+          const keyOf = (p, r, c) => p + ':' + r + ':' + c;
+
+          const markVertical = (p, r, c, heightCells) => {
+            for (let i = 0; i < heightCells; i++) {
+              let rr = r + i;
+              let pp = p;
+              while (rr >= rowsPerPage) {
+                rr -= rowsPerPage;
+                pp += 1;
+              }
+              occupied.add(keyOf(pp, rr, c));
+              if (i > 0) skippedCells += 1;
+            }
+          };
+
+          const stepOne = () => {
+            col += 1;
+            if (col >= cols) {
+              col = 0;
+              row += 1;
+              if (row >= rowsPerPage) {
+                doc.addPage();
+                pageIndex += 1;
+                row = 0;
+              }
+            }
+          };
+
+          const findNextFree = () => {
+            let guard = 0;
+            while (occupied.has(keyOf(pageIndex, row, col)) && guard < 5000) {
+              stepOne();
+              guard += 1;
+            }
+          };
+
+          labels.forEach((lab) => {
+            findNextFree();
+            const startCol = col;
+            const startRow = row;
+            const startPage = pageIndex;
+
+            const x = leftMargin + col * colPitch;
+            const labelTop = topMargin + row * rowPitch;
+
+            const fields = [];
+            if (lab.name) fields.push({ text: lab.name, bold: true });
+            if (lab.company) fields.push({ text: lab.company, bold: false });
+            if (lab.street) fields.push({ text: lab.street, bold: false });
+            if (lab.cityStateZip) fields.push({ text: killDoubleCommas(lab.cityStateZip), bold: false });
+
+            // Wrap within label width only (never into next column)
+            let fontSize = 9;
+            let lineH = 10;
+            let wrapped = [];
+            const rebuild = () => {
+              wrapped = [];
+              fields.forEach((f) => {
+                doc.setFont('helvetica', f.bold ? 'bold' : 'normal');
+                doc.setFontSize(fontSize);
+                const parts = doc.splitTextToSize(killDoubleCommas(f.text), maxTextW);
+                parts.forEach((p, idx) => {
+                  wrapped.push({ text: killDoubleCommas(p), bold: f.bold && idx === 0 });
+                });
+              });
+            };
+            rebuild();
+            while (wrapped.length * lineH > rowPitch * 2 - 6 && fontSize > 6) {
+              fontSize -= 1;
+              lineH = fontSize + 1;
+              rebuild();
+            }
+
+            let y = labelTop + 10;
+            wrapped.forEach((ln) => {
+              doc.setFont('helvetica', ln.bold ? 'bold' : 'normal');
+              doc.setFontSize(fontSize);
+              let t = killDoubleCommas(ln.text);
+              if (doc.getTextWidth(t) > maxTextW) {
+                while (t.length > 1 && doc.getTextWidth(t + '…') > maxTextW) t = t.slice(0, -1);
+                t += '…';
+              }
+              if (t) doc.text(t, x + 5, y);
+              y += lineH;
+            });
+
+            const cellsHigh = Math.max(1, Math.ceil((y - labelTop) / rowPitch));
+            markVertical(startPage, startRow, startCol, cellsHigh);
+            // Move past this cell, then skip any marked (including cells we just blocked below)
+            stepOne();
+            findNextFree();
+          });
+
+          const kind = labelAddressType === 'shipping' ? 'shipping' : 'billing';
+          const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+          doc.save(`customers_labels_avery5160_${kind}_${stamp}.pdf`);
+          setSuccess(
+            `Exported ${labels.length} labels (${kind}). ` +
+              'Long lines wrap inside the label; tall labels skip the cell below instead of printing on the neighbor.' +
+              (skippedCells ? ` Skipped ${skippedCells} cell(s) for overflow.` : '')
+          );
+        } catch (err) {
+          console.error(err);
+          setError('Label PDF export failed: ' + (err.message || String(err)));
+        } finally {
+          setLabelExporting(false);
+        }
+      };
+
+      return (
+        <main className="container mx-auto p-6 flex-grow">
+          {error && <div className="p-4 mb-4 text-sm text-red-600 bg-red-100 rounded-md">{error}</div>}
+          {success && <div className="p-4 mb-4 text-sm text-green-600 bg-green-100 rounded-md">{success}</div>}
+          {fileError && <div className="p-4 mb-4 text-sm text-red-600 bg-red-100 rounded-md">{fileError}</div>}
+          <h1 className="text-3xl font-bold mb-6">Customer List</h1>
+
+          <div className="form-container mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
+              <h3 className="text-lg font-semibold">Find &amp; merge duplicates</h3>
+              <button
+                type="button"
+                onClick={loadDuplicates}
+                disabled={dupLoading || mergeBusy}
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50"
+              >
+                {dupLoading ? 'Scanning…' : 'Scan email / phone / address / name'}
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mb-3">
+              Groups customers that share the same email, phone (last 10 digits), billing/shipping address, or exact name.
+              Pick which record to <strong>keep</strong>; others are merged into it (sales &amp; history move over).
+            </p>
+            {dupData && (
+              <div>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {['email', 'phone', 'address', 'name'].map(tab => (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setDupTab(tab)}
+                      className={`px-3 py-1 rounded-md text-sm ${dupTab === tab ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                    >
+                      {tab} ({(dupData.groups[tab] || []).length})
+                    </button>
+                  ))}
+                </div>
+                {(dupData.groups[dupTab] || []).length === 0 ? (
+                  <p className="text-sm text-gray-600">No {dupTab} duplicate groups found.</p>
+                ) : (
+                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                    {(dupData.groups[dupTab] || []).slice(0, 50).map((group, gi) => (
+                      <div key={gi} className="border border-gray-200 rounded-md p-3 bg-gray-50">
+                        <p className="text-sm font-medium text-gray-700 mb-2">
+                          Match ({group.match_type}): <code className="text-xs bg-white px-1">{group.match_key}</code>
+                          {' '}· {group.count} records
+                        </p>
+                        <ul className="text-sm space-y-2">
+                          {group.customers.map(c => (
+                            <li key={c.id} className="flex flex-wrap items-start justify-between gap-2 border-b border-gray-100 pb-2">
+                              <div>
+                                <strong>#{c.id}</strong> {c.name}
+                                <div className="text-xs text-gray-500">
+                                  {c.email || '—'} · {c.phone || '—'}
+                                  <br />
+                                  {(c.billing_address || '').slice(0, 80)}{(c.billing_address || '').length > 80 ? '…' : ''}
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                disabled={mergeBusy}
+                                onClick={() => mergeGroup(group, c.id)}
+                                className="bg-blue-600 text-white px-3 py-1 rounded-md text-xs hover:bg-blue-700 disabled:opacity-50"
+                              >
+                                Keep this &amp; merge others
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                    {(dupData.groups[dupTab] || []).length > 50 && (
+                      <p className="text-xs text-gray-500">Showing first 50 groups — merge some, then re-scan.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="form-container mb-6">
+            <h3 className="text-lg font-semibold mb-4">Add New Customer</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="add-name" className="block text-sm font-medium text-gray-700">Name</label>
+                <input
+                  id="add-name"
+                  value={newCustomer.name}
+                  onChange={handleNameChange}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="add-email" className="block text-sm font-medium text-gray-700">Email (Optional)</label>
+                <input
+                  id="add-email"
+                  type="email"
+                  value={newCustomer.email}
+                  onChange={e => setNewCustomer({ ...newCustomer, email: e.target.value })}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="add-phone" className="block text-sm font-medium text-gray-700">Phone (Optional)</label>
+                <input
+                  id="add-phone"
+                  type="text"
+                  value={newCustomer.phone}
+                  onChange={e => setNewCustomer({ ...newCustomer, phone: e.target.value })}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g., 123-456-7890"
+                />
+              </div>
+              <div>
+                <label htmlFor="add-billing_address" className="block text-sm font-medium text-gray-700">Billing Address</label>
+                <p className="text-sm text-gray-500 mt-1 mb-1">Paste address here to autofill name</p>
+                <textarea
+                  id="add-billing_address"
+                  value={newCustomer.billing_address}
+                  onChange={handleBillingAddressChange}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 h-40"
+                  required
+                  placeholder="e.g.,\nJohn Doe\n123 Main St\nSpringfield\nIL\n62701"
+                />
+              </div>
+              <div>
+                <label htmlFor="add-shipping_address" className="block text-sm font-medium text-gray-700">Shipping Address</label>
+                <p className="text-sm text-gray-500 mt-1 mb-1">
+                  Auto-filled from billing — change only if ship-to is different
+                </p>
+                <textarea
+                  id="add-shipping_address"
+                  value={newCustomer.shipping_address}
+                  onChange={handleShippingAddressChange}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 h-40"
+                  placeholder="Auto-copies from billing address"
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex gap-4">
+              <button
+                onClick={addCustomer}
+                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+              >
+                Add Customer
+              </button>
+              <div>
+                <label
+                  htmlFor="importFile"
+                  className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 cursor-pointer inline-block"
+                >
+                  Import XLSX
+                </label>
+                <input
+                  id="importFile"
+                  type="file"
+                  accept=".xlsx"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </div>
+              <button
+                onClick={handleImport}
+                disabled={!file || isImporting}
+                className={`bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 ${!file || isImporting ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                Upload
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mt-2">Upload an XLSX file with columns: name (required), email (optional), phone (optional), billing_address (required), shipping_address (optional).</p>
+          </div>
+
+          {!isLoading && customers.length > 0 && (
+            <div className="table-container mb-6">
+              <div className="flex flex-wrap items-center gap-4 mb-4">
+                <input
+                  type="text"
+                  placeholder="Search by Name, Email, Phone, Billing Address, or Shipping Address"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="mt-1 block flex-grow border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  style={{ minWidth: '200px' }}
+                />
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+                >
+                  Clear Search
+                </button>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 mb-4 p-3 bg-gray-50 rounded-md border border-gray-200">
+                <span className="text-sm font-semibold text-gray-700">Mailing labels (Avery 5160)</span>
+                <label className="text-sm text-gray-700 flex items-center gap-1">
+                  <input
+                    type="radio"
+                    name="labelAddressType"
+                    value="billing"
+                    checked={labelAddressType === 'billing'}
+                    onChange={() => setLabelAddressType('billing')}
+                  />
+                  Billing address
+                </label>
+                <label className="text-sm text-gray-700 flex items-center gap-1">
+                  <input
+                    type="radio"
+                    name="labelAddressType"
+                    value="shipping"
+                    checked={labelAddressType === 'shipping'}
+                    onChange={() => setLabelAddressType('shipping')}
+                  />
+                  Shipping address
+                </label>
+                <button
+                  type="button"
+                  onClick={exportAvery5160Pdf}
+                  disabled={labelExporting || sortedCustomers.length === 0}
+                  className={`bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 ${
+                    labelExporting || sortedCustomers.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                  title="Same layout as CRM labels (Ricoh-tuned Avery 5160)"
+                >
+                  {labelExporting ? 'Building PDF…' : `Export PDF (${sortedCustomers.length} shown)`}
+                </button>
+                <span className="text-xs text-gray-500">
+                  Uses the current search results. 30 labels per sheet · 3×10.
+                </span>
+              </div>
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('name')}>
+                      Name {sortConfig.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('email')}>
+                      Email {sortConfig.key === 'email' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('phone')}>
+                      Phone {sortConfig.key === 'phone' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('billing_address')}>
+                      Billing Address {sortConfig.key === 'billing_address' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('shipping_address')}>
+                      Shipping Address {sortConfig.key === 'shipping_address' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {sortedCustomers.map(customer => (
+                    <tr key={customer.id} className="hover:bg-gray-100">
+                      <td className="px-2 py-2">{customer.name || 'N/A'}</td>
+                      <td className="px-2 py-2">{customer.email || 'N/A'}</td>
+                      <td className="px-2 py-2">{customer.phone || 'N/A'}</td>
+                      <td className="px-2 py-2">{customer.billing_address !== undefined ? customer.billing_address : 'N/A'}</td>
+                      <td className="px-2 py-2">{customer.shipping_address !== undefined ? customer.shipping_address : 'N/A'}</td>
+                      <td className="px-2 py-2 whitespace-nowrap">
+                        <button
+                          className="bg-blue-500 text-white px-2 py-1 rounded mr-2 hover:bg-blue-600"
+                          onClick={() => setEditingCustomerId(customer.id)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                          onClick={() => {
+                            if (confirm('Are you sure you want to delete this customer?')) {
+                              deleteCustomer(customer.id);
+                            }
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {editingCustomerId && (
+            <EditCustomerModal 
+              editingCustomerId={editingCustomerId}
+              customers={customers}
+              setEditingCustomerId={setEditingCustomerId}
+              updateCustomer={updateCustomer}
+            />
+          )}
+        </main>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<CustomerListPage />);
+  </script>
+ <script>
+
+      // Update link color
+      linkColorPicker.addEventListener('change', (e) => {
+        const newColor = e.target.value;
+        navLinks.forEach(link => link.style.color = newColor);
+        localStorage.setItem(linkKey, newColor);
+      });
+    });
+  </script>
+</body>
+</html>

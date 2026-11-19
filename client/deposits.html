@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script>
+  <script type="text/javascript">
+    var gk_isXlsx = false;
+    var gk_xlsxFileLookup = {};
+    var gk_fileData = {};
+    function filledCell(cell) {
+      return cell !== '' && cell != null;
+    }
+    function loadFileData(filename) {
+      if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+        try {
+          var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+          var firstSheetName = workbook.SheetNames[0];
+          var worksheet = workbook.Sheets[firstSheetName];
+          var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+          var filteredData = jsonData.filter(row => row.some(filledCell));
+          var headerRowIndex = filteredData.findIndex((row, index) =>
+            row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+          );
+          if (headerRowIndex === -1 || headerRowIndex > 25) {
+            headerRowIndex = 0;
+          }
+          var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
+          csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+          return csv;
+        } catch (e) {
+          console.error(e);
+          return "";
+        }
+      }
+      return gk_fileData[filename] || "";
+    }
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deposits - Accounting</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.24.0/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    .min-h-screen { min-height: 100vh; }
+    .bg-gray-100 { background-color: #f3f4f6; }
+    .bg-blue-600 { background-color: #2563eb; }
+    .text-white { color: #fff; }
+    .p-4 { padding: 1rem; }
+    .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .container { max-width: 1280px; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-4 { gap: 1rem; }
+    .h-12 { height: 3rem; }
+    .mr-4 { margin-right: 1rem; }
+    .text-2xl { font-size: 1.5rem; }
+    .font-bold { font-weight: 700; }
+    .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .hover\\:bg-blue-700:hover { background-color: #1d4ed8; }
+    .rounded-md { border-radius: 0.375rem; }
+    .bg-blue-700 { background-color: #1d4ed8; }
+    .p-6 { padding: 1.5rem; }
+    .flex-grow { flex-grow: 1; }
+    .text-3xl { font-size: 1.875rem; }
+    .mb-6 { margin-bottom: 1.5rem; }
+    .form-container { background-color: #fff; padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .text-sm { font-size: 0.875rem; }
+    .font-medium { font-weight: 500; }
+    .text-gray-700 { color: #374151; }
+    .mt-1 { margin-top: 0.25rem; }
+    .w-full { width: 100%; }
+    .border-gray-300 { border-color: #d1d5db; }
+    .rounded-md { border-radius: 0.375rem; }
+    .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+    .focus\\:ring-blue-500:focus { outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); }
+    .focus\\:border-blue-500:focus { border-color: #3b82f6; }
+    .mt-4 { margin-top: 1rem; }
+    .text-lg { font-size: 1.125rem; }
+    .font-semibold { font-weight: 600; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .text-red-600 { color: #dc2626; }
+    .bg-red-100 { background-color: #fee2e2; }
+    .text-green-600 { color: #16a34a; }
+    .bg-green-100 { background-color: #dcfce7; }
+    .px-4 { padding-left: 1rem; padding-right: 1rem; }
+    .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+    .hover\\:bg-red-700:hover { background-color: #b91c1c; }
+    .bg-red-600 { background-color: #dc2626; }
+    .border-gray-200 { border-color: #e5e7eb; }
+    .space-x-2 > * + * { margin-left: 0.5rem; }
+    .min-w-full { min-width: 100%; }
+    .divide-y { border-bottom: 1px solid #e5e7eb; }
+    .divide-gray-200 { border-color: #e5e7eb; }
+    .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .text-xs { font-size: 0.75rem; }
+    .uppercase { text-transform: uppercase; }
+    .tracking-wider { letter-spacing: 0.05em; }
+    .whitespace-nowrap { white-space: nowrap; }
+    .table-container { background-color: #fff; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .cursor-pointer { cursor: pointer; }
+    .bg-blue-100 { background-color: #dbeafe; }
+    .bg-gray-600 { background-color: #4b5563; }
+    .hover\\:bg-gray-700:hover { background-color: #374151; }
+    .disabled\\:bg-gray-300:disabled { background-color: #d1d5db; }
+    .relative { position: relative; }
+    .absolute { position: absolute; }
+    .z-10 { z-index: 10; }
+    .max-h-48 { max-height: 12rem; }
+    .overflow-y-auto { overflow-y: auto; }
+    .top-full { top: 100%; }
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+  </style>
+  <link rel="stylesheet" href="/app-shell.css" />
+  <link rel="stylesheet" href="/kpi-common.css" />
+  <script src="/app-shell.js" defer></script>
+  <script src="/kpi-common.js" defer></script>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+  <header id="header" class="text-white p-4">
+    <div class="class"fixed top-0 left-0 w-full bg-blue-600 text-white p-4 flex flex-wrap items-center justify-between gap-4 shadow-md z-10">
+      <div class="flex items-center">
+        <a href="/"><img src="/logo.png" alt="My Company Logo" class="h-12 mr-4" /></a>
+        <h1 class="text-2xl font-bold">Open Accounting</h1>
+      </div>
+      <nav id="nav" class="flex flex-wrap gap-4">
+        <a href="/" class="px-4 hover:underline">Settings</a>
+        <a href="/deposits" class="px-4 hover:underline">Deposits</a>
+        <a href="/expenses" class="px-4 hover:underline">Expenses</a>
+        <a href="/services-reports" class="px-4 hover:underline">Reports</a>
+		<a href="/vendors" class="px-4 hover:underline">Vendors (My Company)</a>
+      </nav>
+    </div>
+  </header>
+  <div id="root" class="flex-grow"></div>
+    <footer class="bg-gray-800 text-white p-4 mt-8">
+    <div class="container mx-auto">
+      <p>© Open Accounting. All rights reserved.</p>
+    </div>
+  </footer>
+<script type="text/babel">
+  const { useState, useEffect, useCallback, useMemo, Fragment } = React;
+  const BASE_URL = window.location.origin + '/api';
+
+  const getCompanyId = () => localStorage.getItem('selectedCompanyId') || '1';
+  const getCompanyMeta = (id) => {
+    const c = window.CompanyConfig && CompanyConfig.get ? CompanyConfig.get(id) : null;
+    const settings = (c && c.settings) || {};
+    return {
+      id: String(id),
+      name: (c && (c.legal_name || c.name)) || 'My Company',
+      short: (c && c.short_name) || 'My Company',
+      address: settings.address || '',
+      phone: settings.phone ? ('Phone: ' + settings.phone) : '',
+    };
+  };
+
+  const fetchWithRetry = async (url, options, type, retries = 5, delay = 1000) => {
+    const companyId = getCompanyId();
+    // Append company_id for GETs; POSTs send company_id in body
+    let finalUrl = url;
+    if (!options?.method || options.method === 'GET' || options.method === 'DELETE') {
+      const sep = url.indexOf('?') >= 0 ? '&' : '?';
+      finalUrl = `${url}${sep}company_id=${encodeURIComponent(companyId)}`;
+    }
+    for (let i = 0; i < retries; i++) {
+      try {
+        const response = await fetch(finalUrl, {
+          ...options,
+          headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', ...options?.headers },
+          signal: AbortSignal.timeout(15000)
+        });
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => 'No response text');
+          throw new Error(`HTTP ${response.status}: ${errorText || 'Unknown error'}`);
+        }
+        // DELETE may be empty
+        if (response.status === 204) return null;
+        const text = await response.text();
+        if (!text) return null;
+        return JSON.parse(text);
+      } catch (error) {
+        if (i < retries - 1) {
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        throw error;
+      }
+    }
+  };
+
+  const ErrorBoundary = ({ children }) => {
+    const [error, setError] = useState(null);
+    useEffect(() => {
+      const errorHandler = (error) => {
+        setError(error.message || 'An unexpected error occurred');
+      };
+      window.addEventListener('error', errorHandler);
+      return () => window.removeEventListener('error', errorHandler);
+    }, []);
+    if (error) {
+      return (
+        <div className="p-4 text-red-600 bg-red-100 rounded-lg shadow-sm">
+          <h2>Error: {error}</h2>
+          <p>Please refresh the page.</p>
+        </div>
+      );
+    }
+    return children;
+  };
+
+  const DepositsPage = () => {
+    const [customers, setCustomers] = useState([]);
+    const [deposits, setDeposits] = useState([]);
+    const [form, setForm] = useState({
+      customerId: '',
+      amount: 0,
+      type: 'Deposit',
+      date: new Date().toISOString().split('T')[0],
+      description: ''
+    });
+    const [editForm, setEditForm] = useState(null);
+    const [newCustomer, setNewCustomer] = useState({
+      name: '',
+      email: '',
+      phone: '',
+      billing_address: '',
+      shipping_address: '',
+      shippingFollowsBilling: true
+    });
+    const [selectedIndex, setSelectedIndex] = useState(-1);
+    const [error, setError] = useState(null);
+    const [message, setMessage] = useState({ text: '', type: '' });
+    const [importFile, setImportFile] = useState(null);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [showCustomerModal, setShowCustomerModal] = useState(false);
+    const [customerSearch, setCustomerSearch] = useState('');
+    const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+    const [selectedCustomer, setSelectedCustomer] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [companyId, setCompanyId] = useState(getCompanyId());
+    const companyMeta = useMemo(() => getCompanyMeta(companyId), [companyId]);
+
+    useEffect(() => {
+      const onCompany = () => {
+        setCompanyId(getCompanyId());
+      };
+      window.addEventListener('accounting-company-changed', onCompany);
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'selectedCompanyId') onCompany();
+      });
+      return () => window.removeEventListener('accounting-company-changed', onCompany);
+    }, []);
+
+    useEffect(() => {
+      const fetchData = async () => {
+        setIsLoading(true);
+        setSelectedIndex(-1);
+        setSelectedCustomer(null);
+        setCustomerSearch('');
+        setForm({
+          customerId: '',
+          amount: 0,
+          type: 'Deposit',
+          date: new Date().toISOString().split('T')[0],
+          description: ''
+        });
+        try {
+          const [custData, depData] = await Promise.all([
+            fetchWithRetry(`${BASE_URL}/customers`, { headers: { 'Accept': 'application/json' } }, 'customers'),
+            fetchWithRetry(`${BASE_URL}/deposits`, { headers: { 'Accept': 'application/json' } }, 'deposits')
+          ]);
+          setCustomers(Array.isArray(custData) ? custData : (custData ? [custData] : []));
+          setDeposits(Array.isArray(depData) ? depData : (depData ? [depData] : []));
+          setIsLoading(false);
+        } catch (err) {
+          setError(`Failed to load data: ${err.message}`);
+          setIsLoading(false);
+        }
+      };
+      fetchData();
+    }, [companyId]);
+
+    const handleFormChange = useCallback((e) => {
+      const { name, value } = e.target;
+      setForm(prev => ({
+        ...prev,
+        [name]: name === 'amount' ? (value ? parseFloat(value) || 0 : 0) : value
+      }));
+    }, []);
+
+    const handleEditFormChange = useCallback((e) => {
+      const { name, value } = e.target;
+      setEditForm(prev => ({
+        ...prev,
+        [name]: name === 'amount' ? (value ? parseFloat(value) || 0 : 0) : value
+      }));
+    }, []);
+
+    const handleCustomerFormChange = useCallback((e) => {
+      const { name, value } = e.target;
+      setNewCustomer(prev => {
+        const next = { ...prev, [name]: value };
+        if (name === 'billing_address' && prev.shippingFollowsBilling) {
+          next.shipping_address = value;
+        }
+        if (name === 'shipping_address') {
+          next.shippingFollowsBilling =
+            value.trim() === '' || value === prev.billing_address;
+        }
+        return next;
+      });
+    }, []);
+
+    const handleImportFileChange = useCallback((e) => {
+      setImportFile(e.target.files[0]);
+      setMessage({ text: '', type: '' });
+    }, []);
+
+    const handleAddCustomer = useCallback(async (e) => {
+      e.preventDefault();
+      const bill = (newCustomer.billing_address || '').trim();
+      const ship = (newCustomer.shipping_address || '').trim() || bill;
+      const customer = {
+        name: newCustomer.name,
+        email: newCustomer.email || null,
+        phone: newCustomer.phone || null,
+        billing_address: bill,
+        shipping_address: ship || bill,
+        company_id: parseInt(getCompanyId(), 10)
+      };
+      if (!customer.name || !customer.billing_address) {
+        setMessage({ text: 'Name and billing address are required', type: 'error' });
+        return;
+      }
+      try {
+        const newCust = await fetchWithRetry(`${BASE_URL}/customers`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(customer)
+        }, 'add customer');
+        setCustomers(prev => [...prev, newCust]);
+        setForm(prev => ({ ...prev, customerId: newCust.id.toString() }));
+        setSelectedCustomer(newCust);
+        setCustomerSearch(newCust.name);
+        setNewCustomer({ name: '', email: '', phone: '', billing_address: '', shipping_address: '', shippingFollowsBilling: true });
+        setShowCustomerModal(false);
+        setMessage({ text: `Customer ${newCust.name} added`, type: 'success' });
+      } catch (err) {
+        setMessage({ text: `Error adding customer: ${err.message}`, type: 'error' });
+      }
+    }, [newCustomer]);
+
+    const handleSubmit = useCallback(async (e) => {
+      e.preventDefault();
+      const customerId = parseInt(form.customerId);
+      const amount = form.amount;
+      const type = form.type;
+      const date = form.date;
+      const description = form.description;
+      if (!customerId || !amount || !type || !date) {
+        setMessage({ text: 'Please fill all required fields', type: 'error' });
+        return;
+      }
+      const deposit = {
+        customer_id: customerId,
+        amount,
+        type,
+        date,
+        description: description || null,
+        company_id: parseInt(getCompanyId(), 10)
+      };
+      try {
+        const newDeposit = await fetchWithRetry(`${BASE_URL}/deposits`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(deposit)
+        }, 'record deposit');
+        setDeposits(prev => [...prev, {
+          ...newDeposit,
+          customer_name: customers.find(c => c.id === customerId)?.name || 'Unknown'
+        }]);
+        setForm({
+          customerId: '',
+          amount: 0,
+          type: 'Deposit',
+          date: new Date().toISOString().split('T')[0],
+          description: ''
+        });
+        setCustomerSearch('');
+        setSelectedCustomer(null);
+        setMessage({ text: `Deposit #${newDeposit.id} recorded`, type: 'success' });
+      } catch (err) {
+        setMessage({ text: `Error recording deposit: ${err.message}`, type: 'error' });
+      }
+    }, [form, customers]);
+
+    const handleEdit = useCallback((deposit) => {
+      setEditForm({
+        id: deposit.id,
+        customerId: deposit.customer_id?.toString() || '',
+        amount: deposit.amount || 0,
+        type: deposit.type || 'Deposit',
+        date: deposit.date || new Date().toISOString().split('T')[0],
+        description: deposit.description || ''
+      });
+      setShowEditModal(true);
+    }, []);
+
+    const handleEditSubmit = useCallback(async (e) => {
+      e.preventDefault();
+      if (!editForm) {
+        setMessage({ text: 'No deposit selected', type: 'error' });
+        return;
+      }
+      const customerId = parseInt(editForm.customerId);
+      const amount = editForm.amount;
+      const type = editForm.type;
+      const date = editForm.date;
+      const description = editForm.description;
+      if (!customerId || !amount || !type || !date) {
+        setMessage({ text: 'Please fill all required fields', type: 'error' });
+        return;
+      }
+      const deposit = {
+        customer_id: customerId,
+        amount,
+        type,
+        date,
+        description: description || null,
+        company_id: parseInt(getCompanyId(), 10)
+      };
+      try {
+        const updatedDeposit = await fetchWithRetry(`${BASE_URL}/deposits/${editForm.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(deposit)
+        }, 'update deposit');
+        setDeposits(prev => prev.map(d => d.id === updatedDeposit.id ? {
+          ...updatedDeposit,
+          customer_name: customers.find(c => c.id === customerId)?.name || 'Unknown'
+        } : d));
+        setShowEditModal(false);
+        setEditForm(null);
+        setMessage({ text: `Deposit #${updatedDeposit.id} updated`, type: 'success' });
+      } catch (err) {
+        setMessage({ text: `Error updating deposit: ${err.message}`, type: 'error' });
+      }
+    }, [editForm, customers]);
+
+    const handleDelete = useCallback(async (id) => {
+      if (!window.confirm(`Are you sure you want to delete deposit #${id}?`)) return;
+      try {
+        await fetchWithRetry(`${BASE_URL}/deposits/${id}`, {
+          method: 'DELETE',
+          headers: { 'Accept': 'application/json' }
+        }, 'delete deposit');
+        setDeposits(prev => prev.filter(deposit => deposit.id !== id));
+        setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
+        setMessage({ text: `Deposit #${id} deleted`, type: 'success' });
+      } catch (err) {
+        setMessage({ text: `Error deleting deposit: ${err.message}`, type: 'error' });
+      }
+    }, []);
+
+    const handleDepositClick = useCallback((index) => {
+      setSelectedIndex(prev => prev === index ? -1 : index);
+    }, []);
+
+    const handlePreviousDeposit = useCallback(() => {
+      setSelectedIndex(prev => Math.max(prev - 1, -1));
+    }, []);
+
+    const handleNextDeposit = useCallback(() => {
+      setSelectedIndex(prev => Math.min(prev + 1, deposits.length - 1));
+    }, [deposits]);
+
+    const filteredCustomers = useMemo(() => {
+      return customers
+        .filter(c => c.name.toLowerCase().includes(customerSearch.toLowerCase()))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    }, [customers, customerSearch]);
+
+    const generatePDF = useCallback((deposit) => {
+      const customer = customers.find(c => c.id === deposit.customer_id) || {};
+      const meta = getCompanyMeta(getCompanyId());
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      const companyText = meta.name;
+      const companyWidth = doc.getTextWidth(companyText);
+      doc.text(companyText, (doc.internal.pageSize.width - companyWidth) / 2, 15);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      if (meta.address) {
+        const addressWidth = doc.getTextWidth(meta.address);
+        doc.text(meta.address, (doc.internal.pageSize.width - addressWidth) / 2, 22);
+      }
+      if (meta.phone) {
+        const phoneWidth = doc.getTextWidth(meta.phone);
+        doc.text(meta.phone, (doc.internal.pageSize.width - phoneWidth) / 2, 29);
+      }
+      doc.setFontSize(12);
+      doc.text('Deposit Receipt', 20, 46);
+      doc.text(`Transaction #${deposit.id || 'N/A'}`, 20, 54);
+      doc.text(`Date: ${deposit.date || 'N/A'}`, 20, 62);
+      doc.text('Received From:', 20, 70);
+      if (customer.billing_address) {
+        const addressLines = customer.billing_address.split('\n');
+        let y = 78;
+        doc.text(customer.name || 'N/A', 20, y);
+        y += 8;
+        addressLines.forEach(line => {
+          doc.text(line, 20, y);
+          y += 8;
+        });
+      } else {
+        doc.text(customer.name || 'N/A', 20, 78);
+      }
+      doc.autoTable({
+        startY: 110,
+        head: [['Description', 'Amount']],
+        body: [
+          [`${deposit.type} (${deposit.description || 'No description'})`, `$${deposit.amount.toFixed(2)}`]
+        ],
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255] },
+        margin: { top: 20 }
+      });
+      doc.save(`Receipt_${deposit.id || 'deposit'}.pdf`);
+    }, [customers]);
+
+    const handleCustomerSearchChange = useCallback((e) => {
+      setCustomerSearch(e.target.value);
+      setShowCustomerDropdown(true);
+    }, []);
+
+    const handleCustomerSelect = useCallback((customer) => {
+      setSelectedCustomer(customer);
+      setCustomerSearch(customer.name);
+      setForm(prev => ({ ...prev, customerId: customer.id.toString() }));
+      setShowCustomerDropdown(false);
+    }, []);
+
+    const handleImportDeposits = useCallback(async () => {
+      if (!importFile) {
+        setMessage({ text: 'Please select a file to import', type: 'error' });
+        return;
+      }
+      try {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+          const depositsToImport = json.map(row => {
+            const customer = customers.find(c => c.name.toLowerCase() === (row['Customer'] || '').toLowerCase());
+            return {
+              customer_id: customer ? customer.id : null,
+              amount: parseFloat(row['Amount']) || 0,
+              type: row['Type'] || 'Deposit',
+              date: row['Date'] || new Date().toISOString().split('T')[0],
+              description: row['Description'] || null,
+              company_id: parseInt(getCompanyId(), 10)
+            };
+          }).filter(dep => dep.customer_id && dep.amount > 0);
+          if (depositsToImport.length === 0) {
+            setMessage({ text: 'No valid deposits found', type: 'error' });
+            return;
+          }
+          const importedDeposits = [];
+          for (const dep of depositsToImport) {
+            const response = await fetchWithRetry(`${BASE_URL}/deposits`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(dep)
+            }, 'import deposit');
+            importedDeposits.push({
+              ...response,
+              customer_name: customers.find(c => c.id === dep.customer_id)?.name || 'Unknown'
+            });
+          }
+          setDeposits(prev => [...prev, ...importedDeposits]);
+          setImportFile(null);
+          document.getElementById('importFile').value = '';
+          setMessage({ text: `${importedDeposits.length} deposit(s) imported`, type: 'success' });
+        };
+        reader.readAsArrayBuffer(importFile);
+      } catch (err) {
+        setMessage({ text: `Error importing deposits: ${err.message}`, type: 'error' });
+      }
+    }, [importFile, customers]);
+
+    if (isLoading) {
+      return (
+        <main className="container mx-auto p-6 flex-grow">
+          <h2 className="text-3xl font-bold mb-2">Deposits</h2>
+          <p className="text-sm text-gray-600 mb-4">Loading {companyMeta.name}…</p>
+          <p>Loading...</p>
+        </main>
+      );
+    }
+
+    return (
+      <ErrorBoundary>
+        <main className="container mx-auto p-6 flex-grow">
+          <h2 className="text-3xl font-bold mb-2">Deposits</h2>
+          <p className="text-sm text-gray-600 mb-6">
+            Showing deposits for <strong>{companyMeta.name}</strong> only.
+            Switch company in the header to view the other company’s deposits.
+          </p>
+          {error && (
+            <div className="p-4 mb-6 text-red-600 bg-red-100 rounded-lg shadow-sm">
+              Error: {error}
+            </div>
+          )}
+          {message.text && (
+            <div className={`p-4 mb-6 ${message.type === 'success' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'} rounded-lg shadow-sm`}>
+              {message.text}
+            </div>
+          )}
+          <div className="form-container mb-6">
+            <h3 className="text-lg font-semibold mb-2">Record a Deposit</h3>
+            <form onSubmit={handleSubmit}>
+              <label htmlFor="customerSearch" className="block text-sm font-medium text-gray-700">Customer</label>
+              <div className="relative mt-1">
+                <input
+                  type="text"
+                  id="customerSearch"
+                  value={customerSearch}
+                  onChange={handleCustomerSearchChange}
+                  onFocus={() => setShowCustomerDropdown(true)}
+                  placeholder="Search or select customer"
+                  className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+                {showCustomerDropdown && customerSearch && filteredCustomers.length > 0 && (
+                  <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-sm max-h-48 overflow-y-auto top-full">
+                    {filteredCustomers.map(customer => (
+                      <div
+                        key={customer.id}
+                        onClick={() => handleCustomerSelect(customer)}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                      >
+                        {customer.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCustomerModal(true)}
+                className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                Add New Customer
+              </button>
+              {selectedCustomer && (
+                <div className="mt-2">
+                  <p><strong>Selected Customer:</strong> {selectedCustomer.name}</p>
+                  <p><strong>Billing Address:</strong> {selectedCustomer.billing_address || 'N/A'}</p>
+                </div>
+              )}
+              <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mt-4">Amount</label>
+              <input
+                type="number"
+                id="amount"
+                name="amount"
+                value={form.amount}
+                onChange={handleFormChange}
+                min="0"
+                step="0.01"
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+              <label htmlFor="type" className="block text-sm font-medium text-gray-700 mt-4">Type</label>
+              <select
+                id="type"
+                name="type"
+                value={form.type}
+                onChange={handleFormChange}
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                required
+              >
+                <option value="Deposit">Deposit</option>
+                <option value="Interest">Interest</option>
+                <option value="Payment">Payment</option>
+              </select>
+              <label htmlFor="date" className="block text-sm font-medium text-gray-700 mt-4">Date</label>
+              <input
+                type="date"
+                id="date"
+                name="date"
+                value={form.date}
+                onChange={handleFormChange}
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mt-4">Description (Optional)</label>
+              <textarea
+                id="description"
+                name="description"
+                value={form.description}
+                onChange={handleFormChange}
+                rows="4"
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+              <div className="mt-4 flex gap-4">
+                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                  Record Deposit
+                </button>
+              </div>
+            </form>
+          </div>
+          <div className="form-container mb-6">
+            <h3 className="text-lg font-semibold mb-2">Import Deposits</h3>
+            <input
+              id="importFile"
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleImportFileChange}
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            />
+            <button
+              onClick={handleImportDeposits}
+              disabled={!importFile}
+              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-300"
+            >
+              Import Deposits
+            </button>
+          </div>
+          {deposits.length > 0 && (
+            <div className="table-container bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-2xl font-bold mb-4">Previous Deposits</h3>
+              <div className="flex justify-between mb-4">
+                <button
+                  onClick={handlePreviousDeposit}
+                  disabled={selectedIndex <= -1}
+                  className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 disabled:bg-gray-300"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={handleNextDeposit}
+                  disabled={selectedIndex >= deposits.length - 1}
+                  className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 disabled:bg-gray-300"
+                >
+                  Next
+                </button>
+              </div>
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-blue-600 text-white">
+                  <tr>
+                    <th className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Deposit #</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Customer</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Type</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Amount</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Date</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {deposits.map((deposit, index) => (
+                    <Fragment key={deposit.id}>
+                      <tr
+                        onClick={() => handleDepositClick(index)}
+                        className={`cursor-pointer ${index === selectedIndex ? 'bg-blue-100' : ''}`}
+                      >
+                        <td className="px-2 py-2 whitespace-nowrap">{deposit.id || 'N/A'}</td>
+                        <td className="px-2 py-2 whitespace-nowrap">{deposit.customer_name || 'Unknown'}</td>
+                        <td className="px-2 py-2 whitespace-nowrap">{deposit.type || 'N/A'}</td>
+                        <td className="px-2 py-2 whitespace-nowrap">${(deposit.amount || 0).toFixed(2)}</td>
+                        <td className="px-2 py-2 whitespace-nowrap">{deposit.date || 'N/A'}</td>
+                        <td className="px-2 py-2 whitespace-nowrap space-x-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleEdit(deposit); }}
+                            className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDelete(deposit.id); }}
+                            className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+                          >
+                            Delete
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); generatePDF(deposit); }}
+                            className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                          >
+                            Print Receipt
+                          </button>
+                        </td>
+                      </tr>
+                      {index === selectedIndex && (
+                        <tr>
+                          <td colSpan="6" className="px-2 py-2">
+                            <div className="p-4 border rounded-lg bg-gray-50">
+                              <div className="flex justify-between items-center mb-2">
+                                <h3 className="text-lg font-semibold">Deposit Details</h3>
+                                <div className="space-x-2">
+                                  <button
+                                    onClick={handlePreviousDeposit}
+                                    disabled={selectedIndex <= -1}
+                                    className="bg-gray-600 text-white p-2 rounded disabled:bg-gray-300"
+                                  >
+                                    ←
+                                  </button>
+                                  <button
+                                    onClick={handleNextDeposit}
+                                    disabled={selectedIndex >= deposits.length - 1}
+                                    className="bg-gray-600 text-white p-2 rounded disabled:bg-gray-300"
+                                  >
+                                    →
+                                  </button>
+                                </div>
+                              </div>
+                              <p><strong>Deposit #:</strong> {deposit.id || 'N/A'}</p>
+                              <p><strong>Customer:</strong> {deposit.customer_name || 'Unknown'}</p>
+                              <p><strong>Type:</strong> {deposit.type || 'N/A'}</p>
+                              <p><strong>Amount:</strong> ${(deposit.amount || 0).toFixed(2)}</p>
+                              <p><strong>Date:</strong> {deposit.date || 'N/A'}</p>
+                              <p><strong>Description:</strong> {deposit.description || 'N/A'}</p>
+                              <p><strong>Billing Address:</strong> {(customers.find(c => c.id === deposit.customer_id)?.billing_address || 'N/A')}</p>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {showCustomerModal && (
+            <div className="modal">
+              <div className="modal-content">
+                <h3 className="text-lg font-semibold mb-4">Add New Customer</h3>
+                <form onSubmit={handleAddCustomer}>
+                  <label htmlFor="customerName" className="block text-sm font-medium text-gray-700">Name</label>
+                  <input
+                    type="text"
+                    id="customerName"
+                    name="name"
+                    value={newCustomer.name}
+                    onChange={handleCustomerFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mt-4">Email (Optional)</label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={newCustomer.email}
+                    onChange={handleCustomerFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mt-4">Phone (Optional)</label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={newCustomer.phone}
+                    onChange={handleCustomerFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <label htmlFor="billing_address" className="block text-sm font-medium text-gray-700 mt-4">Billing Address</label>
+                  <textarea
+                    id="billing_address"
+                    name="billing_address"
+                    value={newCustomer.billing_address}
+                    onChange={handleCustomerFormChange}
+                    rows="4"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                  <label htmlFor="shipping_address" className="block text-sm font-medium text-gray-700 mt-4">Shipping Address</label>
+                  <textarea
+                    id="shipping_address"
+                    name="shipping_address"
+                    value={newCustomer.shipping_address}
+                    onChange={handleCustomerFormChange}
+                    rows="4"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                  <div className="mt-4 flex justify-end gap-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCustomerModal(false);
+                        setNewCustomer({ name: '', email: '', phone: '', billing_address: '', shipping_address: '' });
+                      }}
+                      className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                      Add Customer
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+          {showEditModal && editForm && (
+            <div className="modal">
+              <div className="modal-content">
+                <h3 className="text-lg font-semibold mb-4">Edit Deposit</h3>
+                <form onSubmit={handleEditSubmit}>
+                  <label htmlFor="editCustomerId" className="block text-sm font-medium text-gray-700">Customer</label>
+                  <select
+                    id="editCustomerId"
+                    name="customerId"
+                    value={editForm.customerId}
+                    onChange={handleEditFormChange}
+                    required
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select a customer</option>
+                    {customers.map(customer => (
+                      <option key={customer.id} value={customer.id}>{customer.name}</option>
+                    ))}
+                  </select>
+                  <label htmlFor="editAmount" className="block text-sm font-medium text-gray-700 mt-4">Amount</label>
+                  <input
+                    type="number"
+                    id="editAmount"
+                    name="amount"
+                    value={editForm.amount}
+                    onChange={handleEditFormChange}
+                    min="0"
+                    step="0.01"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                  <label htmlFor="editType" className="block text-sm font-medium text-gray-700 mt-4">Type</label>
+                  <select
+                    id="editType"
+                    name="type"
+                    value={editForm.type}
+                    onChange={handleEditFormChange}
+                    required
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="Deposit">Deposit</option>
+                    <option value="Interest">Interest</option>
+                    <option value="Payment">Payment</option>
+                  </select>
+                  <label htmlFor="editDate" className="block text-sm font-medium text-gray-700 mt-4">Date</label>
+                  <input
+                    type="date"
+                    id="editDate"
+                    name="date"
+                    value={editForm.date}
+                    onChange={handleEditFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                  <label htmlFor="editDescription" className="block text-sm font-medium text-gray-700 mt-4">Description (Optional)</label>
+                  <textarea
+                    id="editDescription"
+                    name="description"
+                    value={editForm.description}
+                    onChange={handleEditFormChange}
+                    rows="4"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <div className="mt-4 flex justify-end gap-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowEditModal(false);
+                        setEditForm(null);
+                      }}
+                      className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                      Update Deposit
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </main>
+      </ErrorBoundary>
+    );
+  };
+
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(<DepositsPage />);
+</script>
+  <script>
+
+      }
+      if (linkColorPicker) {
+        linkColorPicker.value = linkColor;
+        linkColorPicker.addEventListener('change', (e) => {
+          const newColor = e.target.value;
+          navLinks.forEach(link => link.style.color = newColor);
+          localStorage.setItem(linkKey, newColor);
+        });
+      }
+    });
+  </script>
+</body>
+</html>

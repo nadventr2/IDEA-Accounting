@@ -1,0 +1,2071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoices - Accounting</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.24.0/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="ship-to.js"></script>
+  <script src="company-config.js"></script>
+  <style>
+    .min-h-screen { min-height: 100vh; }
+    .bg-gray-100 { background-color: #f3f4f6; }
+    .bg-blue-600 { background-color: #2563eb; }
+    .text-white { color: #fff; }
+    .p-4 { padding: 1rem; }
+    .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .container { max-width: 1280px; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-4 { gap: 1rem; }
+    .h-12 { height: 3rem; }
+    .mr-4 { margin-right: 1rem; }
+    .text-2xl { font-size: 1.5rem; }
+    .font-bold { font-weight: 700; }
+    .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .hover\\:bg-blue-700:hover { background-color: #1d4ed8; }
+    .rounded-md { border-radius: 0.375rem; }
+    .bg-blue-700 { background-color: #1d4ed8; }
+    .p-6 { padding: 1.5rem; }
+    .flex-grow { flex-grow: 1; }
+    .text-3xl { font-size: 1.875rem; }
+    .mb-6 { margin-bottom: 1.5rem; }
+    .form-container { background-color: #fff; padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .grid { display: grid; }
+    .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+    .md\\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .gap-4 { gap: 1rem; }
+    .text-sm { font-size: 0.875rem; }
+    .font-medium { font-weight: 500; }
+    .text-gray-700 { color: #374151; }
+    .mt-1 { margin-top: 0.25rem; }
+    .mb-1 { margin-bottom: 0.25rem; }
+    .w-full { width: 100%; }
+    .border-gray-300 { border-color: #d1d5db; }
+    .rounded-md { border-radius: 0.375rem; }
+    .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+    .focus\\:ring-blue-500 { outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); }
+    .focus\\:border-blue-500 { border-color: #3b82f6; }
+    .mt-4 { margin-top: 1rem; }
+    .text-lg { font-size: 1.125rem; }
+    .font-semibold { font-weight: 600; }
+    .mb-4 { margin-bottom: 1rem; }
+    .border { border: 1px solid #e5e7eb; }
+    .border-gray-200 { border-color: #e5e7eb; }
+    .p-2 { padding: 0.5rem; }
+    .bg-gray-50 { background-color: #f9fafb; }
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .text-left { text-align: left; }
+    .border-collapse { border-collapse: collapse; }
+    .bg-white { background-color: #fff; }
+    .text-red-600 { color: #dc2626; }
+    .bg-red-100 { background-color: #fee2e2; }
+    .text-green-600 { color: #16a34a; }
+    .bg-green-100 { background-color: #dcfce7; }
+    .bg-green-600 { background-color: #16a34a; }
+    .btn-convert {
+      background-color: #15803d;
+      color: #fff;
+      font-weight: 700;
+      padding: 0.35rem 0.65rem;
+      border-radius: 0.375rem;
+      border: 1px solid #14532d;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+      white-space: nowrap;
+    }
+    .btn-convert:hover:not(:disabled) { background-color: #166534; }
+    .btn-convert:disabled {
+      background-color: #9ca3af;
+      border-color: #9ca3af;
+      color: #f3f4f6;
+      cursor: not-allowed;
+      opacity: 0.85;
+      box-shadow: none;
+    }
+    .btn-packing {
+      background-color: #0f766e;
+      color: #fff;
+      font-weight: 700;
+      padding: 0.35rem 0.65rem;
+      border-radius: 0.375rem;
+      border: 1px solid #115e59;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+      white-space: nowrap;
+    }
+    .btn-packing:hover:not(:disabled) { background-color: #0d9488; }
+    .btn-packing:disabled {
+      background-color: #9ca3af;
+      border-color: #9ca3af;
+      color: #f3f4f6;
+      cursor: not-allowed;
+      opacity: 0.85;
+      box-shadow: none;
+    }
+    .px-4 { padding-left: 1rem; padding-right: 1rem; }
+    .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+    .hover\\:bg-red-700:hover { background-color: #b91c1c; }
+    .bg-red-600 { background-color: #dc2626; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .border-gray-200 { border-color: #e5e7eb; }
+    .flex { display: flex; }
+    .justify-between { justify-content: space-between; }
+    .items-center { align-items: center; }
+    .space-x-2 > * + * { margin-left: 0.5rem; }
+    .min-w-full { min-width: 100%; }
+    .divide-y { border-bottom: 1px solid #e5e7eb; }
+    .divide-gray-200 { border-color: #e5e7eb; }
+    .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .text-xs { font-size: 0.75rem; }
+    .text-gray-500 { color: #6b7280; }
+    .uppercase { text-transform: uppercase; }
+    .tracking-wider { letter-spacing: 0.05em; }
+    .whitespace-nowrap { white-space: nowrap; }
+    .table-container { background-color: #fff; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .cursor-pointer { cursor: pointer; }
+    .bg-blue-100 { background-color: #dbeafe; }
+    .bg-gray-600 { background-color: #4b5563; }
+    .hover\\:bg-gray-700:hover { background-color: #374151; }
+    .disabled\\:bg-gray-300 { background-color: #d1d5db; }
+    .relative { position: relative; }
+    .absolute { position: absolute; }
+    .z-10 { z-index: 10; }
+    .max-h-48 { max-height: 12rem; }
+    .overflow-y-auto { overflow-y: auto; }
+    .top-full { top: 100%; }
+    .w-20 { width: 5rem; }
+    .ml-2 { margin-left: 0.5rem; }
+    .opacity-50 { opacity: 0.5; }
+    .cursor-not-allowed { cursor: not-allowed; }
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+  </style>
+  <link rel="stylesheet" href="/app-shell.css" />
+  <link rel="stylesheet" href="/kpi-common.css" />
+  <script src="/app-shell.js" defer></script>
+  <script src="/kpi-common.js" defer></script>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+  <header id="header" class="text-white p-4">
+    <div class="fixed top-0 left-0 w-full bg-blue-600 text-white p-4 flex flex-wrap items-center justify-between gap-4 shadow-md z-10">
+      <div class="flex items-center">
+        <a href="/"><img src="/logo.png" alt="Company Logo" class="h-12 mr-4" /></a>
+        <h1 class="text-2xl font-bold">Open Accounting</h1>
+      </div>
+      <nav id="nav" class="flex flex-wrap gap-4">
+        <a href="/" class="px-4 hover:underline">Settings</a>
+<a href="/estimates.html" class="px-4 hover:underline">Estimates</a>
+        <a href="/invoices.html" class="px-4 hover:underline">Invoices</a>
+        <a href="/sales.html" class="px-4 hover:underline">Sales</a>
+        <a href="/add-vendor.html" class="px-4 hover:underline">Add Vendor</a>
+        <a href="/add-products.html" class="px-4 hover:underline">Add Product</a>
+        <a href="/purchase-order.html" class="px-4 hover:underline">Purchase Order</a>
+        <a href="/packing-slip.html" class="px-4 hover:underline">Packing Slips</a>
+        <a href="/transaction-history.html" class="px-4 hover:underline">Transaction History</a>
+        <a href="/customer-list.html" class="px-4 hover:underline">Customer List</a>
+        <a href="/receive-inventory.html" class="px-4 hover:underline">Receive Inventory</a>
+        <a href="/inventory.html" class="px-4 hover:underline">Inventory</a>
+        <a href="/bills.html" class="px-4 hover:underline">Bills</a>
+        <a href="/sales-tax.html" class="px-4 hover:underline">Sales Tax</a>
+        <a href="/reports.html" class="px-4 hover:underline">Reports</a>
+      </nav>
+    </div>
+  </header>
+  <div id="root" class="flex-grow"></div>
+    <footer class="bg-gray-800 text-white p-4 mt-8">
+    <div class="container mx-auto">
+      <p>© Open Accounting. All rights reserved.</p>
+    </div>
+  </footer>
+    <script type="text/javascript">
+    var gk_isXlsx = false;
+    var gk_xlsxFileLookup = {};
+    var gk_fileData = {};
+    function filledCell(cell) {
+      return cell !== '' && cell != null;
+    }
+    function loadFileData(filename) {
+      if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+        try {
+          var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+          var firstSheetName = workbook.SheetNames[0];
+          var worksheet = workbook.Sheets[firstSheetName];
+          var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+          var filteredData = jsonData.filter(row => row.some(filledCell));
+          var headerRowIndex = filteredData.findIndex((row, index) => {
+            if (index + 1 >= filteredData.length) return false;
+            return row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length;
+          });
+          if (headerRowIndex === -1 || headerRowIndex > 25) {
+            headerRowIndex = 0;
+          }
+          var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
+          csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+          return csv;
+        } catch (e) {
+          console.error('Error processing XLSX:', e);
+          return "";
+        }
+      }
+      return gk_fileData[filename] || "";
+    }
+  </script>
+  <script type="text/javascript">
+    const BASE_URL = window.location.origin + '/api';
+    const fetchWithRetry = async (url, options, type, setter, retries = 10, delay = 1000) => {
+      console.log(`[FETCH] Starting ${type} from ${url}`);
+      const companyId = localStorage.getItem('selectedCompanyId') || '1';
+      const urlWithCompany = `${url}?company_id=${companyId}`;
+      for (let i = 0; i < retries; i++) {
+        try {
+          console.log(`[FETCH] Attempt ${i + 1} for ${type}`);
+          const response = await fetch(urlWithCompany, {
+            ...options,
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', ...options?.headers },
+            signal: AbortSignal.timeout(15000)
+          });
+          console.log(`[FETCH] Response for ${type}: status ${response.status}`);
+          if (!response.ok) {
+            const errorText = await response.text().catch(() => 'No response text');
+            throw new Error(`HTTP ${response.status}: ${errorText || 'Unknown server error'}`);
+          }
+          const contentType = response.headers.get('content-type');
+          if (!contentType?.includes('application/json')) {
+            const text = await response.text().catch(() => 'No response text');
+            throw new Error(`Expected JSON, got ${contentType || 'unknown'}: ${text.slice(0, 200)}`);
+          }
+          const data = await response.json();
+          console.log(`[FETCH] Data for ${type}:`, JSON.stringify(data, null, 2));
+          if (!data) {
+            throw new Error(`Received empty response for ${type}`);
+          }
+          if (setter) {
+            const validatedData = Array.isArray(data) ? data : [data];
+            console.log(`[FETCH] Setting state for ${type}:`, validatedData.length, 'items');
+            setter(validatedData);
+          }
+          return data;
+        } catch (error) {
+          console.error(`[FETCH] Error for ${type} (attempt ${i + 1}):`, error.message);
+          if (i < retries - 1) {
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+          throw error;
+        }
+      }
+    };
+  </script>
+  <script type="text/babel">
+  const { useState, useEffect, useCallback, useMemo, Fragment } = React;
+  const ErrorBoundary = ({ children }) => {
+    const [error, setError] = useState(null);
+    useEffect(() => {
+      const errorHandler = (error) => {
+        console.error('ErrorBoundary caught:', error);
+        const errorMessage = error.message || (typeof error === 'string' ? error : 'An unexpected error occurred');
+        setError(errorMessage);
+      };
+      window.addEventListener('error', errorHandler);
+      return () => window.removeEventListener('error', errorHandler);
+    }, []);
+    if (error) {
+      return (
+        <div className="p-4 text-red-600 bg-red-100 rounded-lg shadow-sm">
+          <h2>Error: {error}</h2>
+          <p>Please refresh the page or check the console for details.</p>
+        </div>
+      );
+    }
+    return children;
+  };
+  const InvoicesPage = () => {
+    console.log('InvoicesPage component initialized');
+    const [products, setProducts] = useState([]);
+    const [customers, setCustomers] = useState([]);
+    const [invoices, setInvoices] = useState([]);
+    const [form, setForm] = useState({
+      customerId: '',
+      items: [],
+      discount: 0,
+      taxRate: 0,
+      shipping: 0,
+      paymentMethod: 'Cash',
+      date: new Date().toISOString().split('T')[0],
+      status: 'Pending',
+      notes: '',
+      customer_po: ''
+    });
+    const [currentProductId, setCurrentProductId] = useState('');
+    const [currentQuantity, setCurrentQuantity] = useState('');
+    const [currentCustomPrice, setCurrentCustomPrice] = useState('');
+    const [editForm, setEditForm] = useState(null);
+    const [newCustomer, setNewCustomer] = useState({
+      name: '',
+      email: '',
+      phone: '',
+      billing_address: '',
+      shipping_address: ''
+    });
+    const [skuSearch, setSkuSearch] = useState('');
+    const [selectedInvoiceIndex, setSelectedInvoiceIndex] = useState(-1);
+    const [error, setError] = useState(null);
+    const [message, setMessage] = useState({ text: '', type: '' });
+    const [importFile, setImportFile] = useState(null);
+    const [showCustomerModal, setShowCustomerModal] = useState(false);
+    const [customerSearch, setCustomerSearch] = useState('');
+    const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+    const [selectedCustomer, setSelectedCustomer] = useState(null);
+    const [docShippingAddress, setDocShippingAddress] = useState('');
+    const [saveShippingToCustomer, setSaveShippingToCustomer] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
+    const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
+    // Pay invoice modal: collect payment method/date then create sale + mark Paid
+    const [payInvoice, setPayInvoice] = useState(null);
+    const [payForm, setPayForm] = useState({
+      payment_method: 'Check',
+      payment_date: new Date().toISOString().split('T')[0],
+      note: ''
+    });
+    const [payBusy, setPayBusy] = useState(false);
+    const invoiceIsClosed = (inv) => {
+      const s = String(inv?.status || '').toLowerCase();
+      return s === 'paid' || s === 'converted' || s === 'void';
+    };
+    const selectedCompanyId = localStorage.getItem('selectedCompanyId') || '1';
+    const companyUsesProducts = () =>
+      (window.CompanyConfig && window.CompanyConfig.usesProducts)
+        ? window.CompanyConfig.usesProducts(selectedCompanyId)
+        : true;
+    const companyTaxRates = () => {
+      const c = window.CompanyConfig && window.CompanyConfig.get
+        ? window.CompanyConfig.get(selectedCompanyId)
+        : null;
+      return (c && c.tax_rates) || [
+        { label: 'Out of State (0%)', rate: 0 },
+        { label: 'CA (7.75%)', rate: 0.0775 },
+      ];
+    };
+
+    useEffect(() => {
+      console.log('[FETCH] Fetching data');
+      const fetchData = async () => {
+        setIsLoading(true);
+        try {
+          await Promise.all([
+            fetchWithRetry(`${BASE_URL}/products`, { headers: { 'Accept': 'application/json' } }, 'products', (data) => {
+              const filteredProducts = Array.isArray(data) ? data.filter(p => String(p.company_id) === String(localStorage.getItem('selectedCompanyId') || '1')) : [];
+              setProducts(filteredProducts);
+            }),
+            fetchWithRetry(`${BASE_URL}/customers`, { headers: { 'Accept': 'application/json' } }, 'customers', (data) => {
+              const filteredCustomers = Array.isArray(data) ? data.filter(c => String(c.company_id) === String(localStorage.getItem('selectedCompanyId') || '1')) : [];
+              setCustomers(filteredCustomers);
+            }),
+            fetchWithRetry(`${BASE_URL}/invoices`, { headers: { 'Accept': 'application/json' } }, 'invoices', (data) => {
+              const filteredInvoices = Array.isArray(data) ? data.filter(inv => String(inv.company_id) === String(localStorage.getItem('selectedCompanyId') || '1')) : [];
+              setInvoices(filteredInvoices);
+            })
+          ]);
+          console.log('[FETCH] All data fetched successfully');
+          setIsLoading(false);
+        } catch (err) {
+          const errorMsg = `Failed to load data: ${err.message}`;
+          console.error('[FETCH] Error:', errorMsg);
+          setError(errorMsg);
+          setIsLoading(false);
+        }
+      };
+      fetchData();
+    }, []);
+    const handleFormChange = useCallback((e) => {
+      const { name, value } = e.target;
+      setForm(prev => {
+        const newForm = {
+          ...prev,
+          [name]: name === 'shipping' || name === 'discount' ? (value ? parseFloat(value) || 0 : 0) : value
+        };
+        console.log('[FORM] Updated form:', newForm);
+        return newForm;
+      });
+    }, []);
+    const handleEditFormChange = useCallback((e) => {
+      const { name, value } = e.target;
+      setEditForm(prev => {
+        const newForm = {
+          ...prev,
+          [name]: name === 'shipping' || name === 'discount' ? (value ? parseFloat(value) || 0 : 0) : value
+        };
+        console.log('[EDIT FORM] Updated form:', newForm);
+        return newForm;
+      });
+    }, []);
+    const handleCustomerFormChange = useCallback((e) => {
+      const { name, value } = e.target;
+      setNewCustomer(prev => {
+        const newCustomer = { ...prev, [name]: value };
+        if (name === 'billing_address' && value) {
+          const lines = value.split('\n').filter(line => line.trim());
+          if (lines.length >= 1 && !prev.name) {
+            newCustomer.name = lines[0].trim();
+          }
+          if (!prev.shipping_address) {
+            newCustomer.shipping_address = value;
+          }
+        }
+        console.log('[CUSTOMER FORM] Updated:', newCustomer);
+        return newCustomer;
+      });
+    }, []);
+    const handleImportFileChange = useCallback((e) => {
+      setImportFile(e.target.files[0]);
+      setMessage({ text: '', type: '' });
+      console.log('[IMPORT] File selected:', e.target.files[0]?.name);
+    }, []);
+    const handleSkuSearchChange = useCallback((e) => {
+      setSkuSearch(e.target.value);
+      console.log('[SKU SEARCH] Updated:', e.target.value);
+    }, []);
+    const handleProductSelect = useCallback((product) => {
+      setCurrentProductId(product.id.toString());
+      setSkuSearch(product.sku);
+      console.log('[PRODUCT] Selected:', product.id, product.sku);
+    }, []);
+    const handleAddItem = useCallback(() => {
+
+      const productId = parseInt(currentProductId);
+      const quantity = parseInt(currentQuantity);
+      const customPrice = parseFloat(currentCustomPrice) || null;
+      const product = products.find(p => p.id === productId);
+      if (!product || !quantity) {
+        setMessage({ text: 'Please select a product and enter a quantity', type: 'error' });
+        return;
+      }
+      setForm(prev => {
+        const newItems = [...prev.items, { productId, quantity, customPrice }];
+        console.log('[ITEM] Added item:', { productId, quantity, customPrice });
+        return { ...prev, items: newItems };
+      });
+      setCurrentProductId('');
+      setCurrentQuantity('');
+      setCurrentCustomPrice('');
+      setSkuSearch('');
+    }, [currentProductId, currentQuantity, currentCustomPrice, products, selectedCompanyId]);
+    const handleRemoveItem = useCallback((index) => {
+      setForm(prev => {
+        const newItems = prev.items.filter((_, i) => i !== index);
+        console.log('[ITEM] Removed item at index:', index);
+        return { ...prev, items: newItems };
+      });
+    }, []);
+    const handleEditAddItem = useCallback(() => {
+
+      const productId = parseInt(currentProductId);
+      const quantity = parseInt(currentQuantity);
+      const customPrice = parseFloat(currentCustomPrice) || null;
+      const product = products.find(p => p.id === productId);
+      if (!product || !quantity) {
+        setMessage({ text: 'Please select a product and enter a quantity', type: 'error' });
+        return;
+      }
+      setEditForm(prev => {
+        const newItems = [...prev.items, { productId, quantity, customPrice }];
+        console.log('[EDIT ITEM] Added item:', { productId, quantity, customPrice });
+        return { ...prev, items: newItems };
+      });
+      setCurrentProductId('');
+      setCurrentQuantity('');
+      setCurrentCustomPrice('');
+      setSkuSearch('');
+    }, [currentProductId, currentQuantity, currentCustomPrice, products, selectedCompanyId]);
+    const handleEditRemoveItem = useCallback((index) => {
+      setEditForm(prev => {
+        const newItems = prev.items.filter((_, i) => i !== index);
+        console.log('[EDIT ITEM] Removed item at index:', index);
+        return { ...prev, items: newItems };
+      });
+    }, []);
+    const updateRunningTotal = useCallback((items, taxRate, discount = 0, shipping = 0) => {
+      const subtotal = items.reduce((sum, item) => {
+        const product = products.find(p => p.id === item.productId) || {};
+        const price = item.customPrice || (product.retail_price || 0);
+        return sum + price * (item.quantity || 0);
+      }, 0);
+      const validTaxRate = isNaN(taxRate) ? 0 : taxRate;
+      const validShipping = isNaN(shipping) ? 0 : shipping;
+      const validDiscount = isNaN(discount) ? 0 : discount;
+      const tax = subtotal * validTaxRate;
+      const total = subtotal + tax + validShipping - validDiscount;
+      console.log('[TOTAL] Calculated:', { subtotal, tax, shipping, discount, total });
+      return {
+        subtotal,
+        tax,
+        shipping: validShipping,
+        discount: validDiscount,
+        total: total < 0 ? 0 : total
+      };
+    }, [products]);
+    const handleCustomerSearchChange = useCallback((e) => {
+      setCustomerSearch(e.target.value);
+      setShowCustomerDropdown(true);
+      console.log('[CUSTOMER SEARCH] Updated:', e.target.value);
+    }, []);
+    const handleCustomerSelect = useCallback((customer) => {
+      setSelectedCustomer(customer);
+      setCustomerSearch(customer.name);
+      setForm(prev => ({ ...prev, customerId: customer.id.toString() }));
+      setShowCustomerDropdown(false);
+      const ship = (typeof resolveShipTo === 'function'
+        ? resolveShipTo({ customer })
+        : (customer.shipping_address || customer.billing_address || '')).trim();
+      setDocShippingAddress(ship);
+      setSaveShippingToCustomer(true);
+      console.log('[CUSTOMER] Selected:', customer.id, customer.name);
+    }, []);
+    const filteredCustomers = useMemo(() => {
+      const filtered = customers
+        .filter(c => c.name.toLowerCase().includes(customerSearch.toLowerCase()))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      console.log('[CUSTOMER FILTER] Filtered:', filtered.length, 'customers');
+      return filtered;
+    }, [customers, customerSearch]);
+    const filteredProducts = useMemo(() => {
+      const filtered = products
+        .filter(p => p.sku.toLowerCase().includes(skuSearch.toLowerCase()) || p.name.toLowerCase().includes(skuSearch.toLowerCase()))
+        .sort((a, b) => a.sku.localeCompare(b.sku));
+      console.log('[PRODUCT FILTER] Filtered:', filtered.length, 'products');
+      return filtered;
+    }, [products, skuSearch]);
+    const handleSort = useCallback((key) => {
+      setSortConfig(prev => {
+        const direction = prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc';
+        console.log('[SORT] Sorting by:', key, direction);
+        return { key, direction };
+      });
+    }, []);
+    const sortedInvoices = useMemo(() => {
+      const sorted = [...invoices];
+      if (sortConfig.key) {
+        sorted.sort((a, b) => {
+          const aValue = a[sortConfig.key] || '';
+          const bValue = b[sortConfig.key] || '';
+          if (sortConfig.key === 'total') {
+            return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
+          }
+          return sortConfig.direction === 'asc'
+            ? String(aValue).localeCompare(String(bValue))
+            : String(bValue).localeCompare(String(aValue));
+        });
+      }
+      console.log('[SORT] Sorted invoices:', sorted.length);
+      return sorted;
+    }, [invoices, sortConfig]);
+    const handleSubmit = useCallback(async (e) => {
+      e.preventDefault();
+      console.log('[SUBMIT] Submitting invoice:', form);
+      const customerId = parseInt(form.customerId);
+      const items = form.items;
+      const discount = form.discount;
+      const taxRate = form.taxRate;
+      const shipping = form.shipping;
+      const paymentMethod = form.paymentMethod;
+      const date = form.date;
+      const status = form.status;
+      const notes = form.notes;
+      const customer_po = (form.customer_po || '').trim();
+      if (!customerId || (companyUsesProducts() && items.length === 0) || !paymentMethod || !date || !status) {
+        setMessage({ text: 'Please fill all required fields' + (companyUsesProducts() ? ' and add at least one item for My Company' : ''), type: 'error' });
+        return;
+      }
+      const { subtotal, tax, total } = updateRunningTotal(items, taxRate, discount, shipping);
+      const shipAddr = (docShippingAddress || '').trim();
+      const invoice = {
+        customer_id: customerId,
+        items: items.map(item => ({
+          product_id: item.productId,
+          quantity: item.quantity,
+          custom_price: item.customPrice
+        })),
+        discount,
+        tax_rate: taxRate,
+        shipping,
+        payment_method: paymentMethod,
+        date,
+        status,
+        subtotal,
+        tax,
+        total,
+        company_id: parseInt(selectedCompanyId),
+        notes,
+        customer_po: customer_po || null,
+        shipping_address: shipAddr || null
+      };
+      try {
+        if (saveShippingToCustomer && selectedCustomer && shipAddr) {
+          const cust = selectedCustomer;
+          await fetchWithRetry(`${BASE_URL}/customers/${cust.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({
+              name: cust.name,
+              email: cust.email || null,
+              phone: cust.phone || null,
+              billing_address: cust.billing_address || shipAddr,
+              shipping_address: shipAddr,
+              company_id: parseInt(selectedCompanyId, 10) || cust.company_id || 1
+            })
+          }, 'update customer shipping', null);
+          setCustomers(prev => prev.map(c => c.id === cust.id ? { ...c, shipping_address: shipAddr } : c));
+        }
+        const response = await fetchWithRetry(`${BASE_URL}/invoices`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(invoice)
+        }, 'record invoice', null);
+        const newInvoice = response;
+        setInvoices(prev => {
+          const updatedInvoices = [...prev, {
+            ...newInvoice,
+            customer_name: customers.find(c => c.id === customerId)?.name || 'Unknown'
+          }];
+          console.log('[INVOICES] Added new invoice:', newInvoice);
+          return updatedInvoices;
+        });
+        setForm({
+          customerId: '',
+          items: [],
+          discount: 0,
+          taxRate: 0,
+          shipping: 0,
+          paymentMethod: 'Cash',
+          date: new Date().toISOString().split('T')[0],
+          status: 'Pending',
+          notes: '',
+          customer_po: ''
+        });
+        setCurrentProductId('');
+        setCurrentQuantity('');
+        setCurrentCustomPrice('');
+        setSkuSearch('');
+        setCustomerSearch('');
+        setSelectedCustomer(null);
+        setDocShippingAddress('');
+        setSaveShippingToCustomer(true);
+        setMessage({ text: `Invoice ${newInvoice.invoice_number || 'N/A'} recorded successfully`, type: 'success' });
+      } catch (err) {
+        console.error('[SUBMIT] Error:', err);
+        setMessage({ text: `Error recording invoice: ${err.message}`, type: 'error' });
+      }
+    }, [form, customers, products, updateRunningTotal, selectedCompanyId, docShippingAddress, saveShippingToCustomer, selectedCustomer]);
+    const handleEdit = useCallback((invoice) => {
+      console.log('[EDIT] Editing invoice:', invoice);
+      setEditForm({
+        id: invoice.id,
+        customerId: invoice.customer_id?.toString() || '',
+        items: invoice.items ? invoice.items.map(item => ({
+          productId: item.product_id,
+          quantity: item.quantity,
+          customPrice: item.custom_price
+        })) : [],
+        discount: invoice.discount || 0,
+        taxRate: invoice.tax_rate || 0,
+        shipping: invoice.shipping || 0,
+        paymentMethod: invoice.payment_method || 'Cash',
+        date: invoice.date || new Date().toISOString().split('T')[0],
+        status: invoice.status || 'Pending',
+        notes: invoice.notes || '',
+        customer_po: invoice.customer_po || ''
+      });
+    }, []);
+    const handleEditSubmit = useCallback(async (e) => {
+      e.preventDefault();
+      if (!editForm) {
+        setMessage({ text: 'No invoice selected for editing', type: 'error' });
+        return;
+      }
+      console.log('[SUBMIT] Submitting edit for invoice:', editForm);
+      const customerId = parseInt(editForm.customerId);
+      const items = editForm.items;
+      const discount = editForm.discount;
+      const taxRate = editForm.taxRate;
+      const shipping = editForm.shipping;
+      const paymentMethod = editForm.paymentMethod;
+      const date = editForm.date;
+      const status = editForm.status;
+      const notes = editForm.notes;
+      const customer_po = (editForm.customer_po || '').trim();
+      if (!customerId || (companyUsesProducts() && items.length === 0) || !paymentMethod || !date || !status) {
+        setMessage({ text: 'Please fill all required fields' + (companyUsesProducts() ? ' and ensure items are present for My Company' : ''), type: 'error' });
+        return;
+      }
+      const { subtotal, tax, total } = updateRunningTotal(items, taxRate, discount, shipping);
+      const invoice = {
+        customer_id: customerId,
+        items: items.map(item => ({
+          product_id: item.productId,
+          quantity: item.quantity,
+          custom_price: item.customPrice
+        })),
+        discount,
+        tax_rate: taxRate,
+        shipping,
+        payment_method: paymentMethod,
+        date,
+        status,
+        subtotal,
+        tax,
+        total,
+        company_id: parseInt(selectedCompanyId),
+        notes,
+        customer_po: customer_po || null
+      };
+      try {
+        const response = await fetchWithRetry(`${BASE_URL}/invoices/${editForm.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(invoice)
+        }, 'update invoice', null);
+        const updatedInvoice = response;
+        setInvoices(prev => {
+          const updatedInvoices = prev.map(i => i.id === updatedInvoice.id ? {
+            ...updatedInvoice,
+            customer_name: customers.find(c => c.id === customerId)?.name || 'Unknown'
+          } : i);
+          console.log('[INVOICES] Updated invoice:', updatedInvoice);
+          return updatedInvoices;
+        });
+        setEditForm(null);
+        setMessage({ text: `Invoice ${updatedInvoice.invoice_number || 'N/A'} updated successfully`, type: 'success' });
+      } catch (err) {
+        console.error('[SUBMIT] Error:', err);
+        setMessage({ text: `Error updating invoice: ${err.message}`, type: 'error' });
+      }
+    }, [editForm, customers, products, updateRunningTotal, selectedCompanyId]);
+    const handleDelete = useCallback(async (id, invoiceNumber) => {
+      if (!window.confirm(`Are you sure you want to delete invoice ${invoiceNumber || 'N/A'}?`)) return;
+      console.log('[DELETE] Attempting to delete invoice:', { id, invoiceNumber });
+      try {
+        await fetchWithRetry(`${BASE_URL}/invoices/${id}`, {
+          method: 'DELETE',
+          headers: { 'Accept': 'application/json' }
+        }, 'delete invoice', null);
+        setInvoices(prev => {
+          const updatedInvoices = prev.filter(inv => inv.id !== id);
+          console.log('[INVOICES] Deleted invoice:', { id, invoiceNumber });
+          return updatedInvoices;
+        });
+        setSelectedInvoiceIndex(prev => prev > 0 ? prev - 1 : -1);
+        setMessage({ text: `Invoice ${invoiceNumber || 'N/A'} deleted successfully`, type: 'success' });
+      } catch (err) {
+        console.error('[DELETE] Error:', err);
+        setMessage({ text: `Error deleting invoice: ${err.message}`, type: 'error' });
+      }
+    }, []);
+    const openPayModal = useCallback((invoice) => {
+      if (invoiceIsClosed(invoice)) {
+        setMessage({ text: 'This invoice is already paid/converted', type: 'error' });
+        return;
+      }
+      if (!invoice.items || !invoice.items.length) {
+        setMessage({ text: 'Cannot pay: invoice has no line items', type: 'error' });
+        return;
+      }
+      setPayInvoice(invoice);
+      setPayForm({
+        payment_method: invoice.payment_method || 'Check',
+        payment_date: new Date().toISOString().split('T')[0],
+        note: ''
+      });
+    }, []);
+
+    /**
+     * Pay invoice: record sale (inventory + books) with chosen payment method/date,
+     * mark invoice Paid so open-invoices KPI drops.
+     */
+    const handlePayInvoice = useCallback(async () => {
+      const invoice = payInvoice;
+      if (!invoice) return;
+      if (!payForm.payment_method || !payForm.payment_date) {
+        setMessage({ text: 'Payment method and date are required', type: 'error' });
+        return;
+      }
+      setPayBusy(true);
+      console.log('[PAY] Paying invoice → sale:', invoice.invoice_number, payForm);
+      try {
+        const { subtotal, tax, total } = updateRunningTotal(
+          invoice.items.map(item => ({
+            productId: item.product_id,
+            quantity: item.quantity,
+            customPrice: item.custom_price
+          })),
+          invoice.tax_rate,
+          invoice.discount,
+          invoice.shipping
+        );
+        const cust = customers.find(c => c.id === invoice.customer_id);
+        const shipAddr = (typeof resolveShipTo === 'function'
+          ? resolveShipTo({ override: invoice.shipping_address, customer: cust })
+          : (invoice.shipping_address || cust?.shipping_address || cust?.billing_address || null));
+        const payNote = (payForm.note || '').trim();
+        const sale = {
+          customer_id: invoice.customer_id,
+          items: invoice.items.map(item => ({
+            product_id: item.product_id,
+            quantity: item.quantity,
+            custom_price: item.custom_price
+          })),
+          discount: invoice.discount,
+          tax_rate: invoice.tax_rate,
+          shipping: invoice.shipping,
+          payment_method: payForm.payment_method,
+          date: payForm.payment_date,
+          subtotal,
+          tax,
+          total,
+          company_id: parseInt(selectedCompanyId || invoice.company_id || '1', 10),
+          notes:
+            `Paid invoice ${invoice.invoice_number || invoice.id}` +
+            (payNote ? ` — ${payNote}` : '') +
+            (invoice.notes ? ` — ${invoice.notes}` : ''),
+          shipping_address: shipAddr,
+          source: 'invoice'
+        };
+        const newSale = await fetchWithRetry(`${BASE_URL}/sales`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(sale)
+        }, 'record sale', null);
+
+        await fetchWithRetry(`${BASE_URL}/invoices/${invoice.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({
+            customer_id: invoice.customer_id,
+            items: (invoice.items || []).map(item => ({
+              product_id: item.product_id,
+              quantity: item.quantity,
+              custom_price: item.custom_price
+            })),
+            discount: invoice.discount || 0,
+            tax_rate: invoice.tax_rate || 0,
+            shipping: invoice.shipping || 0,
+            payment_method: payForm.payment_method,
+            date: invoice.date,
+            subtotal: invoice.subtotal,
+            tax: invoice.tax,
+            total: invoice.total,
+            company_id: parseInt(selectedCompanyId || invoice.company_id || '1', 10),
+            notes: invoice.notes || '',
+            status: 'Paid',
+            shipping_address: shipAddr
+          })
+        }, 'mark invoice paid', null);
+
+        setInvoices(prev =>
+          prev.map(i =>
+            i.id === invoice.id
+              ? { ...i, status: 'Paid', payment_method: payForm.payment_method }
+              : i
+          )
+        );
+        setPayInvoice(null);
+        setMessage({
+          text: `Invoice ${invoice.invoice_number || 'N/A'} paid → sale ${newSale.transaction_number} (${payForm.payment_method})`,
+          type: 'success'
+        });
+        if (typeof window.refreshAccountingKpis === 'function') {
+          window.refreshAccountingKpis();
+        }
+      } catch (err) {
+        console.error('[PAY] Error:', err);
+        setMessage({ text: `Error paying invoice: ${err.message}`, type: 'error' });
+      } finally {
+        setPayBusy(false);
+      }
+    }, [payInvoice, payForm, customers, updateRunningTotal, selectedCompanyId]);
+
+    const handleCreatePackingSlip = useCallback(async (invoice) => {
+      if (!invoice?.items?.length) {
+        setMessage({ text: 'Cannot create packing slip: invoice has no line items', type: 'error' });
+        return;
+      }
+      if (!invoice.customer_id) {
+        setMessage({ text: 'Cannot create packing slip: invoice has no customer', type: 'error' });
+        return;
+      }
+      if (!window.confirm(`Create a packing slip from invoice ${invoice.invoice_number || 'N/A'}?\n\nYou can split quantities into multiple boxes on the Packing Slips page.`)) {
+        return;
+      }
+      try {
+        const companyId = parseInt(selectedCompanyId || invoice.company_id || '1', 10);
+        const customer = customers.find(c => c.id === invoice.customer_id);
+        const today = new Date();
+        const date_shipped = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        // Start everything in Box 1 — split into Box 2 of N etc. on packing-slip page
+        const items = invoice.items.map(item => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+          box_number: 1
+        }));
+        const payload = {
+          slip_number: `PL-${Date.now().toString().slice(-8)}`,
+          customer_id: invoice.customer_id,
+          customer_po: invoice.customer_po || invoice.invoice_number || null,
+          date_shipped,
+          shipping_address: (typeof resolveShipTo === 'function'
+            ? resolveShipTo({ override: invoice.shipping_address, customer })
+            : (invoice.shipping_address || customer?.shipping_address || customer?.billing_address || null)),
+          notes: `From invoice ${invoice.invoice_number || invoice.id}` + (invoice.notes ? ` — ${invoice.notes}` : ''),
+          tracking_number: null,
+          invoice_id: invoice.id,
+          company_id: companyId,
+          items
+        };
+        const slip = await fetchWithRetry(`${BASE_URL}/packing-slips`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(payload)
+        }, 'create packing slip', null);
+        setMessage({
+          text: `Packing slip ${slip.slip_number} created from invoice ${invoice.invoice_number}. Opening editor to split boxes…`,
+          type: 'success'
+        });
+        // Open packing slip tab in edit mode so user can split into Box 1 of 3, etc.
+        window.location.href = `/packing-slip.html?edit=${slip.id}`;
+      } catch (err) {
+        console.error('[PACKING] Error creating from invoice:', err);
+        setMessage({ text: `Error creating packing slip: ${err.message}`, type: 'error' });
+      }
+    }, [customers, selectedCompanyId]);
+
+    const handleInvoiceClick = useCallback((index) => {
+      console.log('[TABLE] Invoice clicked:', index);
+      setSelectedInvoiceIndex(prev => prev === index ? -1 : index);
+    }, []);
+    const handlePreviousInvoice = useCallback(() => {
+      setSelectedInvoiceIndex(prev => Math.max(prev - 1, -1));
+      console.log('[TABLE] Previous invoice');
+    }, []);
+    const handleNextInvoice = useCallback(() => {
+      setSelectedInvoiceIndex(prev => Math.min(prev + 1, invoices.length - 1));
+      console.log('[TABLE] Next invoice');
+    }, [invoices]);
+    const handleAddCustomer = useCallback(async (e) => {
+      e.preventDefault();
+      const customer = {
+        name: newCustomer.name,
+        email: newCustomer.email || null,
+        phone: newCustomer.phone || null,
+        billing_address: newCustomer.billing_address,
+        shipping_address: newCustomer.shipping_address || newCustomer.billing_address,
+        company_id: parseInt(selectedCompanyId)
+      };
+      if (!customer.name || !customer.billing_address) {
+        setMessage({ text: 'Name and billing address are required', type: 'error' });
+        return;
+      }
+      try {
+        const response = await fetchWithRetry(`${BASE_URL}/customers`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(customer)
+        }, 'add customer', null);
+        const newCust = response;
+        setCustomers(prev => {
+          const updatedCustomers = [...prev, newCust];
+          console.log('[CUSTOMER] Added:', newCust);
+          return updatedCustomers;
+        });
+        setForm(prev => ({ ...prev, customerId: newCust.id.toString() }));
+        setSelectedCustomer(newCust);
+        setCustomerSearch(newCust.name);
+        setNewCustomer({ name: '', email: '', phone: '', billing_address: '', shipping_address: '' });
+        setShowCustomerModal(false);
+        setMessage({ text: `Customer ${newCust.name} added`, type: 'success' });
+      } catch (err) {
+        console.error('[CUSTOMER] Error:', err);
+        setMessage({ text: `Error adding customer: ${err.message}`, type: 'error' });
+      }
+    }, [newCustomer, selectedCompanyId]);
+    const generatePDF = useCallback((invoice) => {
+      console.log('[PDF] Generating for invoice:', invoice.id);
+      const customer = customers.find(c => c.id === invoice.customer_id) || {};
+      const discount = invoice.discount || 0;
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      const _co = (window.CompanyConfig && CompanyConfig.get) ? (CompanyConfig.get() || {}) : {};
+      const companyText = _co.legal_name || _co.name || 'My Company';
+      const companyWidth = doc.getTextWidth(companyText);
+      doc.text(companyText, (doc.internal.pageSize.width - companyWidth) / 2, 15);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      const addressText = (_co && _co.settings && _co.settings.address) || '';
+      const addressWidth = doc.getTextWidth(addressText);
+      doc.text(addressText, (doc.internal.pageSize.width - addressWidth) / 2, 22);
+      const phoneText = (_co && _co.settings && _co.settings.phone) ? ('Phone: ' + _co.settings.phone) : '';
+      const phoneWidth = doc.getTextWidth(phoneText);
+      doc.text(phoneText, (doc.internal.pageSize.width - phoneWidth) / 2, 29);
+      const websiteText = (_co && _co.website) || '';
+      const websiteWidth = doc.getTextWidth(websiteText);
+      doc.text(websiteText, (doc.internal.pageSize.width - websiteWidth) / 2, 36);
+      doc.setFontSize(12);
+      doc.text('Invoice', 20, 46);
+      doc.text(`Invoice #${invoice.invoice_number || 'N/A'}`, 20, 54);
+      doc.text(`PO #: ${invoice.customer_po || '—'}`, 110, 54);
+      doc.text(`Date: ${invoice.date || 'N/A'}`, 20, 62);
+      doc.text(`Status: ${invoice.status || 'Pending'}`, 20, 70);
+      doc.text('To:', 20, 78);
+      if (customer.shipping_address) {
+        const shippingLines = customer.shipping_address.split('\n');
+        let y = 86;
+        shippingLines.forEach(line => {
+          doc.text(line, 20, y);
+          y += 8;
+        });
+        if (customer.billing_address !== customer.shipping_address) {
+          doc.text('Bill To:', 20, y);
+          y += 8;
+          const billingLines = customer.billing_address ? customer.billing_address.split('\n') : ['N/A'];
+          billingLines.forEach(line => {
+            doc.text(line, 20, y);
+            y += 8;
+          });
+        }
+      } else {
+        doc.text('N/A', 20, 86);
+      }
+      doc.autoTable({
+        startY: doc.lastAutoTable?.finalY || 110,
+        head: [['Item', 'SKU', 'Quantity', 'Price']],
+        body: invoice.items && invoice.items.length > 0 ? invoice.items.map(item => {
+          const product = products.find(p => p.id === item.product_id) || {};
+          const price = item.custom_price || (product.retail_price || 0);
+          return [
+            product.name || 'Unknown',
+            product.sku || 'N/A',
+            item.quantity || 0,
+            `$${price.toFixed(2)}${item.custom_price ? ' (Custom)' : ''}`
+          ];
+        }) : [['No items in this invoice', '', '', '']],
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255] },
+        margin: { top: 20 }
+      });
+      const finalY = doc.lastAutoTable.finalY || 110;
+      doc.autoTable({
+        startY: finalY + 10,
+        head: [['Description', 'Amount']],
+        body: [
+          ['Subtotal', `$${(invoice.subtotal || 0).toFixed(2)}`],
+          [`Sales Tax (${invoice.tax_rate === 0.0775 ? 'CA 7.75%' : 'Out of State 0%'})`, `$${(invoice.tax || 0).toFixed(2)}`],
+          ['Shipping', `$${(invoice.shipping || 0).toFixed(2)}`],
+          ...(discount > 0 ? [['Discount', `-$${discount.toFixed(2)}`]] : []),
+          ['Total', `$${(invoice.total || 0).toFixed(2)}`]
+        ],
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255] },
+        margin: { top: 20 }
+      });
+      const paymentY = doc.lastAutoTable.finalY + 10;
+      doc.autoTable({
+        startY: paymentY,
+        body: [['Payment Method', invoice.payment_method || 'N/A']],
+        styles: { fontSize: 10 },
+        margin: { top: 20 }
+      });
+      let notesY = doc.lastAutoTable.finalY + 10;
+      // My Company invoices: legal payee for checks
+      if (String(selectedCompanyId) === '1') {
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Make check payments out to ' + ((window.CompanyConfig && CompanyConfig.get() && (CompanyConfig.get().legal_name || CompanyConfig.get().name)) || 'My Company'), 20, notesY);
+        notesY += 10;
+        doc.setFont('helvetica', 'normal');
+      }
+      doc.setFontSize(10);
+      doc.text('Comments:', 20, notesY);
+      const notesLines = doc.splitTextToSize(invoice.notes || 'N/A', 170);
+      doc.text(notesLines, 20, notesY + 8);
+      doc.save(`Invoice_${invoice.invoice_number || 'invoice'}.pdf`);
+    }, [customers, products, selectedCompanyId]);
+    const handleImportInvoices = useCallback(async () => {
+      if (!importFile) {
+        setMessage({ text: 'Please select a file to import', type: 'error' });
+        return;
+      }
+      console.log('[IMPORT] Starting invoices import');
+      try {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+          const invoicesToImport = json.map(row => {
+            const items = companyUsesProducts() ? (row['Items'] || '').split(';').map(item => {
+              const [sku, quantity, customPrice] = item.split(',').map(s => s.trim());
+              const product = products.find(p => p.sku === sku);
+              return {
+                productId: product ? product.id : null,
+                quantity: parseInt(quantity) || 1,
+                customPrice: customPrice ? parseFloat(customPrice) : null
+              };
+            }).filter(item => item.productId) : [];
+            const customer = customers.find(c => c.name.toLowerCase() === (row['Customer'] || '').toLowerCase());
+            return {
+              customer_id: customer ? customer.id : null,
+              items,
+              discount: parseFloat(row['Discount']) || 0,
+              tax_rate: row['Tax Rate'] === 'CA' ? 0.0775 : 0,
+              shipping: parseFloat(row['Shipping']) || 0,
+              payment_method: row['Payment Method'] || 'Cash',
+              date: row['Date'] || new Date().toISOString().split('T')[0],
+              status: row['Status'] || 'Pending',
+              company_id: parseInt(selectedCompanyId),
+              notes: row['Notes'] || ''
+            };
+          }).filter(inv => inv.customer_id && (selectedCompanyId === '2' || inv.items.length > 0));
+          if (invoicesToImport.length === 0) {
+            setMessage({ text: 'No valid invoices found in the imported file', type: 'error' });
+            return;
+          }
+          const importedInvoices = [];
+          for (const inv of invoicesToImport) {
+            const { subtotal, tax, total } = updateRunningTotal(inv.items, inv.tax_rate, inv.discount, inv.shipping);
+            const invData = { ...inv, subtotal, tax, total };
+            const response = await fetchWithRetry(`${BASE_URL}/invoices`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+              body: JSON.stringify(invData)
+            }, 'import invoice', null);
+            importedInvoices.push({
+              ...response,
+              customer_name: customers.find(c => c.id === inv.customer_id)?.name || 'Unknown'
+            });
+          }
+          setInvoices(prev => {
+            const updatedInvoices = [...prev, ...importedInvoices];
+            console.log('[IMPORT] Imported:', importedInvoices.length, 'invoices');
+            return updatedInvoices;
+          });
+          setImportFile(null);
+          document.getElementById('importFile').value = '';
+          setMessage({ text: `${importedInvoices.length} invoice(s) imported successfully`, type: 'success' });
+        };
+        reader.readAsArrayBuffer(importFile);
+      } catch (err) {
+        console.error('[IMPORT] Error:', err);
+        setMessage({ text: `Error importing invoices: ${err.message}`, type: 'error' });
+      }
+    }, [importFile, products, customers, updateRunningTotal, selectedCompanyId]);
+    if (isLoading) {
+      return (
+        <main className="container mx-auto p-6 flex-grow">
+          <h2 className="text-3xl font-bold mb-6">Invoices</h2>
+          <p>Loading...</p>
+        </main>
+      );
+    }
+    return (
+      <ErrorBoundary>
+        <main className="container mx-auto p-6 flex-grow">
+          <h2 className="text-3xl font-bold mb-6">Invoices</h2>
+          {error && (
+            <div className="p-4 mb-6 text-red-600 bg-red-100 rounded-lg shadow-sm">
+              Error: {error}
+            </div>
+          )}
+          {message.text && (
+            <div className={`p-4 mb-6 ${message.type === 'success' ? 'text-green-600 bg-green-100' : message.type === 'warning' ? 'text-yellow-600 bg-yellow-100' : 'text-red-600 bg-red-100'} rounded-lg shadow-sm`}>
+              {message.text}
+            </div>
+          )}
+          <div className="form-container mb-6">
+            <h3 className="text-lg font-semibold mb-2">Create an Invoice</h3>
+            <form onSubmit={handleSubmit}>
+              <label htmlFor="customerSearch" className="block text-sm font-medium text-gray-700">Customer</label>
+              <div className="relative mt-1">
+                <input
+                  type="text"
+                  id="customerSearch"
+                  value={customerSearch}
+                  onChange={handleCustomerSearchChange}
+                  onFocus={() => setShowCustomerDropdown(true)}
+                  placeholder="Search or select customer"
+                  className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+                {showCustomerDropdown && customerSearch && filteredCustomers.length > 0 && (
+                  <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-sm max-h-48 overflow-y-auto top-full">
+                    {filteredCustomers.map(customer => (
+                      <div
+                        key={customer.id}
+                        onClick={() => handleCustomerSelect(customer)}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                      >
+                        {customer.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCustomerModal(true)}
+                className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                Add New Customer
+              </button>
+              {selectedCustomer && (
+                <div className="mt-3 p-3 border border-gray-200 rounded-md bg-gray-50 space-y-2">
+                  <p><strong>Selected Customer:</strong> {selectedCustomer.name}</p>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Billing address</p>
+                    <p className="text-sm text-gray-600 whitespace-pre-line">{selectedCustomer.billing_address || '—'}</p>
+                  </div>
+                  <div>
+                    <label htmlFor="invoiceShippingAddress" className="block text-sm font-medium text-gray-700">
+                      Shipping address for this invoice
+                    </label>
+                    <textarea
+                      id="invoiceShippingAddress"
+                      value={docShippingAddress}
+                      onChange={(e) => setDocShippingAddress(e.target.value)}
+                      rows="4"
+                      placeholder="Edit for one-time ship-to, or update their permanent address"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <label className="mt-2 flex items-start gap-2 text-sm text-gray-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="mt-1"
+                        checked={saveShippingToCustomer}
+                        onChange={(e) => setSaveShippingToCustomer(e.target.checked)}
+                      />
+                      <span>
+                        <strong>Also update customer record</strong> with this shipping address.
+                        Uncheck for one-time ship-to (saved only on this invoice).
+                      </span>
+                    </label>
+                    <button
+                      type="button"
+                      className="mt-2 text-sm text-blue-600 hover:underline"
+                      onClick={() => setDocShippingAddress(selectedCustomer.billing_address || '')}
+                    >
+                      Copy billing → shipping
+                    </button>
+                  </div>
+                </div>
+              )}
+              {companyUsesProducts() && (
+                <>
+                  <label htmlFor="skuSearch" className="block text-sm font-medium text-gray-700 mt-4">Add Product (Search by SKU or Name)</label>
+                  <div className="relative mt-1 flex items-center flex-wrap">
+                    <input
+                      type="text"
+                      id="skuSearch"
+                      value={skuSearch}
+                      onChange={handleSkuSearchChange}
+                      placeholder="Enter SKU or product name"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:w-[calc(100%-7.5rem)]"
+                    />
+                    <input
+                      type="number"
+                      id="currentQuantity"
+                      value={currentQuantity}
+                      onChange={(e) => setCurrentQuantity(e.target.value)}
+                      min="1"
+                      placeholder="Qty"
+                      className="mt-1 ml-2 w-20 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddItem}
+                      disabled={!currentProductId || !currentQuantity}
+                      className="mt-1 ml-2 bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 disabled:bg-gray-300"
+                    >
+                      Add
+                    </button>
+                    {skuSearch && filteredProducts.length > 0 && !currentProductId && (
+                      <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-sm max-h-48 overflow-y-auto top-full">
+                        {filteredProducts.map(product => (
+                          <div
+                            key={product.id}
+                            onClick={() => handleProductSelect(product)}
+                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          >
+                            {`${product.name} (SKU: ${product.sku})`}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <label htmlFor="currentCustomPrice" className="block text-sm font-medium text-gray-700 mt-4">Custom Price (Optional)</label>
+                  <input
+                    type="number"
+                    id="currentCustomPrice"
+                    value={currentCustomPrice}
+                    onChange={(e) => setCurrentCustomPrice(e.target.value)}
+                    min="0"
+                    step="0.01"
+                    placeholder={currentProductId ? `Default: $${products.find(p => p.id === parseInt(currentProductId))?.retail_price?.toFixed(2) || '0.00'}` : 'Enter custom price'}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </>
+              )}
+              {form.items.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="text-lg font-semibold">Selected Items</h4>
+                  {form.items.map((item, index) => {
+                    const product = products.find(p => p.id === item.productId) || {};
+                    const price = item.customPrice || (product.retail_price || 0);
+                    return (
+                      <div key={index} className="border border-gray-200 p-2 mb-2 rounded flex justify-between items-center">
+                        <div>
+                          <p><strong>Item Name:</strong> {product.name || 'Unknown'}</p>
+                          <p><strong>SKU:</strong> {product.sku || 'N/A'}</p>
+                          <p><strong>Quantity:</strong> {item.quantity || 0}</p>
+                          <p><strong>Price:</strong> ${price.toFixed(2)}{item.customPrice ? ' (Custom)' : ''}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(index)}
+                          className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <label htmlFor="discount" className="block text-sm font-medium text-gray-700 mt-4">Discount (Optional)</label>
+              <input
+                type="number"
+                id="discount"
+                name="discount"
+                value={form.discount}
+                onChange={handleFormChange}
+                min="0"
+                step="0.01"
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+              <label htmlFor="taxRate" className="block text-sm font-medium text-gray-700 mt-4">Sales Tax</label>
+              <select
+                id="taxRate"
+                name="taxRate"
+                value={form.taxRate}
+                onChange={handleFormChange}
+                required
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              >
+                {companyTaxRates().map((tr, i) => (
+                  <option key={i} value={tr.rate}>{tr.label}</option>
+                ))}
+              </select>
+              <label htmlFor="shipping" className="block text-sm font-medium text-gray-700 mt-4">Shipping Charge</label>
+              <input
+                type="number"
+                id="shipping"
+                name="shipping"
+                value={form.shipping}
+                onChange={handleFormChange}
+                min="0"
+                step="0.01"
+                placeholder="Enter shipping charge"
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+              <label htmlFor="paymentMethod" className="block text-sm font-medium text-gray-700 mt-4">Payment Method</label>
+              <select
+                id="paymentMethod"
+                name="paymentMethod"
+                value={form.paymentMethod}
+                onChange={handleFormChange}
+                required
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="Cash">Cash</option>
+                <option value="Card">Card</option>
+                <option value="PayPal">PayPal</option>
+                <option value="Amazon">Amazon</option>
+                <option value="eBay">eBay</option>
+                <option value="Check">Check</option>
+                <option value="Square">Square</option>
+              </select>
+              <label htmlFor="status" className="block text-sm font-medium text-gray-700 mt-4">Status</label>
+              <select
+                id="status"
+                name="status"
+                value={form.status}
+                onChange={handleFormChange}
+                required
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="Pending">Pending</option>
+                <option value="Approved">Approved</option>
+              </select>
+              <label htmlFor="date" className="block text-sm font-medium text-gray-700 mt-4">Date</label>
+              <input
+                type="date"
+                id="date"
+                name="date"
+                value={form.date}
+                onChange={handleFormChange}
+                required
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+              <label htmlFor="customer_po" className="block text-sm font-medium text-gray-700 mt-4">Customer PO #</label>
+              <input
+                type="text"
+                id="customer_po"
+                name="customer_po"
+                value={form.customer_po}
+                onChange={handleFormChange}
+                placeholder="Client purchase order (printed on PDF)"
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+              <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mt-4">Comments</label>
+              <textarea
+                id="notes"
+                name="notes"
+                value={form.notes}
+                onChange={handleFormChange}
+                rows="4"
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+              <div className="mt-4">
+                <h4 className="text-lg font-semibold">Invoice Summary</h4>
+                <p>Subtotal: ${(updateRunningTotal(form.items, form.taxRate, form.discount, form.shipping).subtotal || 0).toFixed(2)}</p>
+                <p>Tax: ${(updateRunningTotal(form.items, form.taxRate, form.discount, form.shipping).tax || 0).toFixed(2)}</p>
+                <p>Shipping: ${(form.shipping || 0).toFixed(2)}</p>
+                {form.discount > 0 && <p>Discount: -${form.discount.toFixed(2)}</p>}
+                <p><strong>Total: ${(updateRunningTotal(form.items, form.taxRate, form.discount, form.shipping).total || 0).toFixed(2)}</strong></p>
+              </div>
+              <div className="mt-4 flex gap-4">
+                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                  Record Invoice
+                </button>
+              </div>
+            </form>
+          </div>
+          <div className="form-container mb-6">
+            <h3 className="text-lg font-semibold mb-2">Import Invoices</h3>
+            <input
+              id="importFile"
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleImportFileChange}
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            />
+            <button
+              onClick={handleImportInvoices}
+              disabled={!importFile}
+              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-300"
+            >
+              Import Invoices
+            </button>
+          </div>
+          {invoices.length > 0 ? (
+            <div className="table-container bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-2xl font-bold mb-4">Previous Invoices</h3>
+              <div className="flex justify-between mb-4">
+                <button
+                  onClick={handlePreviousInvoice}
+                  disabled={selectedInvoiceIndex <= -1}
+                  className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 disabled:bg-gray-300"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={handleNextInvoice}
+                  disabled={selectedInvoiceIndex >= invoices.length - 1}
+                  className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 disabled:bg-gray-300"
+                >
+                  Next
+                </button>
+              </div>
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-blue-600 text-white">
+                  <tr>
+                    <th
+                      className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider cursor-pointer"
+                      onClick={() => handleSort('invoice_number')}
+                    >
+                      Invoice # {sortConfig.key === 'invoice_number' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th
+                      className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider cursor-pointer"
+                      onClick={() => handleSort('customer_name')}
+                    >
+                      Customer {sortConfig.key === 'customer_name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th
+                      className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider cursor-pointer"
+                      onClick={() => handleSort('date')}
+                    >
+                      Date {sortConfig.key === 'date' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th
+                      className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider cursor-pointer"
+                      onClick={() => handleSort('total')}
+                    >
+                      Total {sortConfig.key === 'total' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th
+                      className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider cursor-pointer"
+                      onClick={() => handleSort('status')}
+                    >
+                      Status {sortConfig.key === 'status' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {sortedInvoices.map((invoice, index) => (
+                    <Fragment key={invoice.id}>
+                      <tr
+                        onClick={() => handleInvoiceClick(index)}
+                        className={`cursor-pointer ${index === selectedInvoiceIndex ? 'bg-blue-100' : ''}`}
+                      >
+                        <td className="px-2 py-2 whitespace-nowrap">{invoice.invoice_number || 'N/A'}</td>
+                        <td className="px-2 py-2 whitespace-nowrap">{invoice.customer_name || 'Unknown'}</td>
+                        <td className="px-2 py-2 whitespace-nowrap">{invoice.date || 'N/A'}</td>
+                        <td className="px-2 py-2 whitespace-nowrap">${(invoice.total || 0).toFixed(2)}</td>
+                        <td className="px-2 py-2 whitespace-nowrap">{invoice.status || 'Pending'}</td>
+                        <td className="px-2 py-2 whitespace-nowrap space-x-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleEdit(invoice); }}
+                            className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                            disabled={invoiceIsClosed(invoice)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDelete(invoice.id, invoice.invoice_number); }}
+                            className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+                            disabled={invoiceIsClosed(invoice)}
+                          >
+                            Delete
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); generatePDF(invoice); }}
+                            className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                          >
+                            Print
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleCreatePackingSlip(invoice); }}
+                            className="btn-packing"
+                            title="Create an editable packing slip (split into boxes on Packing Slips tab)"
+                            disabled={!invoice.items || !invoice.items.length}
+                          >
+                            Create Packing Slip
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); openPayModal(invoice); }}
+                            className="btn-convert"
+                            title={invoiceIsClosed(invoice) ? 'Already paid' : 'Record payment → sale; clears open invoices'}
+                            disabled={invoiceIsClosed(invoice)}
+                          >
+                            {invoiceIsClosed(invoice) ? 'Paid' : 'Pay Invoice'}
+                          </button>
+                        </td>
+                      </tr>
+                      {index === selectedInvoiceIndex && (
+                        <tr>
+                          <td colSpan="6" className="px-2 py-2">
+                            <div className="p-4 border rounded-lg bg-gray-50">
+                              <div className="flex justify-between items-center mb-2">
+                                <h3 className="text-lg font-semibold">Invoice Details</h3>
+                                <div className="space-x-2">
+                                  <button
+                                    onClick={handlePreviousInvoice}
+                                    disabled={selectedInvoiceIndex <= -1}
+                                    className="bg-gray-600 text-white p-2 rounded disabled:bg-gray-300"
+                                  >
+                                    ←
+                                  </button>
+                                  <button
+                                    onClick={handleNextInvoice}
+                                    disabled={selectedInvoiceIndex >= invoices.length - 1}
+                                    className="bg-gray-600 text-white p-2 rounded disabled:bg-gray-300"
+                                  >
+                                    →
+                                  </button>
+                                </div>
+                              </div>
+                              <p><strong>Invoice Number:</strong> {invoice.invoice_number || 'N/A'}</p>
+                              <p><strong>Customer PO #:</strong> {invoice.customer_po || '—'}</p>
+                              <p><strong>Date:</strong> {invoice.date || 'N/A'}</p>
+                              <p><strong>Customer:</strong> {invoice.customer_name || 'Unknown'}</p>
+                              <p><strong>Status:</strong> {invoice.status || 'Pending'}</p>
+                              <p><strong>Items:</strong></p>
+                              <ul className="list-disc pl-5">
+                                {invoice.items && invoice.items.length > 0 ? (
+                                  invoice.items.map((item, itemIndex) => {
+                                    const product = products.find(p => p.id === item.product_id) || {};
+                                    const price = item.custom_price || (product.retail_price || 0);
+                                    return (
+                                      <li key={itemIndex}>
+                                        {product.name || 'Unknown'} (SKU: {product.sku || 'N/A'}, Quantity: {item.quantity || 0}, Price: ${price.toFixed(2)}{item.custom_price ? ' (Custom)' : ''})
+                                      </li>
+                                    );
+                                  })
+                                ) : (
+                                  <li>No items</li>
+                                )}
+                              </ul>
+                              <p><strong>Subtotal:</strong> ${(invoice.subtotal || 0).toFixed(2)}</p>
+                              <p><strong>Tax:</strong> ${(invoice.tax || 0).toFixed(2)} ({invoice.tax_rate === 0.0775 ? 'CA 7.75%' : 'Out of State 0%'})</p>
+                              <p><strong>Shipping:</strong> ${(invoice.shipping || 0).toFixed(2)}</p>
+                              {invoice.discount > 0 && <p><strong>Discount:</strong> -${(invoice.discount || 0).toFixed(2)}</p>}
+                              <p><strong>Total:</strong> ${(invoice.total || 0).toFixed(2)}</p>
+                              <p><strong>Payment Method:</strong> {invoice.payment_method || 'N/A'}</p>
+                              {String(selectedCompanyId) === '1' && (
+                                <p className="font-bold text-gray-900 mt-1">Make check payments out to the company on this invoice</p>
+                              )}
+                              <p><strong>Comments:</strong> {invoice.notes || 'N/A'}</p>
+                              <p><strong>Billing Address:</strong> {(customers.find(c => c.id === invoice.customer_id)?.billing_address || 'N/A')}</p>
+                              <p><strong>Shipping Address:</strong> {(typeof resolveShipTo === 'function'
+                                ? resolveShipTo({ override: invoice.shipping_address, customer: customers.find(c => c.id === invoice.customer_id) })
+                                : (invoice.shipping_address || customers.find(c => c.id === invoice.customer_id)?.shipping_address || customers.find(c => c.id === invoice.customer_id)?.billing_address || 'N/A')) || 'N/A'}</p>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="p-4 bg-white rounded-lg shadow-md">
+              <div className="p-8 bg-white rounded-lg shadow-md text-center border border-gray-200">
+                <p className="text-lg font-semibold text-gray-800 mb-1">No invoices yet</p>
+                <p className="text-sm text-gray-500 mb-4">
+                  Create an invoice with the form above, or convert an approved estimate.
+                </p>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <a href="#customerSearch" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 inline-block no-underline">
+                    New invoice
+                  </a>
+                  <a href="/estimates.html" className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 inline-block no-underline">
+                    Estimates
+                  </a>
+                  <a href="/sales.html" className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 inline-block no-underline">
+                    Sales
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+          {payInvoice && (
+            <div className="modal" onClick={() => !payBusy && setPayInvoice(null)}>
+              <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '28rem' }}>
+                <h3 className="text-lg font-semibold mb-2">Pay Invoice</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  <strong>{payInvoice.invoice_number || 'Invoice'}</strong>
+                  {' · '}{payInvoice.customer_name || 'Customer'}
+                  {' · '}<strong>${Number(payInvoice.total || 0).toFixed(2)}</strong>
+                </p>
+                <p className="text-xs text-gray-500 mb-4">
+                  Records a sale (inventory + books) and marks this invoice <strong>Paid</strong> so it drops out of open invoices.
+                </p>
+                <label className="block text-sm font-medium text-gray-700">Payment method</label>
+                <select
+                  value={payForm.payment_method}
+                  onChange={e => setPayForm(f => ({ ...f, payment_method: e.target.value }))}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                  disabled={payBusy}
+                >
+                  <option value="Cash">Cash</option>
+                  <option value="Card">Card</option>
+                  <option value="Check">Check</option>
+                  <option value="Square">Square</option>
+                  <option value="PayPal">PayPal</option>
+                  <option value="Amazon">Amazon</option>
+                  <option value="eBay">eBay</option>
+                  <option value="Zelle">Zelle</option>
+                  <option value="Wire">Wire</option>
+                  <option value="ACH">ACH</option>
+                </select>
+                <label className="block text-sm font-medium text-gray-700 mt-4">Payment date</label>
+                <input
+                  type="date"
+                  value={payForm.payment_date}
+                  onChange={e => setPayForm(f => ({ ...f, payment_date: e.target.value }))}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                  disabled={payBusy}
+                  required
+                />
+                <label className="block text-sm font-medium text-gray-700 mt-4">Note (optional)</label>
+                <input
+                  type="text"
+                  value={payForm.note}
+                  onChange={e => setPayForm(f => ({ ...f, note: e.target.value }))}
+                  placeholder="Check #, last 4 of card, etc."
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                  disabled={payBusy}
+                />
+                <div className="flex justify-end gap-2 mt-6">
+                  <button
+                    type="button"
+                    className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                    onClick={() => setPayInvoice(null)}
+                    disabled={payBusy}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-convert"
+                    onClick={handlePayInvoice}
+                    disabled={payBusy}
+                  >
+                    {payBusy ? 'Recording…' : 'Pay & Create Sale'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          {showCustomerModal && (
+            <div className="modal">
+              <div className="modal-content">
+                <h3 className="text-lg font-semibold mb-4">Add New Customer</h3>
+                <form onSubmit={handleAddCustomer}>
+                  <label htmlFor="customerName" className="block text-sm font-medium text-gray-700">Name</label>
+                  <input
+                    type="text"
+                    id="customerName"
+                    name="name"
+                    value={newCustomer.name}
+                    onChange={handleCustomerFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mt-4">Email (Optional)</label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={newCustomer.email}
+                    onChange={handleCustomerFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mt-4">Phone (Optional)</label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={newCustomer.phone}
+                    onChange={handleCustomerFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <label htmlFor="billing_address" className="block text-sm font-medium text-gray-700 mt-4">Billing Address</label>
+                  <textarea
+                    id="billing_address"
+                    name="billing_address"
+                    value={newCustomer.billing_address}
+                    onChange={handleCustomerFormChange}
+                    rows="4"
+                    placeholder="Paste address here; first line sets Name, address copies to Shipping by default"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                  <label htmlFor="shipping_address" className="block text-sm font-medium text-gray-700 mt-4">Shipping Address (Optional)</label>
+                  <textarea
+                    id="shipping_address"
+                    name="shipping_address"
+                    value={newCustomer.shipping_address}
+                    onChange={handleCustomerFormChange}
+                    rows="4"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <div className="mt-4 flex justify-end gap-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCustomerModal(false);
+                        setNewCustomer({ name: '', email: '', phone: '', billing_address: '', shipping_address: '' });
+                      }}
+                      className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                      Add Customer
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+          {editForm && (
+            <div className="modal">
+              <div className="modal-content">
+                <h3 className="text-lg font-semibold mb-4">Edit Invoice</h3>
+                <form onSubmit={handleEditSubmit}>
+                  <label htmlFor="editCustomerId" className="block text-sm font-medium text-gray-700">Customer</label>
+                  <select
+                    id="editCustomerId"
+                    name="customerId"
+                    value={editForm.customerId}
+                    onChange={handleEditFormChange}
+                    required
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select a customer</option>
+                    {customers.map(customer => (
+                      <option key={customer.id} value={customer.id}>{customer.name}</option>
+                    ))}
+                  </select>
+                  {companyUsesProducts() && (
+                    <>
+                      <label htmlFor="editSkuSearch" className="block text-sm font-medium text-gray-700 mt-4">Add Product (Search by SKU or Name)</label>
+                      <div className="relative mt-1 flex items-center flex-wrap">
+                        <input
+                          type="text"
+                          id="editSkuSearch"
+                          value={skuSearch}
+                          onChange={handleSkuSearchChange}
+                          placeholder="Enter SKU or product name"
+                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:w-[calc(100%-7.5rem)]"
+                        />
+                        <input
+                          type="number"
+                          id="editCurrentQuantity"
+                          value={currentQuantity}
+                          onChange={(e) => setCurrentQuantity(e.target.value)}
+                          min="1"
+                          placeholder="Qty"
+                          className="mt-1 ml-2 w-20 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleEditAddItem}
+                          disabled={!currentProductId || !currentQuantity}
+                          className="mt-1 ml-2 bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 disabled:bg-gray-300"
+                        >
+                          Add
+                        </button>
+                        {skuSearch && filteredProducts.length > 0 && !currentProductId && (
+                          <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-sm max-h-48 overflow-y-auto top-full">
+                            {filteredProducts.map(product => (
+                              <div
+                                key={product.id}
+                                onClick={() => handleProductSelect(product)}
+                                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                              >
+                                {`${product.name} (SKU: ${product.sku})`}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <label htmlFor="editCurrentCustomPrice" className="block text-sm font-medium text-gray-700 mt-4">Custom Price (Optional)</label>
+                      <input
+                        type="number"
+                        id="editCurrentCustomPrice"
+                        value={currentCustomPrice}
+                        onChange={(e) => setCurrentCustomPrice(e.target.value)}
+                        min="0"
+                        step="0.01"
+                        placeholder={currentProductId ? `Default: $${products.find(p => p.id === parseInt(currentProductId))?.retail_price?.toFixed(2) || '0.00'}` : 'Enter custom price'}
+                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </>
+                  )}
+                  {editForm.items.length > 0 && (
+                    <div className="mt-4">
+                      <h4 className="text-lg font-semibold">Selected Items</h4>
+                      {editForm.items.map((item, index) => {
+                        const product = products.find(p => p.id === item.productId) || {};
+                        const price = item.customPrice || (product.retail_price || 0);
+                        return (
+                          <div key={index} className="border border-gray-200 p-2 mb-2 rounded flex justify-between items-center">
+                            <div>
+                              <p><strong>Item Name:</strong> {product.name || 'Unknown'}</p>
+                              <p><strong>SKU:</strong> {product.sku || 'N/A'}</p>
+                              <p><strong>Quantity:</strong> {item.quantity || 0}</p>
+                              <p><strong>Price:</strong> ${price.toFixed(2)}{item.customPrice ? ' (Custom)' : ''}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleEditRemoveItem(index)}
+                              className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <label htmlFor="editDiscount" className="block text-sm font-medium text-gray-700 mt-4">Discount (Optional)</label>
+                  <input
+                    type="number"
+                    id="editDiscount"
+                    name="discount"
+                    value={editForm.discount}
+                    onChange={handleEditFormChange}
+                    min="0"
+                    step="0.01"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <label htmlFor="editTaxRate" className="block text-sm font-medium text-gray-700 mt-4">Sales Tax</label>
+                  <select
+                    id="editTaxRate"
+                    name="taxRate"
+                    value={editForm.taxRate}
+                    onChange={handleEditFormChange}
+                    required
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {companyTaxRates().map((tr, i) => (
+                      <option key={i} value={tr.rate}>{tr.label}</option>
+                    ))}
+                  </select>
+                  <label htmlFor="editShipping" className="block text-sm font-medium text-gray-700 mt-4">Shipping Charge</label>
+                  <input
+                    type="number"
+                    id="editShipping"
+                    name="shipping"
+                    value={editForm.shipping}
+                    onChange={handleEditFormChange}
+                    min="0"
+                    step="0.01"
+                    placeholder="Enter shipping charge"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <label htmlFor="editPaymentMethod" className="block text-sm font-medium text-gray-700 mt-4">Payment Method</label>
+                  <select
+                    id="editPaymentMethod"
+                    name="paymentMethod"
+                    value={editForm.paymentMethod}
+                    onChange={handleEditFormChange}
+                    required
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="Cash">Cash</option>
+                    <option value="Card">Card</option>
+                    <option value="PayPal">PayPal</option>
+                    <option value="Amazon">Amazon</option>
+                    <option value="eBay">eBay</option>
+                    <option value="Check">Check</option>
+                    <option value="Square">Square</option>
+                  </select>
+                  <label htmlFor="editStatus" className="block text-sm font-medium text-gray-700 mt-4">Status</label>
+                  <select
+                    id="editStatus"
+                    name="status"
+                    value={editForm.status}
+                    onChange={handleEditFormChange}
+                    required
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                  </select>
+                  <label htmlFor="editDate" className="block text-sm font-medium text-gray-700 mt-4">Date</label>
+                  <input
+                    type="date"
+                    id="editDate"
+                    name="date"
+                    value={editForm.date}
+                    onChange={handleEditFormChange}
+                    required
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <label htmlFor="editCustomerPo" className="block text-sm font-medium text-gray-700 mt-4">Customer PO #</label>
+                  <input
+                    type="text"
+                    id="editCustomerPo"
+                    name="customer_po"
+                    value={editForm.customer_po || ''}
+                    onChange={handleEditFormChange}
+                    placeholder="Client purchase order (printed on PDF)"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <label htmlFor="editNotes" className="block text-sm font-medium text-gray-700 mt-4">Comments</label>
+                  <textarea
+                    id="editNotes"
+                    name="notes"
+                    value={editForm.notes}
+                    onChange={handleEditFormChange}
+                    rows="4"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <div className="mt-4">
+                    <h4 className="text-lg font-semibold">Invoice Summary</h4>
+                    <p>Subtotal: ${(updateRunningTotal(editForm.items, editForm.taxRate, editForm.discount, editForm.shipping).subtotal || 0).toFixed(2)}</p>
+                    <p>Tax: ${(updateRunningTotal(editForm.items, editForm.taxRate, editForm.discount, editForm.shipping).tax || 0).toFixed(2)}</p>
+                    <p>Shipping: ${(editForm.shipping || 0).toFixed(2)}</p>
+                    {editForm.discount > 0 && <p>Discount: -${editForm.discount.toFixed(2)}</p>}
+                    <p><strong>Total: ${(updateRunningTotal(editForm.items, editForm.taxRate, editForm.discount, editForm.shipping).total || 0).toFixed(2)}</strong></p>
+                  </div>
+                  <div className="mt-4 flex justify-end gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setEditForm(null)}
+                      className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                      Update Invoice
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </main>
+      </ErrorBoundary>
+    );
+  };
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(<InvoicesPage />);
+</script>
+<script>
+
+    linkColorPicker.addEventListener('change', (e) => {
+      const newColor = e.target.value;
+      navLinks.forEach(link => link.style.color = newColor);
+      localStorage.setItem(linkKey, newColor);
+    });
+  });
+</script>
+</body>
+</html>

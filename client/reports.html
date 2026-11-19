@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports - Open Accounting</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    :root {
+      --blue: #1d4ed8;
+      --blue-dark: #1e3a8a;
+      --green: #059669;
+      --red: #dc2626;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-500: #6b7280;
+      --gray-700: #374151;
+      --gray-900: #111827;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--gray-100);
+      color: var(--gray-900);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: var(--blue);
+      color: #fff;
+      padding: 0.75rem 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      box-shadow: 0 2px 8px rgba(0,0,0,.12);
+    }
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .brand { display: flex; align-items: center; gap: 0.75rem; }
+    .brand img { height: 40px; }
+    .brand h1 { font-size: 1.15rem; margin: 0; font-weight: 700; }
+    nav { display: flex; flex-wrap: wrap; gap: 0.35rem 0.75rem; }
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.85rem;
+      opacity: 0.95;
+      padding: 0.2rem 0.35rem;
+      border-radius: 4px;
+    }
+    nav a:hover, nav a.active { background: rgba(255,255,255,.15); }
+    main {
+      flex: 1;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.25rem 1rem 2.5rem;
+    }
+    h2 { margin: 0 0 1rem; font-size: 1.75rem; }
+    h3 { margin: 0 0 0.75rem; font-size: 1.1rem; }
+    .toolbar {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+      margin-bottom: 1.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: flex-end;
+    }
+    .field { display: flex; flex-direction: column; gap: 0.25rem; min-width: 140px; }
+    .field label { font-size: 0.75rem; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: .03em; }
+    .field select, .field input {
+      padding: 0.5rem 0.65rem;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      background: #fff;
+    }
+    .btn {
+      border: none;
+      border-radius: 6px;
+      padding: 0.55rem 1rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: var(--blue);
+      color: #fff;
+    }
+    .btn:hover { background: var(--blue-dark); }
+    .btn.secondary { background: var(--gray-200); color: var(--gray-700); }
+    .btn.secondary:hover { background: #d1d5db; }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .kpi-grid {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      gap: 0.85rem;
+      margin-bottom: 1.25rem;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .kpi {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+      border-left: 4px solid var(--blue);
+      min-width: 140px;
+      flex: 1 1 0;
+    }
+    .kpi.green { border-left-color: var(--green); }
+    .kpi.red { border-left-color: var(--red); }
+    .kpi.gray { border-left-color: var(--gray-500); }
+    .kpi .label { font-size: 0.75rem; color: var(--gray-500); font-weight: 600; text-transform: uppercase; }
+    .kpi .value { font-size: 1.45rem; font-weight: 700; margin-top: 0.25rem; }
+    .kpi .sub { font-size: 0.8rem; color: var(--gray-500); margin-top: 0.2rem; }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    @media (max-width: 960px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1.1rem 1.25rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    }
+    .card.full { margin-bottom: 1.25rem; }
+    .chart-wrap { position: relative; height: 300px; }
+    table.report {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    table.report th, table.report td {
+      padding: 0.55rem 0.65rem;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    table.report th {
+      text-align: left;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--gray-500);
+      background: var(--gray-50);
+    }
+    table.report td.num, table.report th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    table.report tr.section td {
+      background: var(--gray-50);
+      font-weight: 700;
+      padding-top: 0.75rem;
+    }
+    table.report tr.total td {
+      font-weight: 700;
+      border-top: 2px solid var(--gray-900);
+      border-bottom: 3px double var(--gray-900);
+    }
+    table.report tr.indent td:first-child { padding-left: 1.5rem; color: var(--gray-700); }
+    table.report tr.indent2 td:first-child { padding-left: 2.25rem; color: var(--gray-500); font-size: 0.9rem; }
+    .pos { color: var(--green); }
+    .neg { color: var(--red); }
+    .muted { color: var(--gray-500); font-size: 0.85rem; }
+    .error {
+      background: #fef2f2;
+      color: var(--red);
+      border: 1px solid #fecaca;
+      padding: 0.85rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      color: var(--gray-500);
+      font-size: 1.1rem;
+    }
+    footer {
+      background: #1f2937;
+      color: #e5e7eb;
+      padding: 0.85rem 1rem;
+      font-size: 0.85rem;
+    }
+    footer .inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .tabs {
+      display: flex;
+      gap: 0.35rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .tabs button {
+      border: 1px solid var(--gray-200);
+      background: #fff;
+      padding: 0.45rem 0.9rem;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--gray-700);
+    }
+    .tabs button.active {
+      background: var(--blue);
+      color: #fff;
+      border-color: var(--blue);
+    }
+    .hidden { display: none !important; }
+    .table-scroll { overflow-x: auto; }
+  </style>
+  <link rel="stylesheet" href="/app-shell.css" />
+  <script src="/app-shell.js" defer></script>
+  <link rel="stylesheet" href="/kpi-common.css" />
+  <script src="/kpi-common.js" defer></script>
+</head>
+<body>
+  <!-- Header provided by app-shell.js (shared sticky bar) -->
+  <header id="header" class="app-legacy-header" hidden></header>
+
+  <main>
+    <h2>Financial Reports</h2>
+    <p class="muted" id="rangeLabel" style="margin-top:-0.5rem;margin-bottom:1rem;"></p>
+
+    <div class="toolbar">
+      <div class="field">
+        <label>Company</label>
+        <select id="companySelect">
+          <option value="1">My Company</option>
+          <option value="2">My Company</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Period</label>
+        <select id="periodSelect">
+          <option value="this_month">This month</option>
+          <option value="last_month" selected>Last month</option>
+          <option value="this_quarter">This quarter</option>
+          <option value="last_quarter">Last quarter</option>
+          <option value="ytd">Year to date</option>
+          <option value="this_year">This calendar year</option>
+          <option value="last_year">Last year</option>
+          <option value="last_12_months">Last 12 months</option>
+          <option value="custom">Custom dates</option>
+        </select>
+      </div>
+      <div class="field" id="startField" style="display:none;">
+        <label>Start</label>
+        <input type="date" id="startDate" />
+      </div>
+      <div class="field" id="endField" style="display:none;">
+        <label>End</label>
+        <input type="date" id="endDate" />
+      </div>
+      <button class="btn" id="runBtn" type="button">Run report</button>
+      <button class="btn secondary" id="pdfBtn" type="button">Export PDF</button>
+      <button class="btn secondary" id="csvBtn" type="button">Export CSV</button>
+    </div>
+
+    <div id="errorBox" class="error hidden"></div>
+    <div id="loading" class="loading">Loading report data…</div>
+    <div id="reportBody" class="hidden">
+      <div class="kpi-grid" id="kpiGrid"></div>
+
+      <div class="tabs">
+        <button type="button" class="active" data-tab="pnl">Profit &amp; Loss</button>
+        <button type="button" data-tab="trends">Trends</button>
+        <button type="button" data-tab="expenses">Expenses</button>
+        <button type="button" data-tab="tops">Top customers &amp; products</button>
+        <button type="button" data-tab="analytics">Summary</button>
+      </div>
+
+      <section id="tab-pnl" class="tab-panel">
+        <div class="card full">
+          <h3>Profit &amp; Loss Statement</h3>
+          <p class="muted" id="pnlSubtitle"></p>
+          <div class="table-scroll">
+            <table class="report" id="pnlTable"></table>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-trends" class="tab-panel hidden">
+        <div class="grid-2">
+          <div class="card">
+            <h3>Revenue, expenses &amp; net income</h3>
+            <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+          </div>
+          <div class="card">
+            <h3>Gross profit vs net income</h3>
+            <div class="chart-wrap"><canvas id="marginChart"></canvas></div>
+          </div>
+        </div>
+        <div class="card full">
+          <h3>Monthly breakdown</h3>
+          <div class="table-scroll">
+            <table class="report" id="monthlyTable"></table>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-expenses" class="tab-panel hidden">
+        <div class="grid-2">
+          <div class="card">
+            <h3>Expenses by category</h3>
+            <div class="chart-wrap"><canvas id="expensePie"></canvas></div>
+          </div>
+          <div class="card">
+            <h3>Category detail</h3>
+            <div class="table-scroll">
+              <table class="report" id="expenseTable"></table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-tops" class="tab-panel hidden">
+        <div class="grid-2">
+          <div class="card">
+            <h3>Top customers</h3>
+            <div class="table-scroll">
+              <table class="report" id="topCustomersTable"></table>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Top products</h3>
+            <div class="table-scroll">
+              <table class="report" id="topProductsTable"></table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-analytics" class="tab-panel hidden">
+        <div class="card full">
+          <h3>Summary</h3>
+          <p class="muted">Net income, gross profit, and operating expenses for the selected period.</p>
+          <div class="table-scroll">
+            <table class="report" id="analyticsTable"></table>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <div class="inner">
+      <span>© Open Accounting — Reports</span>
+      <span class="muted" id="generatedAt"></span>
+    </div>
+  </footer>
+
+  <script>
+(function () {
+  'use strict';
+
+  var API_BASE = window.location.origin + '/api';
+  var state = {
+    companyId: localStorage.getItem('selectedCompanyId') || '1',
+    pnl: null,
+    trends: null,
+    top: null,
+    charts: { trend: null, margin: null, pie: null },
+  };
+
+  function $(id) { return document.getElementById(id); }
+
+  function money(n) {
+    var v = Number(n || 0);
+    var abs = Math.abs(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return (v < 0 ? '-$' : '$') + abs;
+  }
+
+  function pct(n) {
+    return Number(n || 0).toFixed(1) + '%';
+  }
+
+  function moneyClass(n) {
+    return Number(n || 0) < 0 ? 'neg' : (Number(n) > 0 ? 'pos' : '');
+  }
+
+  function showError(msg) {
+    var box = $('errorBox');
+    if (!msg) {
+      box.classList.add('hidden');
+      box.textContent = '';
+      return;
+    }
+    box.textContent = msg;
+    box.classList.remove('hidden');
+  }
+
+  function apiUrl(path, params) {
+    var u = new URL(API_BASE + path);
+    Object.keys(params || {}).forEach(function (k) {
+      if (params[k] !== undefined && params[k] !== null && params[k] !== '') {
+        u.searchParams.set(k, params[k]);
+      }
+    });
+    return u.toString();
+  }
+
+  async function fetchJson(path, params) {
+    var res = await fetch(apiUrl(path, params), {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    });
+    if (!res.ok) {
+      var text = await res.text();
+      throw new Error(path + ' → HTTP ' + res.status + ': ' + (text || res.statusText).slice(0, 200));
+    }
+    return res.json();
+  }
+
+  function periodParams() {
+    var period = $('periodSelect').value;
+    var params = {
+      company_id: state.companyId,
+      period: period,
+    };
+    if (period === 'custom') {
+      params.startDate = $('startDate').value;
+      params.endDate = $('endDate').value;
+      if (!params.startDate || !params.endDate) {
+        throw new Error('Choose start and end dates for a custom period.');
+      }
+    }
+    return params;
+  }
+
+  function toggleCustomDates() {
+    var custom = $('periodSelect').value === 'custom';
+    $('startField').style.display = custom ? '' : 'none';
+    $('endField').style.display = custom ? '' : 'none';
+  }
+
+  function destroyCharts() {
+    ['trend', 'margin', 'pie'].forEach(function (k) {
+      if (state.charts[k]) {
+        state.charts[k].destroy();
+        state.charts[k] = null;
+      }
+    });
+  }
+
+  function renderKpis(pnl) {
+    var dep = Number(pnl.income.deposit_income || 0);
+    var salesCount = Number(pnl.income.sale_count || 0);
+    var depCount = Number(pnl.income.deposit_count || 0);
+    var incomeSub = [];
+    if (salesCount) incomeSub.push(salesCount + ' sales');
+    if (depCount) incomeSub.push(depCount + ' deposits');
+    if (!incomeSub.length) incomeSub.push('no income rows');
+    var items = [
+      { label: 'Total income', value: money(pnl.income.net_sales), sub: incomeSub.join(' · '), cls: '' },
+      { label: dep > 0 && salesCount === 0 ? 'Deposits / commissions' : 'Product net sales',
+        value: money(dep > 0 && salesCount === 0 ? dep : (pnl.income.product_net_sales != null ? pnl.income.product_net_sales : pnl.income.net_sales)),
+        sub: dep > 0 && salesCount > 0 ? ('+ deposits ' + money(dep)) : (dep > 0 ? 'From deposits register' : 'Subtotal + shipping − discount'),
+        cls: 'gray' },
+      { label: 'COGS', value: money(pnl.cogs.product_cogs), sub: 'Product cost', cls: 'gray' },
+      { label: 'Gross profit', value: money(pnl.gross_profit), sub: pct(pnl.gross_margin_pct) + ' margin', cls: 'green' },
+      { label: 'Operating expenses', value: money(pnl.expenses.total), sub: 'Bills + expenses + checks / interest / dep.', cls: 'gray' },
+      { label: 'Net income', value: money(pnl.net_income), sub: pct(pnl.net_margin_pct) + ' of income', cls: Number(pnl.net_income) >= 0 ? 'green' : 'red' },
+    ];
+    $('kpiGrid').innerHTML = items.map(function (k) {
+      return '<div class="kpi ' + k.cls + '"><div class="label">' + k.label + '</div>' +
+        '<div class="value">' + k.value + '</div><div class="sub">' + k.sub + '</div></div>';
+    }).join('');
+  }
+
+  function row(label, amount, opts) {
+    opts = opts || {};
+    var cls = (opts.section ? 'section' : '') + (opts.total ? ' total' : '') +
+      (opts.indent ? ' indent' : '') + (opts.indent2 ? ' indent2' : '');
+    var amt = opts.blank ? '' : money(amount);
+    var amtCls = opts.blank ? '' : moneyClass(amount);
+    return '<tr class="' + cls + '"><td>' + label + '</td><td class="num ' + amtCls + '">' + amt + '</td></tr>';
+  }
+
+  function renderPnl(pnl) {
+    var hasDeposits = Number(pnl.income.deposit_income || 0) > 0;
+    var hasSales = Number(pnl.income.sale_count || 0) > 0;
+    var books = pnl.books || {};
+    var noi = pnl.net_operating_income != null ? pnl.net_operating_income : pnl.net_income;
+    var taxPay = Number(pnl.income_tax_payments || 0);
+    $('pnlSubtitle').textContent =
+      'Company #' + pnl.company_id + ' · ' + pnl.range.label +
+      ' · Sales, deposits, bills, expenses, checks, loans, depreciation & tax (Books)';
+
+    var html = '<thead><tr><th>Account</th><th class="num">Amount</th></tr></thead><tbody>';
+    html += row('Income', null, { section: true, blank: true });
+    if (hasSales || Number(pnl.income.product_subtotal || 0) || Number(pnl.income.shipping || 0)) {
+      html += row('Product sales (subtotal)', pnl.income.product_subtotal, { indent: true });
+      html += row('Shipping income', pnl.income.shipping, { indent: true });
+      html += row('Discounts', -Math.abs(pnl.income.discounts || 0), { indent: true });
+      html += row('Product net sales', pnl.income.product_net_sales != null ? pnl.income.product_net_sales : 0, { indent: true });
+    }
+    if (hasDeposits) {
+      html += row('Deposits / commissions / other income', pnl.income.deposit_income, { indent: true });
+      (pnl.income.deposits_by_type || []).forEach(function (d) {
+        html += row(d.type + ' (' + d.count + ')', d.amount, { indent2: true });
+      });
+    }
+    if (!hasSales && !hasDeposits) {
+      html += row('No income recorded in this period', 0, { indent: true });
+    }
+    html += row('Total income', pnl.income.net_sales, { total: true });
+    html += row('Cost of goods sold', pnl.cogs.product_cogs, { indent: true });
+    html += row('Gross profit', pnl.gross_profit, { total: true });
+    html += row('Operating expenses', null, { section: true, blank: true });
+    html += row('From vendor bills', pnl.expenses.from_bills, { indent: true });
+    html += row('From expenses register', pnl.expenses.from_expenses_table, { indent: true });
+    if (Number(pnl.expenses.from_checks || 0) > 0) {
+      html += row('From checks (operating)', pnl.expenses.from_checks, { indent: true });
+    }
+    if (Number(pnl.expenses.interest_expense || 0) > 0) {
+      html += row('Interest expense (loans)', pnl.expenses.interest_expense, { indent: true });
+    }
+    if (Number(pnl.expenses.depreciation_expense || 0) > 0) {
+      html += row('Depreciation expense', pnl.expenses.depreciation_expense, { indent: true });
+    }
+    (pnl.expenses.by_category || []).forEach(function (c) {
+      // Interest/Depreciation already shown as dedicated lines when present
+      if (c.category === 'Interest expense (loans)' || c.category === 'Depreciation') return;
+      html += row(c.category, c.amount, { indent2: true });
+    });
+    html += row('Total operating expenses', pnl.expenses.total, { total: true });
+    html += row('Net operating income', noi, { total: true });
+    var oth = pnl.other_income || {};
+    if (Number(oth.total || 0) > 0) {
+      html += row('Other income (books receipts)', oth.total, { indent: true });
+      if (Number(oth.reimbursement_excess || 0) > 0) {
+        html += row('Reimbursement excess over job costs', oth.reimbursement_excess, { indent2: true });
+      }
+    }
+    if (taxPay > 0) {
+      html += row('Estimated / income tax payments', taxPay, { indent: true });
+    }
+    html += row('Net income', pnl.net_income, { total: true });
+    html += row('Books memo (not P&amp;L expenses)', null, { section: true, blank: true });
+    html += row('Owner draws (equity)', books.owner_draws || 0, { indent: true });
+    html += row('Loan principal paid (balance sheet)', books.loan_principal_paid || 0, { indent: true });
+    html += row('Prepaid tax payments (asset)', books.prepaid_tax_payments || 0, { indent: true });
+    html += row('Asset purchases (capitalized)', books.asset_purchases || 0, { indent: true });
+    html += row('Client reimbursable paid (job costs)', books.reimbursable_paid || 0, { indent: true });
+    html += row('Client reimbursements received (Zelle etc.)', books.reimbursements_received || 0, { indent: true });
+    html += row('Open reimbursable (period memo)', books.reimbursable_open || 0, { indent: true });
+    if (Number(books.meals_expense || 0) > 0) {
+      html += row('Meals (full amount in OpEx)', books.meals_expense, { indent: true });
+      html += row('Meals deductible estimate (default 50%)', books.meals_deductible_estimate || 0, { indent2: true });
+    }
+    if (Number(books.intercompany_paid || 0) > 0) {
+      html += row('Intercompany transfers (not OpEx)', books.intercompany_paid, { indent: true });
+    }
+    if (Number(books.check_count || 0) > 0) {
+      html += '<tr class="indent"><td>Payments recorded in period</td><td class="num">' +
+        Number(books.check_count) + '</td></tr>';
+    }
+    if (Number(books.receipt_count || 0) > 0) {
+      html += '<tr class="indent"><td>Money-in receipts in period</td><td class="num">' +
+        Number(books.receipt_count) + '</td></tr>';
+    }
+    html += row('Other / memo', null, { section: true, blank: true });
+    html += row('Sales tax collected (liability memo)', pnl.income.tax_collected, { indent: true });
+    html += row('Inventory purchase bills (not OpEx)', pnl.cogs.inventory_bills, { indent: true });
+    html += row('Gross receipts (incl. tax)', pnl.income.gross_receipts, { indent: true });
+    html += '</tbody>';
+    $('pnlTable').innerHTML = html;
+  }
+
+  function renderTrends(trends) {
+    var months = trends.months || [];
+    var labels = months.map(function (m) { return m.month; });
+    var netSales = months.map(function (m) { return m.net_sales; });
+    var expenses = months.map(function (m) { return m.expenses; });
+    var netIncome = months.map(function (m) { return m.net_income; });
+    var gross = months.map(function (m) { return m.gross_profit; });
+
+    destroyCharts();
+
+    state.charts.trend = new Chart($('trendChart'), {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'Net sales', data: netSales, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,.12)', tension: 0.25, fill: true },
+          { label: 'Expenses', data: expenses, borderColor: '#f59e0b', backgroundColor: 'transparent', tension: 0.25 },
+          { label: 'Net income', data: netIncome, borderColor: '#059669', backgroundColor: 'transparent', tension: 0.25, borderWidth: 2 },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { position: 'bottom' } },
+        scales: {
+          y: {
+            ticks: {
+              callback: function (v) { return '$' + Number(v).toLocaleString(); },
+            },
+          },
+        },
+      },
+    });
+
+    state.charts.margin = new Chart($('marginChart'), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'Gross profit', data: gross, backgroundColor: 'rgba(37,99,235,.65)' },
+          { label: 'Net income', data: netIncome, backgroundColor: 'rgba(5,150,105,.65)' },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } },
+        scales: {
+          y: {
+            ticks: {
+              callback: function (v) { return '$' + Number(v).toLocaleString(); },
+            },
+          },
+        },
+      },
+    });
+
+    var body = months.map(function (m) {
+      return '<tr>' +
+        '<td>' + m.month + '</td>' +
+        '<td class="num">' + money(m.net_sales) + '</td>' +
+        '<td class="num">' + money(m.cogs) + '</td>' +
+        '<td class="num">' + money(m.gross_profit) + '</td>' +
+        '<td class="num">' + money(m.expenses) + '</td>' +
+        '<td class="num ' + moneyClass(m.net_income) + '">' + money(m.net_income) + '</td>' +
+        '<td class="num">' + m.sale_count + '</td>' +
+        '</tr>';
+    }).join('');
+
+    $('monthlyTable').innerHTML =
+      '<thead><tr>' +
+      '<th>Month</th><th class="num">Net sales</th><th class="num">COGS</th>' +
+      '<th class="num">Gross profit</th><th class="num">Expenses</th>' +
+      '<th class="num">Net income</th><th class="num"># Sales</th>' +
+      '</tr></thead><tbody>' + (body || '<tr><td colspan="7" class="muted">No monthly data</td></tr>') + '</tbody>';
+  }
+
+  function renderExpenses(pnl) {
+    var cats = pnl.expenses.by_category || [];
+    var labels = cats.map(function (c) { return c.category; });
+    var data = cats.map(function (c) { return c.amount; });
+    var colors = [
+      '#2563eb', '#059669', '#f59e0b', '#dc2626', '#7c3aed',
+      '#0891b2', '#db2777', '#65a30d', '#ea580c', '#4b5563',
+      '#0d9488', '#9333ea', '#b45309',
+    ];
+
+    if (state.charts.pie) {
+      state.charts.pie.destroy();
+      state.charts.pie = null;
+    }
+
+    if (labels.length === 0) {
+      $('expensePie').parentElement.innerHTML =
+        '<p class="muted" style="padding:2rem;text-align:center;">No operating expenses in this period.</p><canvas id="expensePie" class="hidden"></canvas>';
+    } else {
+      // restore canvas if replaced
+      if (!$('expensePie') || $('expensePie').classList.contains('hidden')) {
+        $('expensePie') && $('expensePie').classList.remove('hidden');
+      }
+      var pieEl = $('expensePie');
+      if (!pieEl || pieEl.tagName !== 'CANVAS') {
+        document.querySelector('#tab-expenses .chart-wrap').innerHTML = '<canvas id="expensePie"></canvas>';
+        pieEl = $('expensePie');
+      }
+      state.charts.pie = new Chart(pieEl, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: labels.map(function (_, i) { return colors[i % colors.length]; }),
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'right' } },
+        },
+      });
+    }
+
+    var total = cats.reduce(function (s, c) { return s + Number(c.amount || 0); }, 0);
+    var rows = cats.map(function (c) {
+      var share = total > 0 ? (100 * c.amount / total) : 0;
+      return '<tr><td>' + c.category + '</td><td class="num">' + money(c.amount) +
+        '</td><td class="num">' + share.toFixed(1) + '%</td></tr>';
+    }).join('');
+    $('expenseTable').innerHTML =
+      '<thead><tr><th>Category</th><th class="num">Amount</th><th class="num">Share</th></tr></thead>' +
+      '<tbody>' + (rows || '<tr><td colspan="3" class="muted">None</td></tr>') +
+      '<tr class="total"><td>Total</td><td class="num">' + money(total) + '</td><td class="num">100%</td></tr></tbody>';
+  }
+
+  function renderTops(top) {
+    var cust = (top.top_customers || []).map(function (c, i) {
+      return '<tr><td>' + (i + 1) + '</td><td>' + (c.name || '') + '</td><td class="num">' +
+        c.sale_count + '</td><td class="num">' + money(c.total) + '</td></tr>';
+    }).join('');
+    $('topCustomersTable').innerHTML =
+      '<thead><tr><th>#</th><th>Customer</th><th class="num">Sales</th><th class="num">Total</th></tr></thead>' +
+      '<tbody>' + (cust || '<tr><td colspan="4" class="muted">No sales</td></tr>') + '</tbody>';
+
+    var prod = (top.top_products || []).map(function (p, i) {
+      return '<tr><td>' + (i + 1) + '</td><td>' + (p.name || '') +
+        '<div class="muted">' + (p.sku || '') + '</div></td>' +
+        '<td class="num">' + p.qty + '</td>' +
+        '<td class="num">' + money(p.revenue) + '</td>' +
+        '<td class="num">' + money(p.cogs) + '</td>' +
+        '<td class="num ' + moneyClass(p.profit) + '">' + money(p.profit) + '</td></tr>';
+    }).join('');
+    $('topProductsTable').innerHTML =
+      '<thead><tr><th>#</th><th>Product</th><th class="num">Qty</th><th class="num">Revenue</th><th class="num">COGS</th><th class="num">Profit</th></tr></thead>' +
+      '<tbody>' + (prod || '<tr><td colspan="6" class="muted">No products sold</td></tr>') + '</tbody>';
+  }
+
+  function renderAnalytics(pnl) {
+    var a = pnl.analytics || {};
+    var rows = [
+      ['Net income (company total)', pnl.net_income],
+      ['Gross profit', pnl.gross_profit],
+      ['Operating expenses', pnl.expenses && pnl.expenses.total],
+    ];
+    $('analyticsTable').innerHTML =
+      '<thead><tr><th>Metric</th><th class="num">Amount</th></tr></thead><tbody>' +
+      rows.map(function (r) {
+        return '<tr><td>' + r[0] + '</td><td class="num ' + moneyClass(r[1]) + '">' + money(r[1]) + '</td></tr>';
+      }).join('') + '</tbody>';
+  }
+
+  async function runReport() {
+    showError('');
+    $('loading').classList.remove('hidden');
+    $('reportBody').classList.add('hidden');
+    $('runBtn').disabled = true;
+
+    try {
+      state.companyId = $('companySelect').value;
+      localStorage.setItem('selectedCompanyId', state.companyId);
+      var params = periodParams();
+
+      // Use the SAME period for P&L, trends, and tops (so YTD never includes last year)
+      var results = await Promise.all([
+        fetchJson('/reports/pnl', params),
+        fetchJson('/reports/trends', params),
+        fetchJson('/reports/top', Object.assign({}, params, { limit: 10 })),
+      ]);
+
+      state.pnl = results[0];
+      state.trends = results[1];
+      state.top = results[2];
+
+      $('rangeLabel').textContent = 'Period: ' + state.pnl.range.label;
+      $('generatedAt').textContent = 'Generated ' + new Date().toLocaleString();
+
+      renderKpis(state.pnl);
+      renderPnl(state.pnl);
+      renderTrends(state.trends);
+      renderExpenses(state.pnl);
+      renderTops(state.top);
+      renderAnalytics(state.pnl);
+
+      $('reportBody').classList.remove('hidden');
+    } catch (err) {
+      console.error(err);
+      showError(err.message || String(err));
+    } finally {
+      $('loading').classList.add('hidden');
+      $('runBtn').disabled = false;
+    }
+  }
+
+  function exportCsv() {
+    if (!state.pnl || !state.trends) return;
+    var lines = ['Section,Label,Amount'];
+    var p = state.pnl;
+    function add(section, label, amount) {
+      lines.push('"' + section + '","' + label + '",' + Number(amount || 0).toFixed(2));
+    }
+    add('P&L', 'Net sales', p.income.net_sales);
+    add('P&L', 'COGS', p.cogs.product_cogs);
+    add('P&L', 'Gross profit', p.gross_profit);
+    add('P&L', 'Operating expenses', p.expenses.total);
+    add('P&L', 'Net income', p.net_income);
+    (p.expenses.by_category || []).forEach(function (c) {
+      add('Expense category', c.category, c.amount);
+    });
+    (state.trends.months || []).forEach(function (m) {
+      add('Monthly ' + m.month, 'Net sales', m.net_sales);
+      add('Monthly ' + m.month, 'COGS', m.cogs);
+      add('Monthly ' + m.month, 'Expenses', m.expenses);
+      add('Monthly ' + m.month, 'Net income', m.net_income);
+    });
+    var blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'pnl-' + state.companyId + '-' + (p.range.startDate) + '-to-' + p.range.endDate + '.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function exportPdf() {
+    if (!state.pnl) return;
+    var p = state.pnl;
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text('Profit & Loss Statement', 14, 16);
+    doc.setFontSize(10);
+    doc.text('Company ID: ' + p.company_id + '  |  ' + p.range.label, 14, 24);
+    doc.autoTable({
+      startY: 30,
+      head: [['Account', 'Amount']],
+      body: [
+        ['Net sales', money(p.income.net_sales)],
+        ['COGS', money(p.cogs.product_cogs)],
+        ['Gross profit', money(p.gross_profit)],
+        ['Operating expenses', money(p.expenses.total)],
+        ['Net income', money(p.net_income)],
+        ['Tax collected (memo)', money(p.income.tax_collected)],
+      ],
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [37, 99, 235] },
+    });
+    var y = doc.lastAutoTable.finalY + 10;
+    if (p.expenses.by_category && p.expenses.by_category.length) {
+      doc.text('Expenses by category', 14, y);
+      doc.autoTable({
+        startY: y + 4,
+        head: [['Category', 'Amount']],
+        body: p.expenses.by_category.map(function (c) {
+          return [c.category, money(c.amount)];
+        }),
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [55, 65, 81] },
+      });
+    }
+    doc.save('pnl-' + p.company_id + '-' + p.range.startDate + '.pdf');
+  }
+
+  // Tabs
+  document.querySelectorAll('.tabs button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.tabs button').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      var tab = btn.getAttribute('data-tab');
+      document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.add('hidden'); });
+      $('tab-' + tab).classList.remove('hidden');
+      // Chart.js needs resize after unhide
+      Object.keys(state.charts).forEach(function (k) {
+        if (state.charts[k]) state.charts[k].resize();
+      });
+    });
+  });
+
+  $('periodSelect').addEventListener('change', toggleCustomDates);
+  $('companySelect').value = state.companyId;
+  $('runBtn').addEventListener('click', runReport);
+  $('pdfBtn').addEventListener('click', exportPdf);
+  $('csvBtn').addEventListener('click', exportCsv);
+
+  toggleCustomDates();
+  runReport();
+})();
+  </script>
+</body>
+</html>

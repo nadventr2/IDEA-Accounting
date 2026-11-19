@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Books — Full Accounting</title>
+  <link rel="stylesheet" href="/app-shell.css" />
+  <link rel="stylesheet" href="/kpi-common.css" />
+  <script src="/company-config.js"></script>
+  <script src="/app-shell.js" defer></script>
+  <script src="/kpi-common.js" defer></script>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; background: #f3f4f6; color: #111; }
+    main { max-width: 1400px; margin: 0 auto; padding: 1rem 1rem 3rem; }
+    h2 { margin: 0 0 0.35rem; font-size: 1.75rem; }
+    .sub { color: #6b7280; font-size: 0.9rem; margin-bottom: 1rem; }
+    .tabs { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 1rem; }
+    .tabs button {
+      border: 1px solid #e5e7eb; background: #fff; padding: 0.45rem 0.9rem;
+      border-radius: 999px; cursor: pointer; font-weight: 600; font-size: 0.85rem;
+    }
+    .tabs button.active { background: #1d4ed8; color: #fff; border-color: #1d4ed8; }
+    .card {
+      background: #fff; border-radius: 10px; padding: 1rem 1.15rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 1rem;
+    }
+    .card h3 { margin: 0 0 0.75rem; font-size: 1.1rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.65rem; }
+    label { display: block; font-size: 0.72rem; font-weight: 600; color: #6b7280; text-transform: uppercase; margin-bottom: 0.2rem; }
+    input, select, textarea {
+      width: 100%; box-sizing: border-box; padding: 0.45rem 0.55rem;
+      border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem;
+    }
+    .btn {
+      border: none; border-radius: 6px; padding: 0.5rem 0.9rem; font-weight: 600;
+      cursor: pointer; background: #1d4ed8; color: #fff; font-size: 0.9rem;
+    }
+    .btn:hover { background: #1e3a8a; }
+    .btn.secondary { background: #e5e7eb; color: #374151; }
+    .btn.green { background: #059669; }
+    .btn.red { background: #dc2626; }
+    .btn.sm { padding: 0.25rem 0.5rem; font-size: 0.8rem; }
+    .msg { padding: 0.65rem 0.85rem; border-radius: 8px; margin-bottom: 0.75rem; font-size: 0.9rem; }
+    .msg.ok { background: #ecfdf5; color: #047857; }
+    .msg.err { background: #fef2f2; color: #b91c1c; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th, td { padding: 0.45rem 0.5rem; border-bottom: 1px solid #e5e7eb; text-align: left; vertical-align: top; }
+    th { background: #f9fafb; font-size: 0.7rem; text-transform: uppercase; color: #6b7280; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .hidden { display: none !important; }
+    .hint { font-size: 0.8rem; color: #6b7280; margin: 0.35rem 0 0.75rem; }
+    .kpi-row { display: flex; flex-wrap: nowrap; gap: 0.65rem; overflow-x: auto; margin-bottom: 1rem; }
+    .kpi { background: #fff; border-radius: 10px; padding: 0.75rem 1rem; border-left: 4px solid #2563eb; min-width: 140px; flex: 1 1 0; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+    .kpi.green { border-left-color: #059669; }
+    .kpi.red { border-left-color: #dc2626; }
+    .kpi.amber { border-left-color: #d97706; }
+    .kpi .l { font-size: 0.7rem; color: #6b7280; font-weight: 600; text-transform: uppercase; }
+    .kpi .v { font-size: 1.2rem; font-weight: 700; margin-top: 0.15rem; }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; align-items: end; }
+    .loan-fields, .tax-fields { background: #f8fafc; padding: 0.65rem; border-radius: 8px; margin-top: 0.5rem; }
+
+    /* —— Balance sheet polish —— */
+    .bs-toolbar {
+      display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center;
+      justify-content: space-between; margin-bottom: 0.85rem;
+    }
+    .bs-toolbar .left, .bs-toolbar .right { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; }
+    .bs-status {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-weight: 700; font-size: 0.85rem; padding: 0.35rem 0.7rem;
+      border-radius: 999px;
+    }
+    .bs-status.ok { background: #ecfdf5; color: #047857; }
+    .bs-status.bad { background: #fef2f2; color: #b91c1c; }
+    .bs-status.warn { background: #fffbeb; color: #b45309; }
+    .bs-cols {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;
+    }
+    @media (max-width: 900px) { .bs-cols { grid-template-columns: 1fr; } }
+    .bs-col h4 {
+      margin: 0 0 0.5rem; font-size: 0.8rem; text-transform: uppercase;
+      letter-spacing: 0.04em; color: #475569; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.35rem;
+    }
+    table.bs-stmt { font-size: 0.92rem; }
+    table.bs-stmt td { border-bottom: 1px solid #f1f5f9; padding: 0.4rem 0.35rem; }
+    table.bs-stmt tr.section td {
+      font-weight: 800; background: #f8fafc; color: #0f172a;
+      border-bottom: 1px solid #e2e8f0; padding-top: 0.55rem;
+    }
+    table.bs-stmt tr.indent td:first-child { padding-left: 1.15rem; color: #334155; }
+    table.bs-stmt tr.indent2 td:first-child { padding-left: 1.85rem; color: #64748b; font-size: 0.88rem; }
+    table.bs-stmt tr.total td {
+      font-weight: 800; border-top: 2px solid #0f172a; border-bottom: 3px double #0f172a;
+      background: #f8fafc; padding-top: 0.55rem; padding-bottom: 0.55rem;
+    }
+    table.bs-stmt tr.grand td {
+      font-weight: 800; background: #eff6ff; border-top: 2px solid #2563eb;
+      color: #1e3a8a;
+    }
+    table.bs-stmt tr.zero td { opacity: 0.45; }
+    table.bs-stmt tr.neg td.num { color: #b91c1c; }
+    .bs-header-print {
+      text-align: center; margin-bottom: 1rem; display: none;
+    }
+    .bs-header-print h2 { margin: 0; font-size: 1.35rem; }
+    .bs-header-print p { margin: 0.25rem 0 0; color: #64748b; font-size: 0.9rem; }
+    .bs-foot-note {
+      margin-top: 0.85rem; font-size: 0.8rem; color: #64748b;
+      line-height: 1.4; border-top: 1px dashed #e2e8f0; padding-top: 0.65rem;
+    }
+    details.bs-inputs summary {
+      cursor: pointer; font-weight: 700; color: #1e40af; list-style: none;
+    }
+    details.bs-inputs summary::-webkit-details-marker { display: none; }
+    details.bs-inputs[open] summary { margin-bottom: 0.75rem; }
+    .toggle-row { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; align-items: center; font-size: 0.88rem; }
+    .toggle-row label { display: inline-flex; align-items: center; gap: 0.35rem; text-transform: none; font-size: 0.88rem; color: #111; font-weight: 500; }
+
+    @media print {
+      body { background: #fff; }
+      #app-shell-header, #app-shell-spacer, .tabs, #kpis, #msg,
+      .bs-inputs, .bs-toolbar .right, .no-print, .sub { display: none !important; }
+      main { max-width: none; padding: 0; }
+      .card { box-shadow: none; border: none; padding: 0; margin: 0; }
+      .bs-header-print { display: block !important; }
+      .bs-cols { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+      table.bs-stmt tr.zero { display: none; }
+      .tab.hidden { display: none !important; }
+      #tab-bs.tab { display: block !important; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h2>Books — Full Accounting</h2>
+    <p class="sub" id="companyLine">Checks, remittances (Party B / Party A), owner draws, assets, loans — for year-end CPA work.</p>
+    <div id="msg"></div>
+    <div class="kpi-row" id="kpis"></div>
+
+    <div class="tabs" id="tabs">
+      <button type="button" class="active" data-tab="checks">Payments out</button>
+      <button type="button" data-tab="receipts">Money in</button>
+      <button type="button" data-tab="settlements">Party B / Party A</button>
+      <button type="button" data-tab="bs">Balance sheet</button>
+      <button type="button" data-tab="aging">A/R · A/P</button>
+      <button type="button" data-tab="f1099">1099</button>
+      <button type="button" data-tab="ye">YE checklist</button>
+      <button type="button" data-tab="loans">Loans</button>
+      <button type="button" data-tab="assets">Fixed assets</button>
+      <button type="button" data-tab="tax">Tax payments</button>
+      <button type="button" data-tab="draws">Owner equity</button>
+      <button type="button" data-tab="cpa">CPA package</button>
+    </div>
+
+    <!-- PAYMENTS OUT -->
+    <section id="tab-checks" class="tab">
+      <div class="card">
+        <h3>Record a payment (check, card, Zelle, …)</h3>
+        <p class="hint">
+          <strong>Method</strong> = how you paid (check / credit card / Zelle / custom).
+          <strong>Category</strong> = what it is for the books:
+          Operating · Loan (P&amp;I) · Owner draw · Tax · Asset ·
+          <strong>Client reimbursable</strong> (parts for a job you will get paid back for — not OpEx).
+        </p>
+        <div class="grid">
+          <div><label>Date</label><input type="date" id="c_date" /></div>
+          <div>
+            <label>Payment method</label>
+            <select id="c_method"></select>
+          </div>
+          <div id="c_custom_wrap" class="hidden">
+            <label>Custom method name</label>
+            <input type="text" id="c_method_custom" placeholder="e.g. Venmo, PayPal, Amex Platinum" />
+          </div>
+          <div><label>Ref / check # / conf #</label><input type="text" id="c_number" placeholder="Check #, last4, Zelle conf" /></div>
+          <div><label>Payee</label><input type="text" id="c_payee" placeholder="Who was paid?" /></div>
+          <div><label>Amount (total)</label><input type="number" step="0.01" id="c_amount" /></div>
+          <div>
+            <label>Category</label>
+            <select id="c_category">
+              <option value="operating_expense">Operating expense</option>
+              <option value="reimbursable_expense">Client reimbursable (job cost)</option>
+              <option value="meals">Meals (limited deduction)</option>
+              <option value="intercompany">Intercompany (between companies)</option>
+              <option value="party_b_remittance">Pay Party B remittance (product proceeds)</option>
+              <option value="party_a_settlement">Pay Party A settlement (product proceeds)</option>
+              <option value="loan_payment">Loan payment (P&amp;I)</option>
+              <option value="owner_draw">Owner withdrawal / draw</option>
+              <option value="tax_payment">Tax payment</option>
+              <option value="asset_purchase">Asset purchase</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div><label>Expense / job label</label><input type="text" id="c_exp_name" placeholder="e.g. Client parts — 123 Main St" /></div>
+          <div>
+            <label>Meals? (50% default)</label>
+            <select id="c_meals">
+              <option value="0">No</option>
+              <option value="1">Yes — meals</option>
+            </select>
+          </div>
+          <div id="c_meals_pct_wrap" class="hidden">
+            <label>Meals deductible %</label>
+            <input type="number" id="c_meals_pct" value="50" min="0" max="100" step="1" />
+          </div>
+          <div>
+            <label>Related company (if IC)</label>
+            <select id="c_related">
+              <option value="">—</option>
+              <option value="1">My Company</option>
+              <option value="2">My Company</option>
+            </select>
+          </div>
+          <div style="grid-column: 1 / -1;"><label>Memo</label><input type="text" id="c_memo" /></div>
+        </div>
+        <div class="loan-fields hidden" id="reimbHint">
+          <p class="hint" style="margin:0;">
+            <strong>Reimbursable:</strong> company card buys parts for a client → record here as
+            <em>Client reimbursable</em> + method <em>Credit card</em>.
+            When they Zelle you back, use the <strong>Money in</strong> tab as <em>Reimbursement</em>
+            (optionally link this payment). That is <strong>not sales income</strong> — it clears the amount due from the client.
+          </p>
+        </div>
+        <div class="loan-fields hidden" id="loanFields">
+          <div class="grid">
+            <div>
+              <label>Loan</label>
+              <select id="c_loan"></select>
+            </div>
+            <div><label>Principal</label><input type="number" step="0.01" id="c_principal" /></div>
+            <div><label>Interest</label><input type="number" step="0.01" id="c_interest" /></div>
+          </div>
+          <p class="hint">Principal reduces loan balance (not P&amp;L). Interest hits Interest Expense on the P&amp;L.</p>
+        </div>
+        <div class="tax-fields hidden" id="taxFields">
+          <div class="grid">
+            <div><label>Jurisdiction</label><input type="text" id="c_tax_j" placeholder="CA FTB, IRS, etc." value="CA" /></div>
+            <div><label>Tax year</label><input type="number" id="c_tax_year" /></div>
+            <div>
+              <label>Tax type</label>
+              <select id="c_tax_type">
+                <option value="estimated">Estimated / quarterly</option>
+                <option value="prepaid">Prepaid</option>
+                <option value="balance_due">Balance due</option>
+                <option value="extension">Extension payment</option>
+              </select>
+            </div>
+            <div>
+              <label>Prepaid asset?</label>
+              <select id="c_tax_prepaid">
+                <option value="0">No — track as tax payment</option>
+                <option value="1">Yes — prepaid (balance sheet)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn" id="c_save">Save payment</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Payment register</h3>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th><th>Method</th><th>Ref</th><th>Payee</th><th>Category</th>
+                <th class="num">Amount</th><th class="num">Principal</th><th class="num">Interest</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="c_table"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- PARTY REMITTANCES -->
+    <section id="tab-settlements" class="tab hidden">
+      <div class="card">
+        <h3>Party B / Party A product remittances</h3>
+        <p class="hint">
+          Use this when product sales belong to someone else and the cash still lands in the company bank.
+          <strong>Not owner equity draws</strong> — these are <em>proceeds owed</em>.
+          Set the fee rate in the EasyCart settings if you import orders.
+          Party labels are whatever you type in Settings.
+        </p>
+        <div class="kpi-row" id="set_kpis"></div>
+      </div>
+      <div class="card">
+        <h3>1 · Accrue amount owed (monthly)</h3>
+        <p class="hint">
+          After the month’s sales: enter Party B (or Party A) product sales, fees, and the amount you owe them.
+          Or enter the remittance amount directly. This increases <strong>Due to Party B / Due to Party A</strong>
+          and records remittance expense (not a draw).
+        </p>
+        <div class="grid">
+          <div><label>Settlement date</label><input type="date" id="set_date" /></div>
+          <div><label>Period start</label><input type="date" id="set_pstart" /></div>
+          <div><label>Period end</label><input type="date" id="set_pend" /></div>
+          <div>
+            <label>Party</label>
+            <select id="set_party">
+              <option value="party_b">Party B (product remittance)</option>
+              <option value="party_a">Party A (product settlement)</option>
+            </select>
+          </div>
+          <div><label>Gross product sales $</label><input type="number" step="0.01" id="set_gross" placeholder="Their SKUs only" /></div>
+          <div><label>Fees $</label><input type="number" step="0.01" id="set_fees" value="0" /></div>
+          <div><label>Refunds $</label><input type="number" step="0.01" id="set_refunds" value="0" /></div>
+          <div><label>Sales tax held (not remitted) $</label><input type="number" step="0.01" id="set_tax" value="0" /></div>
+          <div>
+            <label>Amount owed $</label>
+            <input type="number" step="0.01" id="set_amount" placeholder="Or compute from gross−fees−refunds" />
+          </div>
+          <div style="grid-column:1/-1;"><label>Notes</label><input type="text" id="set_notes" placeholder="e.g. July Party B SKUs remittance" /></div>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn secondary" id="set_compute">Compute amount = gross − fees − refunds</button>
+          <button type="button" class="btn" id="set_accrue">Accrue amount owed</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>2 · Record payment / retention</h3>
+        <p class="hint">
+          <strong>Party B:</strong> bank wire/ACH — also available under Payments out → category “Pay Party B remittance”.<br>
+          <strong>Party A:</strong> if you keep the cash in the company account, record the method
+          <em>Retained in company bank</em> (clears the amount owed without a transfer).
+        </p>
+        <div class="grid">
+          <div><label>Payment date</label><input type="date" id="setp_date" /></div>
+          <div>
+            <label>Party</label>
+            <select id="setp_party">
+              <option value="party_b">Party B</option>
+              <option value="party_a">Party A</option>
+            </select>
+          </div>
+          <div><label>Amount paid / retained $</label><input type="number" step="0.01" id="setp_amount" /></div>
+          <div>
+            <label>Method</label>
+            <select id="setp_method">
+              <option value="ach">ACH / bank transfer</option>
+              <option value="wire">Wire</option>
+              <option value="check">Check</option>
+              <option value="zelle">Zelle</option>
+              <option value="retained">Retained in company bank</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div><label>Ref / conf #</label><input type="text" id="setp_ref" /></div>
+          <div style="grid-column:1/-1;"><label>Notes</label><input type="text" id="setp_notes" /></div>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn green" id="setp_save">Record payment / retention</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Settlement register</h3>
+        <div class="grid" style="max-width:200px;margin-bottom:0.75rem;">
+          <div><label>Year filter</label><input type="number" id="set_year" /></div>
+        </div>
+        <div class="actions" style="margin-top:0;">
+          <button type="button" class="btn secondary" id="set_refresh">Refresh</button>
+        </div>
+        <div style="overflow-x:auto;margin-top:0.75rem;">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th><th>Period</th><th>Party</th><th>Type</th>
+                <th class="num">Gross</th><th class="num">Fees</th><th class="num">Amount</th>
+                <th>Method / ref</th><th>Notes</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="set_table"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- MONEY IN -->
+    <section id="tab-receipts" class="tab hidden">
+      <div class="card">
+        <h3>Money in (Zelle reimbursement, refund, other)</h3>
+        <p class="hint">
+          Use this for money that is <strong>not</strong> a sales deposit / commission
+          (those still go on the Deposits page). Typical case:
+          client reimburses parts you put on the company card → method <strong>Zelle</strong>,
+          category <strong>Reimbursement</strong>. Link the original payment when you can.
+        </p>
+        <div class="grid">
+          <div><label>Date</label><input type="date" id="r_date" /></div>
+          <div>
+            <label>Payment method</label>
+            <select id="r_method"></select>
+          </div>
+          <div id="r_custom_wrap" class="hidden">
+            <label>Custom method name</label>
+            <input type="text" id="r_method_custom" placeholder="e.g. Venmo" />
+          </div>
+          <div><label>Amount</label><input type="number" step="0.01" id="r_amount" /></div>
+          <div><label>From (payer)</label><input type="text" id="r_payer" placeholder="Client name" /></div>
+          <div><label>Ref / conf #</label><input type="text" id="r_ref" /></div>
+          <div>
+            <label>Category</label>
+            <select id="r_category">
+              <option value="reimbursement">Client reimbursement (clears job cost)</option>
+              <option value="refund">Vendor / card refund (offsets expense)</option>
+              <option value="other_income">Other income</option>
+            </select>
+          </div>
+          <div>
+            <label>Link to original payment (optional)</label>
+            <select id="r_link"></select>
+          </div>
+          <div style="grid-column:1/-1;"><label>Memo</label><input type="text" id="r_memo" placeholder="e.g. Reimburse water heater part — 123 Main" /></div>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn green" id="r_save">Save money in</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Receipts register</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th><th>Method</th><th>From</th><th>Category</th><th class="num">Amount</th><th>Linked payment</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="r_table"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- BALANCE SHEET -->
+    <section id="tab-bs" class="tab hidden">
+      <div class="card bs-inputs no-print">
+        <details class="bs-inputs" open>
+          <summary>⚙ Statement inputs (cash, CC, equity, overrides)</summary>
+          <p class="hint">
+            Cash and credit card don’t auto-reconcile from every transaction yet — enter
+            <strong>statement ending balances</strong> so the sheet matches the bank/CC.
+            Beginning equity comes from last year’s return or prior books.
+            A/R, A/P, loans, and fixed assets pull from the system automatically.
+          </p>
+          <div class="grid">
+            <div><label>As of date</label><input type="date" id="bs_asof" /></div>
+            <div><label>Bank / cash balance</label><input type="number" step="0.01" id="bs_cash" /></div>
+            <div><label>Credit card balance owed</label><input type="number" step="0.01" id="bs_cc" /></div>
+            <div><label>Beginning equity</label><input type="number" step="0.01" id="bs_equity" /></div>
+            <div><label>Inventory override (optional)</label><input type="number" step="0.01" id="bs_inv" placeholder="Blank = system" /></div>
+            <div><label>Sales tax still payable</label><input type="number" step="0.01" id="bs_stax" /></div>
+            <div><label>Other assets</label><input type="number" step="0.01" id="bs_oa" value="0" /></div>
+            <div><label>Other liabilities</label><input type="number" step="0.01" id="bs_ol" value="0" /></div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn" id="bs_save">Save balances</button>
+            <button type="button" class="btn secondary" id="bs_refresh">Refresh sheet</button>
+          </div>
+        </details>
+      </div>
+
+      <div class="card" id="bs_statement_card">
+        <div class="bs-toolbar no-print">
+          <div class="left">
+            <h3 style="margin:0;">Balance sheet</h3>
+            <span id="bs_status" class="bs-status warn">Loading…</span>
+          </div>
+          <div class="right">
+            <div class="toggle-row">
+              <label><input type="checkbox" id="bs_hide_zero" checked /> Hide zero lines</label>
+              <label><input type="checkbox" id="bs_show_cents" checked /> Show cents</label>
+            </div>
+            <button type="button" class="btn secondary" id="bs_copy">Copy text</button>
+            <button type="button" class="btn green" id="bs_print">Print / PDF</button>
+          </div>
+        </div>
+
+        <div id="bs_print_area">
+          <div class="bs-header-print">
+            <h2 id="bs_print_company">Company</h2>
+            <p>Balance Sheet</p>
+            <p id="bs_print_asof"></p>
+          </div>
+          <div class="kpi-row" id="bs_kpis" style="margin-bottom:1rem;"></div>
+          <div class="bs-cols">
+            <div class="bs-col">
+              <h4>Assets</h4>
+              <table class="bs-stmt" id="bs_assets_table"></table>
+            </div>
+            <div class="bs-col">
+              <h4>Liabilities &amp; equity</h4>
+              <table class="bs-stmt" id="bs_le_table"></table>
+            </div>
+          </div>
+          <div class="bs-foot-note" id="bs_note"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AGING -->
+    <section id="tab-aging" class="tab hidden">
+      <div class="card">
+        <div class="grid" style="max-width:280px;margin-bottom:0.75rem;">
+          <div><label>As of</label><input type="date" id="ag_asof" /></div>
+        </div>
+        <div class="actions" style="margin-top:0;">
+          <button type="button" class="btn secondary" id="ag_refresh">Refresh aging</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Accounts receivable (open invoices)</h3>
+        <div class="kpi-row" id="ar_kpis"></div>
+        <div style="overflow-x:auto;"><table><thead>
+          <tr><th>Date</th><th>Invoice</th><th>Customer</th><th>Status</th><th>Days</th><th class="num">Amount</th></tr>
+        </thead><tbody id="ar_table"></tbody></table></div>
+      </div>
+      <div class="card">
+        <h3>Accounts payable (unpaid bills)</h3>
+        <div class="kpi-row" id="ap_kpis"></div>
+        <div style="overflow-x:auto;"><table><thead>
+          <tr><th>Bill date</th><th>Due</th><th>Vendor</th><th>Bill #</th><th>Days</th><th class="num">Amount</th></tr>
+        </thead><tbody id="ap_table"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- 1099 -->
+    <section id="tab-f1099" class="tab hidden">
+      <div class="card">
+        <h3>1099-NEC candidate list</h3>
+        <p class="hint">
+          Payees paid ≥ threshold via check / Zelle / ACH / cash / wire / Venmo (not credit card).
+          Owner draws, tax, and loan payments are excluded. Confirm W-9s and corporate exemptions with your CPA.
+        </p>
+        <div class="grid" style="max-width:420px;">
+          <div><label>Tax year</label><input type="number" id="f9_year" /></div>
+          <div><label>Threshold $</label><input type="number" id="f9_thresh" value="600" /></div>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn" id="f9_refresh">Load 1099 list</button>
+          <button type="button" class="btn secondary" id="f9_csv">Export CSV</button>
+        </div>
+        <div class="kpi-row" id="f9_kpis" style="margin-top:0.75rem;"></div>
+        <div style="overflow-x:auto;margin-top:0.75rem;">
+          <table>
+            <thead><tr>
+              <th>Payee</th><th class="num">Total</th><th>#</th><th>Methods</th><th>TIN</th><th>≥ threshold</th>
+            </tr></thead>
+            <tbody id="f9_table"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- YE CHECKLIST -->
+    <section id="tab-ye" class="tab hidden">
+      <div class="card">
+        <h3>Year-end CPA checklist</h3>
+        <p class="hint">Track documents and bookkeeping tasks so nothing is missing when you hand off to the CPA.</p>
+        <div class="grid" style="max-width:200px;">
+          <div><label>Tax year</label><input type="number" id="ye_year" /></div>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn secondary" id="ye_refresh">Reload</button>
+        </div>
+        <div class="kpi-row" id="ye_kpis" style="margin-top:0.75rem;"></div>
+        <div id="ye_list" style="margin-top:1rem;"></div>
+      </div>
+    </section>
+
+    <!-- LOANS -->
+    <section id="tab-loans" class="tab hidden">
+      <div class="card">
+        <h3>Add loan</h3>
+        <div class="grid">
+          <div><label>Name</label><input id="l_name" placeholder="e.g. Toyota Finance — Tacoma" /></div>
+          <div><label>Lender</label><input id="l_lender" /></div>
+          <div><label>Original principal</label><input type="number" step="0.01" id="l_orig" /></div>
+          <div><label>Current balance</label><input type="number" step="0.01" id="l_bal" /></div>
+          <div><label>Interest rate %</label><input type="number" step="0.01" id="l_rate" /></div>
+          <div><label>Start date</label><input type="date" id="l_start" /></div>
+          <div style="grid-column:1/-1;"><label>Notes</label><input id="l_notes" /></div>
+        </div>
+        <div class="actions"><button type="button" class="btn" id="l_save">Save loan</button></div>
+      </div>
+      <div class="card">
+        <h3>Loans</h3>
+        <table>
+          <thead><tr><th>Name</th><th>Lender</th><th class="num">Original</th><th class="num">Balance</th><th class="num">Rate</th><th></th></tr></thead>
+          <tbody id="l_table"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ASSETS -->
+    <section id="tab-assets" class="tab hidden">
+      <div class="card">
+        <h3>Add fixed asset (vehicle, equipment, …)</h3>
+        <div class="grid">
+          <div><label>Name</label><input id="a_name" placeholder="2022 Ford Transit" /></div>
+          <div>
+            <label>Type</label>
+            <select id="a_type">
+              <option value="vehicle">Vehicle</option>
+              <option value="equipment">Equipment</option>
+              <option value="computer">Computer / tech</option>
+              <option value="furniture">Furniture</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div><label>Purchase date</label><input type="date" id="a_date" /></div>
+          <div><label>Purchase cost</label><input type="number" step="0.01" id="a_cost" /></div>
+          <div><label>Salvage value</label><input type="number" step="0.01" id="a_salvage" value="0" /></div>
+          <div><label>Useful life (years)</label><input type="number" step="0.5" id="a_life" value="5" /></div>
+          <div><label>Linked loan (optional)</label><select id="a_loan"></select></div>
+          <div style="grid-column:1/-1;"><label>Notes</label><input id="a_notes" /></div>
+        </div>
+        <div class="actions"><button type="button" class="btn" id="a_save">Save asset</button></div>
+        <p class="hint">Straight-line depreciation: (cost − salvage) ÷ years ÷ 12 per month. CPA may adjust method — this tracks what you book.</p>
+      </div>
+      <div class="card">
+        <h3>Fixed assets</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th><th>Type</th><th class="num">Cost</th><th class="num">Accum. dep.</th>
+              <th class="num">Book value</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="a_table"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAX -->
+    <section id="tab-tax" class="tab hidden">
+      <div class="card">
+        <h3>Tax payment (without a check record)</h3>
+        <p class="hint">Use this for ACH/online payments or prepaid CA taxes. Prefer recording a <strong>check</strong> with category “Tax payment” if you wrote a check.</p>
+        <div class="grid">
+          <div><label>Date</label><input type="date" id="t_date" /></div>
+          <div><label>Amount</label><input type="number" step="0.01" id="t_amount" /></div>
+          <div><label>Jurisdiction</label><input id="t_jur" value="CA" /></div>
+          <div><label>Tax year</label><input type="number" id="t_year" /></div>
+          <div>
+            <label>Type</label>
+            <select id="t_type">
+              <option value="estimated">Estimated / quarterly</option>
+              <option value="prepaid">Prepaid</option>
+              <option value="balance_due">Balance due</option>
+              <option value="extension">Extension</option>
+            </select>
+          </div>
+          <div>
+            <label>Prepaid asset?</label>
+            <select id="t_prepaid"><option value="0">No</option><option value="1">Yes</option></select>
+          </div>
+          <div><label>Check / conf #</label><input id="t_check" /></div>
+          <div style="grid-column:1/-1;"><label>Notes</label><input id="t_notes" /></div>
+        </div>
+        <div class="actions"><button type="button" class="btn" id="t_save">Save tax payment</button></div>
+      </div>
+      <div class="card">
+        <h3>Tax payments</h3>
+        <table>
+          <thead><tr><th>Date</th><th>Jurisdiction</th><th>Type</th><th>Year</th><th class="num">Amount</th><th>Prepaid?</th><th></th></tr></thead>
+          <tbody id="t_table"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- DRAWS -->
+    <section id="tab-draws" class="tab hidden">
+      <div class="card">
+        <h3>Owner equity (draw / contribution)</h3>
+        <p class="hint">Owner draws are <strong>not</strong> P&amp;L expenses — they reduce equity. Prefer “Write checks → Owner draw” if you paid by check so the register stays complete.</p>
+        <div class="grid">
+          <div><label>Date</label><input type="date" id="o_date" /></div>
+          <div><label>Amount</label><input type="number" step="0.01" id="o_amount" /></div>
+          <div>
+            <label>Type</label>
+            <select id="o_type"><option value="draw">Draw / withdrawal</option><option value="contribution">Owner contribution</option></select>
+          </div>
+          <div><label>Check #</label><input id="o_check" /></div>
+          <div style="grid-column:1/-1;"><label>Description</label><input id="o_desc" /></div>
+        </div>
+        <div class="actions"><button type="button" class="btn" id="o_save">Save</button></div>
+      </div>
+      <div class="card">
+        <h3>Owner equity transactions</h3>
+        <table>
+          <thead><tr><th>Date</th><th>Type</th><th class="num">Amount</th><th>Description</th><th></th></tr></thead>
+          <tbody id="o_table"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- CPA -->
+    <section id="tab-cpa" class="tab hidden">
+      <div class="card">
+        <h3>Year-end CPA package</h3>
+        <p class="hint">Downloads a full JSON package: payments, receipts, loans, assets, depreciation, tax, equity, <strong>balance sheet</strong>, A/R &amp; A/P aging, <strong>1099 list</strong>, YE checklist, and notes. Pair with bank/CC PDF statements for the CPA.</p>
+        <div class="grid" style="max-width:320px;">
+          <div><label>Tax year</label><input type="number" id="cpa_year" /></div>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn green" id="cpa_dl">Download CPA package (JSON)</button>
+          <a class="btn secondary" href="/reports.html" style="text-decoration:none;display:inline-block;">Open P&amp;L reports</a>
+        </div>
+        <pre id="cpa_preview" style="margin-top:1rem;background:#0f172a;color:#e2e8f0;padding:1rem;border-radius:8px;overflow:auto;max-height:320px;font-size:0.75rem;"></pre>
+      </div>
+    </section>
+  </main>
+
+  <script>
+(function () {
+  'use strict';
+  var API = location.origin + '/api';
+  var state = {
+    companyId: localStorage.getItem('selectedCompanyId') || '1',
+    checks: [], receipts: [], loans: [], assets: [], taxes: [], equity: [],
+    expCats: [], methods: [],
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function money(n) {
+    var v = Number(n || 0);
+    return (v < 0 ? '-$' : '$') + Math.abs(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function msg(text, ok) {
+    var el = $('msg');
+    if (!text) { el.innerHTML = ''; return; }
+    el.innerHTML = '<div class="msg ' + (ok ? 'ok' : 'err') + '">' + text + '</div>';
+  }
+  function cid() { return localStorage.getItem('selectedCompanyId') || '1'; }
+
+  async function api(path, opts) {
+    var o = opts || {};
+    var url = API + path;
+    if (!o.method || o.method === 'GET' || o.method === 'DELETE') {
+      url += (path.indexOf('?') >= 0 ? '&' : '?') + 'company_id=' + encodeURIComponent(cid());
+    }
+    var res = await fetch(url, {
+      ...o,
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...(o.headers || {}) },
+    });
+    var text = await res.text();
+    var data = text ? JSON.parse(text) : null;
+    if (!res.ok) throw new Error((data && data.error) || res.statusText);
+    return data;
+  }
+
+  // Local calendar date (not UTC). toISOString() is UTC and flips to "tomorrow"
+  // after ~5pm Pacific — which then excludes the row from YTD (server uses LA "today").
+  function today() {
+    var d = new Date();
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+
+  function fillLoanSelects() {
+    var opts = '<option value="">— Select loan —</option>' +
+      state.loans.filter(function (l) { return l.active !== 0; }).map(function (l) {
+        return '<option value="' + l.id + '">' + escapeHtml(l.name) + ' (bal ' + money(l.current_balance) + ')</option>';
+      }).join('');
+    $('c_loan').innerHTML = opts;
+    $('a_loan').innerHTML = '<option value="">— None —</option>' +
+      state.loans.map(function (l) {
+        return '<option value="' + l.id + '">' + escapeHtml(l.name) + '</option>';
+      }).join('');
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function toggleCatFields() {
+    var cat = $('c_category').value;
+    $('loanFields').classList.toggle('hidden', cat !== 'loan_payment');
+    $('taxFields').classList.toggle('hidden', cat !== 'tax_payment');
+    $('reimbHint').classList.toggle('hidden', cat !== 'reimbursable_expense');
+    if (cat === 'meals') $('c_meals').value = '1';
+    if (cat === 'intercompany') {
+      // leave related company as user picks
+    }
+    toggleMealsPct();
+  }
+  function toggleMealsPct() {
+    var on = $('c_meals').value === '1' || $('c_category').value === 'meals';
+    $('c_meals_pct_wrap').classList.toggle('hidden', !on);
+  }
+
+  function fillMethodSelects() {
+    var opts = (state.methods || []).map(function (m) {
+      return '<option value="' + escapeHtml(m.code) + '">' + escapeHtml(m.label) + '</option>';
+    }).join('');
+    opts += '<option value="custom">Custom…</option>';
+    $('c_method').innerHTML = opts;
+    $('r_method').innerHTML = opts;
+    // defaults
+    if (!$('c_method').value) $('c_method').value = 'check';
+    if (!$('r_method').value) $('r_method').value = 'zelle';
+    // prefer zelle for money in if available
+    var hasZelle = (state.methods || []).some(function (m) { return m.code === 'zelle'; });
+    if (hasZelle) $('r_method').value = 'zelle';
+    toggleMethodCustom('c');
+    toggleMethodCustom('r');
+  }
+
+  function toggleMethodCustom(prefix) {
+    var sel = $(prefix + '_method');
+    var wrap = $(prefix + '_custom_wrap');
+    if (!sel || !wrap) return;
+    wrap.classList.toggle('hidden', sel.value !== 'custom');
+  }
+
+  function methodPayload(prefix) {
+    var code = $(prefix + '_method').value;
+    var custom = ($(prefix + '_method_custom') && $(prefix + '_method_custom').value) || '';
+    if (code === 'custom') {
+      return {
+        payment_method: 'custom',
+        payment_method_custom: custom,
+        payment_method_label: custom,
+      };
+    }
+    var hit = (state.methods || []).find(function (m) { return m.code === code; });
+    return {
+      payment_method: code,
+      payment_method_label: hit ? hit.label : code,
+    };
+  }
+
+  function fillReceiptLinkSelect() {
+    var reimb = state.checks.filter(function (c) {
+      return c.category === 'reimbursable_expense' || Number(c.is_reimbursable) === 1;
+    });
+    var all = reimb.length ? reimb : state.checks.slice(0, 40);
+    $('r_link').innerHTML = '<option value="">— None —</option>' +
+      all.map(function (c) {
+        return '<option value="' + c.id + '">' +
+          escapeHtml(c.check_date) + ' · ' + escapeHtml(c.payee) + ' · ' + money(c.amount) +
+          (c.expense_category_name ? ' · ' + escapeHtml(c.expense_category_name) : '') +
+          '</option>';
+      }).join('');
+  }
+
+  async function loadAll() {
+    state.companyId = cid();
+    $('companyLine').textContent =
+      'Company #' + state.companyId + ' — payments, Party B / Party A remittances, reimbursements, loans, assets — CPA year-end.';
+    try {
+      var results = await Promise.all([
+        api('/books/checks'),
+        api('/books/loans'),
+        api('/books/assets'),
+        api('/books/tax-payments'),
+        api('/books/owner-equity'),
+        api('/books/summary'),
+        api('/books/payment-methods').catch(function () { return []; }),
+        api('/books/receipts').catch(function () { return []; }),
+        api('/expense_categories').catch(function () { return []; }),
+      ]);
+      state.checks = results[0] || [];
+      state.loans = results[1] || [];
+      state.assets = results[2] || [];
+      state.taxes = results[3] || [];
+      state.equity = results[4] || [];
+      var sum = results[5] || {};
+      state.methods = results[6] || [];
+      state.receipts = results[7] || [];
+      state.expCats = results[8] || [];
+      renderKpis(sum);
+      fillMethodSelects();
+      fillLoanSelects();
+      fillReceiptLinkSelect();
+      renderChecks();
+      renderReceipts();
+      renderLoans();
+      renderAssets();
+      renderTaxes();
+      renderEquity();
+      await loadSettlements();
+    } catch (e) {
+      msg('Load failed: ' + e.message, false);
+    }
+  }
+
+  function renderKpis(sum) {
+    var y = (sum && sum.ytd) || {};
+    $('kpis').innerHTML =
+      kpi('OpEx payments YTD', money(y.operating_from_checks), 'green') +
+      kpi('Due to Party B', money(sum.due_to_party_b), 'amber') +
+      kpi('Due to Party A', money(sum.due_to_party_a), 'amber') +
+      kpi('Party B remittance YTD', money(y.party_b_remittance_expense), '') +
+      kpi('Party A remittance YTD', money(y.party_a_remittance_expense), '') +
+      kpi('Interest exp. YTD', money(y.interest_expense), 'amber') +
+      kpi('Owner draws YTD', money(y.owner_draws), 'red') +
+      kpi('Loan balances', money(sum.loan_balance), '');
+  }
+
+  async function loadSettlements() {
+    if (!$('set_table')) return;
+    var year = $('set_year') && $('set_year').value ? $('set_year').value : new Date().getFullYear();
+    try {
+      var data = await api('/books/settlements?year=' + year);
+      state.settlements = data.settlements || [];
+      var b = data.balances || {};
+      if ($('set_kpis')) {
+        $('set_kpis').innerHTML =
+          kpi('Due to Party B (open)', money(b.mark), 'amber') +
+          kpi('Due to Party A (open)', money(b.party_a), 'amber') +
+          kpi('Total open remittances', money(b.total), 'red');
+      }
+      $('set_table').innerHTML = state.settlements.map(function (s) {
+        var period = (s.period_start || s.period_end)
+          ? escapeHtml((s.period_start || '') + ' → ' + (s.period_end || ''))
+          : '—';
+        var meth = s.entry_type === 'payment'
+          ? escapeHtml(s.payment_method || '') + (s.reference_number ? ' · ' + escapeHtml(s.reference_number) : '')
+          : '—';
+        return '<tr>' +
+          '<td>' + escapeHtml(s.settlement_date) + '</td>' +
+          '<td style="font-size:0.8rem;">' + period + '</td>' +
+          '<td>' + escapeHtml(s.party) + '</td>' +
+          '<td>' + escapeHtml(s.entry_type) + '</td>' +
+          '<td class="num">' + money(s.gross_sales) + '</td>' +
+          '<td class="num">' + money(s.fees) + '</td>' +
+          '<td class="num">' + money(s.amount) + '</td>' +
+          '<td style="font-size:0.8rem;">' + meth + '</td>' +
+          '<td style="font-size:0.8rem;">' + escapeHtml(s.notes || '') + '</td>' +
+          '<td><button type="button" class="btn red sm" data-del-settlement="' + s.id + '">Del</button></td>' +
+          '</tr>';
+      }).join('') || '<tr><td colspan="10">No settlement entries for this year yet.</td></tr>';
+    } catch (e) {
+      if ($('set_table')) {
+        $('set_table').innerHTML = '<tr><td colspan="10">Could not load settlements: ' + escapeHtml(e.message) + '</td></tr>';
+      }
+    }
+  }
+  function kpi(l, v, cls) {
+    return '<div class="kpi ' + (cls || '') + '"><div class="l">' + l + '</div><div class="v">' + v + '</div></div>';
+  }
+
+  function renderChecks() {
+    $('c_table').innerHTML = state.checks.map(function (c) {
+      var method = c.payment_method_label || c.payment_method || 'check';
+      return '<tr>' +
+        '<td>' + escapeHtml(c.check_date) + '</td>' +
+        '<td>' + escapeHtml(method) + '</td>' +
+        '<td>' + escapeHtml(c.reference_number || c.check_number || '') + '</td>' +
+        '<td>' + escapeHtml(c.payee) + '<div style="color:#6b7280;font-size:0.75rem;">' +
+        escapeHtml(c.category) + (c.memo ? ' · ' + escapeHtml(c.memo) : '') + '</div></td>' +
+        '<td>' + escapeHtml(c.expense_category_name || c.category) + '</td>' +
+        '<td class="num">' + money(c.amount) + '</td>' +
+        '<td class="num">' + money(c.principal_amount) + '</td>' +
+        '<td class="num">' + money(c.interest_amount) + '</td>' +
+        '<td><button type="button" class="btn red sm" data-del-check="' + c.id + '">Del</button></td>' +
+        '</tr>';
+    }).join('') || '<tr><td colspan="9">No payments yet.</td></tr>';
+  }
+
+  function renderReceipts() {
+    $('r_table').innerHTML = state.receipts.map(function (r) {
+      var linked = r.linked_payee
+        ? (escapeHtml(r.linked_date || '') + ' · ' + escapeHtml(r.linked_payee) + ' · ' + money(r.linked_amount))
+        : '—';
+      return '<tr>' +
+        '<td>' + escapeHtml(r.receipt_date) + '</td>' +
+        '<td>' + escapeHtml(r.payment_method_label || r.payment_method || '') + '</td>' +
+        '<td>' + escapeHtml(r.payer || '') +
+        (r.memo ? '<div style="color:#6b7280;font-size:0.75rem;">' + escapeHtml(r.memo) + '</div>' : '') +
+        '</td>' +
+        '<td>' + escapeHtml(r.category) + '</td>' +
+        '<td class="num">' + money(r.amount) + '</td>' +
+        '<td style="font-size:0.8rem;">' + linked + '</td>' +
+        '<td><button type="button" class="btn red sm" data-del-receipt="' + r.id + '">Del</button></td>' +
+        '</tr>';
+    }).join('') || '<tr><td colspan="7">No money-in receipts yet.</td></tr>';
+  }
+
+  function renderLoans() {
+    $('l_table').innerHTML = state.loans.map(function (l) {
+      return '<tr>' +
+        '<td>' + escapeHtml(l.name) + '</td>' +
+        '<td>' + escapeHtml(l.lender || '') + '</td>' +
+        '<td class="num">' + money(l.original_principal) + '</td>' +
+        '<td class="num">' + money(l.current_balance) + '</td>' +
+        '<td class="num">' + Number(l.interest_rate || 0).toFixed(2) + '%</td>' +
+        '<td><button type="button" class="btn red sm" data-del-loan="' + l.id + '">Del</button></td>' +
+        '</tr>';
+    }).join('') || '<tr><td colspan="6">No loans yet.</td></tr>';
+  }
+
+  function renderAssets() {
+    $('a_table').innerHTML = state.assets.map(function (a) {
+      var book = Number(a.purchase_cost || 0) - Number(a.accumulated_depreciation || 0);
+      return '<tr>' +
+        '<td>' + escapeHtml(a.name) + '</td>' +
+        '<td>' + escapeHtml(a.asset_type || '') + '</td>' +
+        '<td class="num">' + money(a.purchase_cost) + '</td>' +
+        '<td class="num">' + money(a.accumulated_depreciation) + '</td>' +
+        '<td class="num">' + money(book) + '</td>' +
+        '<td>' +
+        '<button type="button" class="btn sm secondary" data-dep="' + a.id + '">+1 mo dep</button> ' +
+        '<button type="button" class="btn red sm" data-del-asset="' + a.id + '">Del</button>' +
+        '</td></tr>';
+    }).join('') || '<tr><td colspan="6">No assets yet.</td></tr>';
+  }
+
+  function renderTaxes() {
+    $('t_table').innerHTML = state.taxes.map(function (t) {
+      return '<tr>' +
+        '<td>' + escapeHtml(t.payment_date) + '</td>' +
+        '<td>' + escapeHtml(t.jurisdiction || '') + '</td>' +
+        '<td>' + escapeHtml(t.tax_type || '') + '</td>' +
+        '<td>' + escapeHtml(t.tax_year || '') + '</td>' +
+        '<td class="num">' + money(t.amount) + '</td>' +
+        '<td>' + (t.is_prepaid ? 'Yes' : 'No') + '</td>' +
+        '<td><button type="button" class="btn red sm" data-del-tax="' + t.id + '">Del</button></td>' +
+        '</tr>';
+    }).join('') || '<tr><td colspan="7">No tax payments yet.</td></tr>';
+  }
+
+  function renderEquity() {
+    $('o_table').innerHTML = state.equity.map(function (o) {
+      return '<tr>' +
+        '<td>' + escapeHtml(o.tx_date) + '</td>' +
+        '<td>' + escapeHtml(o.tx_type) + '</td>' +
+        '<td class="num">' + money(o.amount) + '</td>' +
+        '<td>' + escapeHtml(o.description || '') + '</td>' +
+        '<td><button type="button" class="btn red sm" data-del-eq="' + o.id + '">Del</button></td>' +
+        '</tr>';
+    }).join('') || '<tr><td colspan="5">No owner equity transactions yet.</td></tr>';
+  }
+
+  // Tabs
+  document.querySelectorAll('.tabs button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.tabs button').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      document.querySelectorAll('.tab').forEach(function (t) { t.classList.add('hidden'); });
+      $('tab-' + btn.getAttribute('data-tab')).classList.remove('hidden');
+    });
+  });
+
+  $('c_category').addEventListener('change', toggleCatFields);
+  $('c_meals').addEventListener('change', toggleMealsPct);
+  $('c_method').addEventListener('change', function () { toggleMethodCustom('c'); });
+  $('r_method').addEventListener('change', function () { toggleMethodCustom('r'); });
+  $('c_date').value = today();
+  $('r_date').value = today();
+  $('t_date').value = today();
+  $('o_date').value = today();
+  var yNow = new Date().getFullYear();
+  $('t_year').value = yNow;
+  $('c_tax_year').value = yNow;
+  $('cpa_year').value = yNow;
+  $('f9_year').value = yNow;
+  $('ye_year').value = yNow;
+  $('bs_asof').value = yNow + '-12-31';
+  $('ag_asof').value = today();
+
+  $('c_save').onclick = async function () {
+    try {
+      var method = methodPayload('c');
+      if (method.payment_method === 'custom' && !method.payment_method_custom) {
+        throw new Error('Enter a custom payment method name');
+      }
+      var body = {
+        company_id: Number(cid()),
+        check_date: $('c_date').value,
+        check_number: $('c_number').value || null,
+        reference_number: $('c_number').value || null,
+        payee: $('c_payee').value,
+        amount: Number($('c_amount').value),
+        memo: $('c_memo').value || null,
+        category: $('c_category').value,
+        expense_category_name: $('c_exp_name').value || null,
+        loan_id: $('c_loan').value ? Number($('c_loan').value) : null,
+        principal_amount: Number($('c_principal').value || 0),
+        interest_amount: Number($('c_interest').value || 0),
+        tax_jurisdiction: $('c_tax_j').value || null,
+        tax_year: $('c_tax_year').value ? Number($('c_tax_year').value) : null,
+        tax_type: $('c_tax_type').value || null,
+        is_prepaid_tax: $('c_tax_prepaid').value === '1',
+        is_owner_draw: $('c_category').value === 'owner_draw',
+        is_reimbursable: $('c_category').value === 'reimbursable_expense',
+        is_meals: $('c_meals').value === '1' || $('c_category').value === 'meals',
+        meals_deductible_pct: Number($('c_meals_pct').value || 50),
+        is_intercompany: $('c_category').value === 'intercompany',
+        related_company_id: $('c_related').value ? Number($('c_related').value) : null,
+        payment_method: method.payment_method,
+        payment_method_custom: method.payment_method_custom || null,
+        payment_method_label: method.payment_method_label || null,
+      };
+      if (!body.check_date || !body.payee || !body.amount) throw new Error('Date, payee, and amount required');
+      await api('/books/checks', { method: 'POST', body: JSON.stringify(body) });
+      msg('Payment saved.', true);
+      $('c_payee').value = '';
+      $('c_amount').value = '';
+      $('c_number').value = '';
+      $('c_memo').value = '';
+      $('c_principal').value = '';
+      $('c_interest').value = '';
+      $('c_method_custom').value = '';
+      await loadAll();
+    } catch (e) { msg(e.message, false); }
+  };
+
+  $('r_save').onclick = async function () {
+    try {
+      var method = methodPayload('r');
+      if (method.payment_method === 'custom' && !method.payment_method_custom) {
+        throw new Error('Enter a custom payment method name');
+      }
+      var body = {
+        company_id: Number(cid()),
+        receipt_date: $('r_date').value,
+        amount: Number($('r_amount').value),
+        payer: $('r_payer').value || null,
+        reference_number: $('r_ref').value || null,
+        category: $('r_category').value,
+        memo: $('r_memo').value || null,
+        linked_check_id: $('r_link').value ? Number($('r_link').value) : null,
+        payment_method: method.payment_method,
+        payment_method_custom: method.payment_method_custom || null,
+        payment_method_label: method.payment_method_label || null,
+      };
+      if (!body.receipt_date || !body.amount) throw new Error('Date and amount required');
+      await api('/books/receipts', { method: 'POST', body: JSON.stringify(body) });
+      msg('Money in saved.', true);
+      $('r_amount').value = '';
+      $('r_payer').value = '';
+      $('r_ref').value = '';
+      $('r_memo').value = '';
+      $('r_method_custom').value = '';
+      await loadAll();
+    } catch (e) { msg(e.message, false); }
+  };
+
+  $('l_save').onclick = async function () {
+    try {
+      await api('/books/loans', {
+        method: 'POST',
+        body: JSON.stringify({
+          company_id: Number(cid()),
+          name: $('l_name').value,
+          lender: $('l_lender').value,
+          original_principal: Number($('l_orig').value || 0),
+          current_balance: Number($('l_bal').value || $('l_orig').value || 0),
+          interest_rate: Number($('l_rate').value || 0),
+          start_date: $('l_start').value || null,
+          notes: $('l_notes').value || null,
+        }),
+      });
+      msg('Loan saved.', true);
+      $('l_name').value = '';
+      await loadAll();
+    } catch (e) { msg(e.message, false); }
+  };
+
+  $('a_save').onclick = async function () {
+    try {
+      await api('/books/assets', {
+        method: 'POST',
+        body: JSON.stringify({
+          company_id: Number(cid()),
+          name: $('a_name').value,
+          asset_type: $('a_type').value,
+          purchase_date: $('a_date').value || null,
+          purchase_cost: Number($('a_cost').value || 0),
+          salvage_value: Number($('a_salvage').value || 0),
+          useful_life_years: Number($('a_life').value || 5),
+          loan_id: $('a_loan').value ? Number($('a_loan').value) : null,
+          notes: $('a_notes').value || null,
+        }),
+      });
+      msg('Asset saved.', true);
+      $('a_name').value = '';
+      await loadAll();
+    } catch (e) { msg(e.message, false); }
+  };
+
+  $('t_save').onclick = async function () {
+    try {
+      await api('/books/tax-payments', {
+        method: 'POST',
+        body: JSON.stringify({
+          company_id: Number(cid()),
+          payment_date: $('t_date').value,
+          amount: Number($('t_amount').value),
+          jurisdiction: $('t_jur').value,
+          tax_type: $('t_type').value,
+          tax_year: Number($('t_year').value),
+          check_number: $('t_check').value || null,
+          is_prepaid: $('t_prepaid').value === '1',
+          notes: $('t_notes').value || null,
+        }),
+      });
+      msg('Tax payment saved.', true);
+      await loadAll();
+    } catch (e) { msg(e.message, false); }
+  };
+
+  $('o_save').onclick = async function () {
+    try {
+      await api('/books/owner-equity', {
+        method: 'POST',
+        body: JSON.stringify({
+          company_id: Number(cid()),
+          tx_date: $('o_date').value,
+          amount: Number($('o_amount').value),
+          tx_type: $('o_type').value,
+          description: $('o_desc').value || null,
+          check_number: $('o_check').value || null,
+        }),
+      });
+      msg('Owner equity transaction saved.', true);
+      await loadAll();
+    } catch (e) { msg(e.message, false); }
+  };
+
+  $('cpa_dl').onclick = async function () {
+    try {
+      var year = Number($('cpa_year').value);
+      var data = await api('/books/cpa-package?year=' + year);
+      $('cpa_preview').textContent = JSON.stringify(data, null, 2);
+      var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'cpa-package-company' + cid() + '-' + year + '.json';
+      a.click();
+      msg('CPA package downloaded for ' + year + '.', true);
+    } catch (e) { msg(e.message, false); }
+  };
+
+  var lastBalanceSheet = null;
+
+  function coPartyLabels() {
+    var c = window.CompanyConfig && window.CompanyConfig.get
+      ? window.CompanyConfig.get(cid())
+      : null;
+    var a = (c && (c.party_a_label || (c.settings && c.settings.party_a_label))) || 'Party A';
+    var b = (c && (c.party_b_label || (c.settings && c.settings.party_b_label))) || 'Party B';
+    // Seed used Party A=A Party B=B historically in UI labels for due_to_party_a / due_to_party_b
+    return { party_a: a || 'Party A', mark: b || 'Party B', company: (c && (c.legal_name || c.name)) || 'Company' };
+  }
+
+  function bsMoney(n, showCents) {
+    var x = Number(n) || 0;
+    if (!showCents) {
+      return (x < 0 ? '-' : '') + '$' + Math.abs(Math.round(x)).toLocaleString('en-US');
+    }
+    return money(x);
+  }
+
+  function bsRow(label, amount, opts) {
+    opts = opts || {};
+    var showCents = !$('bs_show_cents') || $('bs_show_cents').checked;
+    var hideZero = $('bs_hide_zero') && $('bs_hide_zero').checked;
+    var cls = [];
+    if (opts.section) cls.push('section');
+    if (opts.indent) cls.push('indent');
+    if (opts.indent2) cls.push('indent2');
+    if (opts.total) cls.push('total');
+    if (opts.grand) cls.push('grand');
+    var amt = amount;
+    if (amt != null && Math.abs(Number(amt)) < 0.005) {
+      cls.push('zero');
+      if (hideZero && !opts.section && !opts.total && !opts.grand) return '';
+    }
+    if (amt != null && Number(amt) < -0.005) cls.push('neg');
+    var a = amt == null ? '' : bsMoney(amt, showCents);
+    return (
+      '<tr class="' + cls.join(' ') + '"><td>' + label + '</td><td class="num">' + a + '</td></tr>'
+    );
+  }
+
+  function renderBalanceSheet(bs) {
+    lastBalanceSheet = bs;
+    var A = bs.assets || {};
+    var Li = bs.liabilities || {};
+    var E = bs.equity || {};
+    var parties = coPartyLabels();
+    var faNet = A.fixed_assets_net != null
+      ? A.fixed_assets_net
+      : (Number(A.fixed_assets_cost || 0) - Number(A.accumulated_depreciation || 0));
+
+    var assetsHtml = '';
+    assetsHtml += bsRow('Current assets', null, { section: true });
+    assetsHtml += bsRow('Cash / bank', A.cash, { indent: true });
+    assetsHtml += bsRow('Accounts receivable', A.accounts_receivable, { indent: true });
+    assetsHtml += bsRow('Inventory', A.inventory, { indent: true });
+    assetsHtml += bsRow('Prepaid taxes', A.prepaid_taxes, { indent: true });
+    assetsHtml += bsRow('Due from clients (reimbursable)', A.due_from_clients_reimbursable, { indent: true });
+    assetsHtml += bsRow('Other current assets', A.other_assets, { indent: true });
+    assetsHtml += bsRow('Fixed assets', null, { section: true });
+    assetsHtml += bsRow('Fixed assets (cost)', A.fixed_assets_cost, { indent: true });
+    assetsHtml += bsRow('Less: accumulated depreciation', -Math.abs(A.accumulated_depreciation || 0), { indent: true });
+    assetsHtml += bsRow('Fixed assets, net', faNet, { indent: true });
+    assetsHtml += bsRow('Total assets', A.total, { total: true });
+    $('bs_assets_table').innerHTML = assetsHtml;
+
+    var leHtml = '';
+    leHtml += bsRow('Liabilities', null, { section: true });
+    leHtml += bsRow('Accounts payable', Li.accounts_payable, { indent: true });
+    leHtml += bsRow('Credit card payable', Li.credit_card, { indent: true });
+    leHtml += bsRow('Loans payable', Li.loans, { indent: true });
+    leHtml += bsRow('Sales tax payable', Li.sales_tax_payable, { indent: true });
+    // Prefer generic party labels from company settings; fall back to Party B / Party A names
+    var dueMarkLabel = parties.mark && parties.mark !== 'Party B'
+      ? ('Due to ' + parties.mark + ' (product remittances)')
+      : 'Due to Party B (product remittances)';
+    var duePartyALabel = parties.party_a && parties.party_a !== 'Party A'
+      ? ('Due to ' + parties.party_a + ' (product settlement)')
+      : 'Due to Party A (product settlement)';
+    // Historical API fields: due_to_party_b / due_to_party_a
+    leHtml += bsRow(dueMarkLabel, Li.due_to_party_b, { indent: true });
+    leHtml += bsRow(duePartyALabel, Li.due_to_party_a, { indent: true });
+    leHtml += bsRow('Intercompany', Li.intercompany_due, { indent: true });
+    leHtml += bsRow('Other liabilities', Li.other_liabilities, { indent: true });
+    leHtml += bsRow('Total liabilities', Li.total, { total: true });
+    leHtml += bsRow('Equity', null, { section: true });
+    leHtml += bsRow('Beginning equity', E.beginning_equity, { indent: true });
+    leHtml += bsRow('Owner contributions', E.contributions, { indent: true });
+    leHtml += bsRow('Owner draws', -Math.abs(E.draws || 0), { indent: true });
+    leHtml += bsRow('Retained earnings (plug)', E.retained_earnings_plug, { indent: true });
+    leHtml += bsRow('Total equity', E.total, { total: true });
+    leHtml += bsRow('Total liabilities + equity', (Li.total || 0) + (E.total || 0), { grand: true });
+    $('bs_le_table').innerHTML = leHtml;
+
+    var leSum = (Li.total || 0) + (E.total || 0);
+    var diff = Math.round(((A.total || 0) - leSum) * 100) / 100;
+    var balanced = Math.abs(diff) < 0.02 || bs.balanced;
+    var st = $('bs_status');
+    if (balanced) {
+      st.className = 'bs-status ok';
+      st.textContent = '✓ Balanced';
+    } else {
+      st.className = 'bs-status bad';
+      st.textContent = 'Out of balance by ' + money(diff);
+    }
+
+    $('bs_kpis').innerHTML =
+      kpi('Total assets', money(A.total), 'green') +
+      kpi('Total liabilities', money(Li.total), 'red') +
+      kpi('Total equity', money(E.total), '') +
+      kpi(balanced ? 'Check' : 'Difference', balanced ? 'OK' : money(diff), balanced ? 'green' : 'amber');
+
+    $('bs_print_company').textContent = parties.company;
+    $('bs_print_asof').textContent = 'As of ' + (bs.as_of || '');
+    var note = E.note || '';
+    if (!balanced) {
+      note = 'Sheet is out of balance by ' + money(diff) +
+        '. Check cash/CC/beginning equity inputs, or missing bills/invoices. ' + note;
+    }
+    $('bs_note').textContent = note;
+  }
+
+  async function loadBalanceSheet() {
+    var asof = $('bs_asof').value || today();
+    try {
+      var bal = await api('/books/balances?as_of=' + encodeURIComponent(asof));
+      var L = bal.latest || {};
+      if (L.cash) $('bs_cash').value = L.cash.amount;
+      if (L.credit_card) $('bs_cc').value = L.credit_card.amount;
+      if (L.beginning_equity) $('bs_equity').value = L.beginning_equity.amount;
+      if (L.inventory_override) $('bs_inv').value = L.inventory_override.amount;
+      if (L.sales_tax_payable) $('bs_stax').value = L.sales_tax_payable.amount;
+      if (L.other_assets) $('bs_oa').value = L.other_assets.amount;
+      if (L.other_liabilities) $('bs_ol').value = L.other_liabilities.amount;
+
+      var bs = await api('/books/balance-sheet?as_of=' + encodeURIComponent(asof));
+      renderBalanceSheet(bs);
+    } catch (e) {
+      var st = $('bs_status');
+      if (st) { st.className = 'bs-status warn'; st.textContent = 'Error'; }
+      msg(e.message, false);
+    }
+  }
+
+  function balanceSheetPlainText() {
+    if (!lastBalanceSheet) return '';
+    var A = lastBalanceSheet.assets || {};
+    var Li = lastBalanceSheet.liabilities || {};
+    var E = lastBalanceSheet.equity || {};
+    var co = coPartyLabels().company;
+    var lines = [
+      co,
+      'Balance Sheet as of ' + (lastBalanceSheet.as_of || ''),
+      '',
+      'ASSETS',
+      '  Cash / bank\t' + money(A.cash),
+      '  Accounts receivable\t' + money(A.accounts_receivable),
+      '  Inventory\t' + money(A.inventory),
+      '  Prepaid taxes\t' + money(A.prepaid_taxes),
+      '  Due from clients\t' + money(A.due_from_clients_reimbursable),
+      '  Fixed assets (net)\t' + money(A.fixed_assets_net != null ? A.fixed_assets_net : (A.fixed_assets_cost - A.accumulated_depreciation)),
+      '  Other assets\t' + money(A.other_assets),
+      'Total assets\t' + money(A.total),
+      '',
+      'LIABILITIES',
+      '  Accounts payable\t' + money(Li.accounts_payable),
+      '  Credit card\t' + money(Li.credit_card),
+      '  Loans\t' + money(Li.loans),
+      '  Sales tax payable\t' + money(Li.sales_tax_payable),
+      '  Due to parties / intercompany\t' + money((Li.due_to_party_b || 0) + (Li.due_to_party_a || 0) + (Li.intercompany_due || 0)),
+      '  Other liabilities\t' + money(Li.other_liabilities),
+      'Total liabilities\t' + money(Li.total),
+      '',
+      'EQUITY',
+      '  Beginning equity\t' + money(E.beginning_equity),
+      '  Contributions\t' + money(E.contributions),
+      '  Draws\t' + money(-Math.abs(E.draws || 0)),
+      '  Retained earnings (plug)\t' + money(E.retained_earnings_plug),
+      'Total equity\t' + money(E.total),
+      '',
+      'Total liabilities + equity\t' + money((Li.total || 0) + (E.total || 0)),
+    ];
+    return lines.join('\n');
+  }
+
+  $('bs_save').onclick = async function () {
+    try {
+      var asof = $('bs_asof').value;
+      var balances = [
+        { account_key: 'cash', label: 'Cash / bank', amount: Number($('bs_cash').value || 0) },
+        { account_key: 'credit_card', label: 'Credit card', amount: Number($('bs_cc').value || 0) },
+        { account_key: 'beginning_equity', label: 'Beginning equity', amount: Number($('bs_equity').value || 0) },
+        { account_key: 'sales_tax_payable', label: 'Sales tax payable', amount: Number($('bs_stax').value || 0) },
+        { account_key: 'other_assets', label: 'Other assets', amount: Number($('bs_oa').value || 0) },
+        { account_key: 'other_liabilities', label: 'Other liabilities', amount: Number($('bs_ol').value || 0) },
+      ];
+      if ($('bs_inv').value !== '') {
+        balances.push({ account_key: 'inventory_override', label: 'Inventory', amount: Number($('bs_inv').value || 0) });
+      }
+      await api('/books/balances', {
+        method: 'PUT',
+        body: JSON.stringify({ company_id: Number(cid()), as_of_date: asof, balances: balances }),
+      });
+      msg('Balances saved for ' + asof + '.', true);
+      await loadBalanceSheet();
+    } catch (e) { msg(e.message, false); }
+  };
+  $('bs_refresh').onclick = loadBalanceSheet;
+  if ($('bs_hide_zero')) $('bs_hide_zero').onchange = function () { if (lastBalanceSheet) renderBalanceSheet(lastBalanceSheet); };
+  if ($('bs_show_cents')) $('bs_show_cents').onchange = function () { if (lastBalanceSheet) renderBalanceSheet(lastBalanceSheet); };
+  if ($('bs_print')) $('bs_print').onclick = function () { window.print(); };
+  if ($('bs_copy')) {
+    $('bs_copy').onclick = async function () {
+      try {
+        await navigator.clipboard.writeText(balanceSheetPlainText());
+        msg('Balance sheet copied to clipboard.', true);
+      } catch (e) {
+        msg('Could not copy: ' + e.message, false);
+      }
+    };
+  }
+
+  async function loadAging() {
+    var asof = $('ag_asof').value || today();
+    try {
+      var ar = await api('/books/ar-aging?as_of=' + encodeURIComponent(asof));
+      var ap = await api('/books/ap-aging?as_of=' + encodeURIComponent(asof));
+      function ageKpis(b, total, el) {
+        $(el).innerHTML =
+          kpi('Total', money(total), 'green') +
+          kpi('Current', money(b.current), '') +
+          kpi('31–60', money(b['31_60']), 'amber') +
+          kpi('61–90', money(b['61_90']), 'amber') +
+          kpi('90+', money(b['90_plus']), 'red');
+      }
+      ageKpis(ar.buckets || {}, ar.total, 'ar_kpis');
+      ageKpis(ap.buckets || {}, ap.total, 'ap_kpis');
+      $('ar_table').innerHTML = (ar.items || []).map(function (r) {
+        return '<tr><td>' + escapeHtml(r.date) + '</td><td>' + escapeHtml(r.invoice_number) +
+          '</td><td>' + escapeHtml(r.customer) + '</td><td>' + escapeHtml(r.status) +
+          '</td><td>' + r.days_outstanding + '</td><td class="num">' + money(r.amount) + '</td></tr>';
+      }).join('') || '<tr><td colspan="6">No open invoices.</td></tr>';
+      $('ap_table').innerHTML = (ap.items || []).map(function (r) {
+        return '<tr><td>' + escapeHtml(r.bill_date) + '</td><td>' + escapeHtml(r.due_date || '') +
+          '</td><td>' + escapeHtml(r.vendor) + '</td><td>' + escapeHtml(r.bill_number || '') +
+          '</td><td>' + r.days_outstanding + '</td><td class="num">' + money(r.amount) + '</td></tr>';
+      }).join('') || '<tr><td colspan="6">No unpaid bills.</td></tr>';
+    } catch (e) { msg(e.message, false); }
+  }
+  $('ag_refresh').onclick = loadAging;
+
+  var state1099 = null;
+  async function load1099() {
+    try {
+      var year = Number($('f9_year').value);
+      var th = Number($('f9_thresh').value || 600);
+      state1099 = await api('/books/1099?year=' + year + '&threshold=' + th);
+      $('f9_kpis').innerHTML =
+        kpi('Candidates ≥ $' + th, String(state1099.candidate_count || 0), 'amber') +
+        kpi('Candidate total', money(state1099.candidate_total), 'red') +
+        kpi('Below threshold', String((state1099.below_threshold || []).length), '');
+      var rows = (state1099.candidates || []).concat(
+        (state1099.below_threshold || []).map(function (p) { return p; })
+      );
+      // show candidates first already sorted; show all with flag
+      var all = (state1099.candidates || []).concat(state1099.below_threshold || []);
+      $('f9_table').innerHTML = all.map(function (p) {
+        var methods = (p.by_method || []).map(function (m) {
+          return m.method + ' ' + money(m.amount);
+        }).join('; ');
+        return '<tr style="' + (p.meets_threshold ? '' : 'opacity:0.65;') + '">' +
+          '<td>' + escapeHtml(p.payee) +
+          (p.address ? '<div style="font-size:0.75rem;color:#6b7280;">' + escapeHtml(p.address) + '</div>' : '') +
+          '</td><td class="num">' + money(p.total) + '</td><td>' + p.payment_count +
+          '</td><td style="font-size:0.8rem;">' + escapeHtml(methods) +
+          '</td><td>' + escapeHtml(p.tin || '—') +
+          '</td><td>' + (p.meets_threshold ? 'Yes' : 'No') + '</td></tr>';
+      }).join('') || '<tr><td colspan="6">No payments found for this year.</td></tr>';
+    } catch (e) { msg(e.message, false); }
+  }
+  $('f9_refresh').onclick = load1099;
+  $('f9_csv').onclick = function () {
+    if (!state1099) { msg('Load 1099 list first.', false); return; }
+    var all = (state1099.candidates || []).concat(state1099.below_threshold || []);
+    var lines = ['payee,total,payments,tin,meets_threshold,methods'];
+    all.forEach(function (p) {
+      var methods = (p.by_method || []).map(function (m) { return m.method + ':' + m.amount; }).join('|');
+      lines.push(
+        '"' + String(p.payee).replace(/"/g, '""') + '",' +
+        p.total + ',' + p.payment_count + ',"' + (p.tin || '') + '",' +
+        (p.meets_threshold ? 'yes' : 'no') + ',"' + methods + '"'
+      );
+    });
+    var blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '1099-candidates-c' + cid() + '-' + $('f9_year').value + '.csv';
+    a.click();
+  };
+
+  async function loadYe() {
+    try {
+      var year = Number($('ye_year').value);
+      var data = await api('/books/ye-checklist?year=' + year);
+      $('ye_kpis').innerHTML =
+        kpi('Progress', data.done_count + ' / ' + data.total_count, 'green') +
+        kpi('Complete', data.pct + '%', data.pct === 100 ? 'green' : 'amber');
+      var groups = { documents: 'Documents to gather', books: 'Books tasks' };
+      var html = '';
+      ['documents', 'books'].forEach(function (g) {
+        html += '<h4 style="margin:1rem 0 0.5rem;font-size:0.95rem;">' + (groups[g] || g) + '</h4>';
+        html += '<div style="display:flex;flex-direction:column;gap:0.4rem;">';
+        (data.items || []).filter(function (i) { return i.group === g; }).forEach(function (i) {
+          html += '<label style="display:flex;align-items:flex-start;gap:0.5rem;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:0.55rem 0.75rem;cursor:pointer;">' +
+            '<input type="checkbox" data-ye-key="' + escapeHtml(i.key) + '" ' + (i.done ? 'checked' : '') + ' style="margin-top:0.2rem;" />' +
+            '<span style="flex:1;"><strong style="font-size:0.9rem;">' + escapeHtml(i.label) + '</strong>' +
+            '<input type="text" data-ye-notes="' + escapeHtml(i.key) + '" value="' + escapeHtml(i.notes || '') +
+            '" placeholder="Notes…" style="margin-top:0.35rem;width:100%;font-size:0.85rem;" /></span></label>';
+        });
+        html += '</div>';
+      });
+      $('ye_list').innerHTML = html;
+    } catch (e) { msg(e.message, false); }
+  }
+  $('ye_refresh').onclick = loadYe;
+  $('ye_list').addEventListener('change', async function (e) {
+    var t = e.target;
+    var key = t.getAttribute('data-ye-key') || t.getAttribute('data-ye-notes');
+    if (!key) return;
+    try {
+      var doneEl = $('ye_list').querySelector('input[data-ye-key="' + key + '"]');
+      var notesEl = $('ye_list').querySelector('input[data-ye-notes="' + key + '"]');
+      await api('/books/ye-checklist', {
+        method: 'PUT',
+        body: JSON.stringify({
+          company_id: Number(cid()),
+          tax_year: Number($('ye_year').value),
+          items: [{ key: key, done: !!(doneEl && doneEl.checked), notes: notesEl ? notesEl.value : '' }],
+        }),
+      });
+      // soft refresh kpis only
+      var data = await api('/books/ye-checklist?year=' + $('ye_year').value);
+      $('ye_kpis').innerHTML =
+        kpi('Progress', data.done_count + ' / ' + data.total_count, 'green') +
+        kpi('Complete', data.pct + '%', data.pct === 100 ? 'green' : 'amber');
+    } catch (err) { msg(err.message, false); }
+  });
+
+  // Load YE tabs when selected
+  document.getElementById('tabs').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-tab]');
+    if (!btn) return;
+    var tab = btn.getAttribute('data-tab');
+    if (tab === 'bs') loadBalanceSheet();
+    if (tab === 'aging') loadAging();
+    if (tab === 'f1099') load1099();
+    if (tab === 'ye') loadYe();
+    if (tab === 'settlements') loadSettlements();
+  });
+
+  if ($('set_year')) $('set_year').value = new Date().getFullYear();
+  if ($('set_date')) $('set_date').value = today();
+  if ($('setp_date')) $('setp_date').value = today();
+
+  if ($('set_compute')) {
+    $('set_compute').onclick = function () {
+      var gross = Number($('set_gross').value || 0);
+      var fees = Number($('set_fees').value || 0);
+      var refunds = Number($('set_refunds').value || 0);
+      var amt = Math.max(0, Math.round((gross - fees - refunds) * 100) / 100);
+      $('set_amount').value = amt.toFixed(2);
+    };
+  }
+  if ($('set_accrue')) {
+    $('set_accrue').onclick = async function () {
+      try {
+        var amount = Number($('set_amount').value || 0);
+        if (!(amount > 0)) {
+          // try compute
+          var g = Number($('set_gross').value || 0);
+          var f = Number($('set_fees').value || 0);
+          var r = Number($('set_refunds').value || 0);
+          amount = Math.max(0, Math.round((g - f - r) * 100) / 100);
+        }
+        if (!(amount > 0)) throw new Error('Enter amount owed (or gross/fees so we can compute it)');
+        await api('/books/settlements', {
+          method: 'POST',
+          body: JSON.stringify({
+            company_id: Number(cid()),
+            settlement_date: $('set_date').value || today(),
+            period_start: $('set_pstart').value || null,
+            period_end: $('set_pend').value || null,
+            party: $('set_party').value,
+            entry_type: 'accrue',
+            gross_sales: Number($('set_gross').value || 0),
+            fees: Number($('set_fees').value || 0),
+            refunds: Number($('set_refunds').value || 0),
+            tax_held: Number($('set_tax').value || 0),
+            amount: amount,
+            notes: $('set_notes').value || null,
+          }),
+        });
+        msg('Accrued remittance owed to ' + $('set_party').value + ': ' + money(amount), true);
+        $('set_amount').value = '';
+        await loadAll();
+      } catch (e) { msg(e.message, false); }
+    };
+  }
+  if ($('setp_save')) {
+    $('setp_save').onclick = async function () {
+      try {
+        var amount = Number($('setp_amount').value || 0);
+        if (!(amount > 0)) throw new Error('Enter payment / retention amount');
+        await api('/books/settlements', {
+          method: 'POST',
+          body: JSON.stringify({
+            company_id: Number(cid()),
+            settlement_date: $('setp_date').value || today(),
+            party: $('setp_party').value,
+            entry_type: 'payment',
+            amount: amount,
+            payment_method: $('setp_method').value,
+            reference_number: $('setp_ref').value || null,
+            notes: $('setp_notes').value || null,
+          }),
+        });
+        msg('Recorded payment/retention for ' + $('setp_party').value + ': ' + money(amount), true);
+        $('setp_amount').value = '';
+        await loadAll();
+      } catch (e) { msg(e.message, false); }
+    };
+  }
+  if ($('set_refresh')) $('set_refresh').onclick = loadSettlements;
+
+  document.body.addEventListener('click', async function (e) {
+    var t = e.target;
+    try {
+      if (t.getAttribute('data-del-settlement')) {
+        if (!confirm('Delete this settlement entry?')) return;
+        await api('/books/settlements/' + t.getAttribute('data-del-settlement') + '?company_id=' + cid(), { method: 'DELETE' });
+        await loadAll();
+      }
+      if (t.getAttribute('data-del-check')) {
+        if (!confirm('Delete this check?')) return;
+        await api('/books/checks/' + t.getAttribute('data-del-check'), { method: 'DELETE' });
+        await loadAll();
+      }
+      if (t.getAttribute('data-del-loan')) {
+        if (!confirm('Delete loan?')) return;
+        await api('/books/loans/' + t.getAttribute('data-del-loan'), { method: 'DELETE' });
+        await loadAll();
+      }
+      if (t.getAttribute('data-del-asset')) {
+        if (!confirm('Delete asset and its depreciation entries?')) return;
+        await api('/books/assets/' + t.getAttribute('data-del-asset'), { method: 'DELETE' });
+        await loadAll();
+      }
+      if (t.getAttribute('data-dep')) {
+        await api('/books/assets/' + t.getAttribute('data-dep') + '/depreciate', {
+          method: 'POST',
+          body: JSON.stringify({ company_id: Number(cid()), period_date: today() }),
+        });
+        msg('Depreciation entry posted.', true);
+        await loadAll();
+      }
+      if (t.getAttribute('data-del-tax')) {
+        if (!confirm('Delete tax payment?')) return;
+        await api('/books/tax-payments/' + t.getAttribute('data-del-tax'), { method: 'DELETE' });
+        await loadAll();
+      }
+      if (t.getAttribute('data-del-eq')) {
+        if (!confirm('Delete equity transaction?')) return;
+        await api('/books/owner-equity/' + t.getAttribute('data-del-eq'), { method: 'DELETE' });
+        await loadAll();
+      }
+      if (t.getAttribute('data-del-receipt')) {
+        if (!confirm('Delete this money-in receipt?')) return;
+        await api('/books/receipts/' + t.getAttribute('data-del-receipt'), { method: 'DELETE' });
+        await loadAll();
+      }
+    } catch (err) { msg(err.message, false); }
+  });
+
+  window.addEventListener('accounting-company-changed', loadAll);
+  window.addEventListener('storage', function (e) {
+    if (e.key === 'selectedCompanyId') loadAll();
+  });
+
+  toggleCatFields();
+  loadAll();
+})();
+  </script>
+</body>
+</html>

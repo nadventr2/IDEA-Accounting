@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Packing Slips - Open Accounting</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.22.9/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="ship-to.js"></script>
+  <style>
+    body { background-color: #f3f4f6; color: #111; font-family: Arial, sans-serif; margin: 0; }
+    main { max-width: 1100px; margin: 0 auto; padding: 6rem 1.25rem 2rem; }
+    .card { background: #fff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,.1); padding: 1.25rem; margin-bottom: 1.25rem; }
+    .box-card { border: 2px solid #2563eb; border-radius: 0.5rem; padding: 0.9rem 1rem; margin-bottom: 0.9rem; background: #f8fafc; }
+    .box-card.backorder { border-color: #d97706; background: #fffbeb; }
+    .box-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; gap: 0.5rem; flex-wrap: wrap; }
+    .box-title { font-weight: 800; color: #1e3a8a; font-size: 1.05rem; }
+    .box-card.backorder .box-title { color: #92400e; }
+    .box-summary { color: #334155; font-size: 0.92rem; margin: 0.35rem 0 0.6rem; }
+    .btn-amber { background: #d97706; color: #fff; }
+    .btn-amber:hover:not(:disabled) { background: #b45309; }
+    .btn-sm { padding: 0.3rem 0.55rem; font-size: 0.8rem; }
+    .actions-cell { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; max-width: 28rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 0.45rem 0.4rem; text-align: left; font-size: 0.875rem; border-bottom: 1px solid #e5e7eb; vertical-align: middle; }
+    th { color: #6b7280; font-size: 0.72rem; text-transform: uppercase; letter-spacing: .04em; }
+    input, select, textarea { width: 100%; padding: 0.45rem 0.55rem; border: 1px solid #d1d5db; border-radius: 0.375rem; box-sizing: border-box; }
+    label { display: block; margin-bottom: 0.25rem; font-size: 0.875rem; font-weight: 600; color: #374151; }
+    button { padding: 0.45rem 0.85rem; border-radius: 0.375rem; cursor: pointer; border: none; font-weight: 600; }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    .btn-blue { background: #2563eb; color: #fff; }
+    .btn-blue:hover:not(:disabled) { background: #1d4ed8; }
+    .btn-green { background: #15803d; color: #fff; }
+    .btn-gray { background: #4b5563; color: #fff; }
+    .btn-red { background: #dc2626; color: #fff; }
+    .btn-outline { background: #fff; color: #1e40af; border: 1px solid #93c5fd; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.85rem; }
+    @media (max-width: 800px) { .grid-3 { grid-template-columns: 1fr; } }
+    .flex { display: flex; } .gap-2 { gap: 0.5rem; } .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; } .flex-wrap { flex-wrap: wrap; }
+    .mb-2 { margin-bottom: 0.5rem; } .mb-4 { margin-bottom: 1rem; } .mt-2 { margin-top: 0.5rem; }
+    .text-3xl { font-size: 1.75rem; font-weight: 800; }
+    .text-xl { font-size: 1.25rem; font-weight: 700; }
+    .alert-ok { background: #dcfce7; color: #166534; padding: 0.65rem 0.8rem; border-radius: 0.375rem; margin-bottom: 0.75rem; }
+    .alert-err { background: #fee2e2; color: #991b1b; padding: 0.65rem 0.8rem; border-radius: 0.375rem; margin-bottom: 0.75rem; }
+    .relative { position: relative; }
+    .dropdown { position: absolute; z-index: 20; left: 0; right: 0; background: #fff; border: 1px solid #d1d5db; border-radius: 0.375rem; max-height: 12rem; overflow-y: auto; box-shadow: 0 8px 20px rgba(0,0,0,.12); }
+    .dropdown div { padding: 0.5rem 0.65rem; cursor: pointer; }
+    .dropdown div:hover { background: #f3f4f6; }
+    .w-20 { width: 5rem; } .w-24 { width: 6rem; }
+    .list-row { border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.85rem 1rem; display: flex; justify-content: space-between; gap: 0.75rem; align-items: flex-start; flex-wrap: wrap; }
+    .muted { color: #64748b; font-size: 0.875rem; }
+    .help { color: #475569; font-size: 0.9rem; margin: 0 0 0.85rem; }
+  </style>
+  <link rel="stylesheet" href="/app-shell.css" />
+  <link rel="stylesheet" href="/kpi-common.css" />
+  <script src="/app-shell.js" defer></script>
+  <script src="/kpi-common.js" defer></script>
+</head>
+<body>
+  <header id="header" class="text-white p-4">
+    <div class="fixed top-0 left-0 w-full bg-blue-600 text-white p-4 flex flex-wrap items-center justify-between gap-4 shadow-md z-10" style="background:#2563eb;color:#fff;padding:1rem;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;position:fixed;top:0;left:0;right:0;z-index:30;">
+      <div class="flex items-center" style="display:flex;align-items:center;">
+        <a href="/"><img src="/logo.png" alt="Company Logo" style="height:3rem;margin-right:1rem;" /></a>
+        <h1 style="font-size:1.35rem;font-weight:800;margin:0;">Open Accounting</h1>
+      </div>
+      <nav id="nav" class="flex flex-wrap gap-4" style="display:flex;flex-wrap:wrap;gap:0.75rem;">
+        <a href="/" style="color:#fff;">Settings</a>
+        <a href="/invoices.html" style="color:#fff;">Invoices</a>
+        <a href="/packing-slip.html" style="color:#fff;font-weight:700;">Packing Slips</a>
+        <a href="/sales.html" style="color:#fff;">Sales</a>
+      </nav>
+    </div>
+  </header>
+
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useMemo } = React;
+
+    const companyId = () => localStorage.getItem('selectedCompanyId') || '1';
+
+    const fetchJson = async (endpoint, options = {}, retries = 3) => {
+      const url = `${endpoint}${endpoint.includes('?') ? '&' : '?'}company_id=${companyId()}`;
+      let lastErr;
+      for (let i = 0; i < retries; i++) {
+        try {
+          const res = await fetch(url, {
+            ...options,
+            headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...(options.headers || {}) },
+            signal: AbortSignal.timeout(15000)
+          });
+          if (res.status === 204) return {};
+          if (!res.ok) {
+            const t = await res.text().catch(() => '');
+            throw new Error(`HTTP ${res.status}: ${t || res.statusText}`);
+          }
+          const ct = res.headers.get('content-type') || '';
+          if (ct.includes('application/json')) return await res.json();
+          return {};
+        } catch (err) {
+          lastErr = err;
+          if (i < retries - 1) await new Promise(r => setTimeout(r, 400 * (i + 1)));
+        }
+      }
+      throw lastErr;
+    };
+
+    const todayStr = () => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+
+    const tempId = () => `t-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    const PackingListPage = () => {
+      const [customers, setCustomers] = useState([]);
+      const [products, setProducts] = useState([]);
+      const [packingLists, setPackingLists] = useState([]);
+      const [customerSearch, setCustomerSearch] = useState('');
+      const [selectedCustomer, setSelectedCustomer] = useState(null);
+      const [showCustomerResults, setShowCustomerResults] = useState(false);
+      const [customerPO, setCustomerPO] = useState('');
+      const [trackingNumber, setTrackingNumber] = useState('');
+      const [shippingAddress, setShippingAddress] = useState('');
+      const [notes, setNotes] = useState('');
+      const [invoiceId, setInvoiceId] = useState(null);
+      const [slipNumber, setSlipNumber] = useState('');
+      const [dateShipped, setDateShipped] = useState(todayStr());
+      const [items, setItems] = useState([]); // {tempId, product_id, sku, name, quantity, box_number}
+      const [boxCount, setBoxCount] = useState(1);
+      const [skuSearch, setSkuSearch] = useState('');
+      const [activeBox, setActiveBox] = useState(1); // where newly added products go
+      const [editingId, setEditingId] = useState(null);
+      const [isLoading, setIsLoading] = useState(true);
+      const [error, setError] = useState(null);
+      const [success, setSuccess] = useState(null);
+      const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
+      const filteredCustomers = useMemo(() => {
+        const q = customerSearch.toLowerCase();
+        return customers
+          .filter(c => (c.name || '').toLowerCase().includes(q))
+          .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      }, [customers, customerSearch]);
+
+      const filteredProducts = useMemo(() => {
+        const q = skuSearch.toLowerCase();
+        return products
+          .filter(p => (p.sku || '').toLowerCase().includes(q) || (p.name || '').toLowerCase().includes(q))
+          .sort((a, b) => (a.sku || '').localeCompare(b.sku || ''))
+          .slice(0, 40);
+      }, [products, skuSearch]);
+
+      const boxNumbers = useMemo(() => Array.from({ length: Math.max(1, boxCount) }, (_, i) => i + 1), [boxCount]);
+
+      const boxSummary = useCallback((boxNum) => {
+        const lines = items
+          .filter(i => Number(i.box_number) === boxNum)
+          .map(i => `${i.quantity} × ${i.sku || '?'}`);
+        return lines.length ? lines.join(', ') : '(empty)';
+      }, [items]);
+
+      const backorderedItems = useMemo(
+        () => items.filter(i => Number(i.box_number) === 0),
+        [items]
+      );
+
+      const resetForm = useCallback(() => {
+        setCustomerSearch('');
+        setSelectedCustomer(null);
+        setCustomerPO('');
+        setTrackingNumber('');
+        setShippingAddress('');
+        setNotes('');
+        setInvoiceId(null);
+        setSlipNumber('');
+        setDateShipped(todayStr());
+        setItems([]);
+        setBoxCount(1);
+        setActiveBox(1);
+        setSkuSearch('');
+        setEditingId(null);
+      }, []);
+
+      // Stable helper — do not close over `customers` state (avoids infinite load loop)
+      // box_number 0 = backordered; 1+ = shipping box
+      const applyEditForm = (pl, custList) => {
+        const list = Array.isArray(custList) ? custList : [];
+        const customer = list.find(c => c.id === pl.customer_id) || null;
+        setSelectedCustomer(customer);
+        setCustomerSearch(customer ? customer.name : (pl.customer_name || ''));
+        setCustomerPO(pl.customer_po || '');
+        setTrackingNumber(pl.tracking_number || '');
+        setShippingAddress(
+          (typeof resolveShipTo === 'function'
+            ? resolveShipTo({ override: pl.shipping_address, customer })
+            : (pl.shipping_address || customer?.shipping_address || customer?.billing_address || ''))
+        );
+        setNotes(pl.notes || '');
+        setInvoiceId(pl.invoice_id || null);
+        setSlipNumber(pl.slip_number || '');
+        setDateShipped(pl.date_shipped || todayStr());
+        const mapped = (pl.items || []).map(i => {
+          let bn = parseInt(i.box_number, 10);
+          if (!Number.isFinite(bn) || bn < 0) bn = 1;
+          return {
+            tempId: tempId(),
+            product_id: i.product_id,
+            sku: i.sku || '',
+            name: i.product_name || i.name || '',
+            quantity: i.quantity || 1,
+            box_number: bn
+          };
+        });
+        setItems(mapped);
+        const maxBox = mapped.reduce((m, i) => {
+          const b = Number(i.box_number) || 0;
+          return b > 0 ? Math.max(m, b) : m;
+        }, 1);
+        setBoxCount(Math.max(1, maxBox));
+        setActiveBox(1);
+        setEditingId(pl.id);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
+      const loadEdit = (pl) => applyEditForm(pl, customers);
+
+      // Load once on mount only — previous deps on loadEdit/customers caused infinite flicker
+      useEffect(() => {
+        let cancelled = false;
+        (async () => {
+          setIsLoading(true);
+          setError(null);
+          try {
+            const [c, p, slips] = await Promise.all([
+              fetchJson('/api/customers'),
+              fetchJson('/api/products'),
+              fetchJson('/api/packing-slips')
+            ]);
+            if (cancelled) return;
+            const cust = Array.isArray(c) ? c : [];
+            const prods = Array.isArray(p) ? p : [];
+            const lists = Array.isArray(slips) ? slips : [];
+            setCustomers(cust);
+            setProducts(prods);
+            setPackingLists(lists);
+
+            const params = new URLSearchParams(window.location.search);
+            const editId = params.get('edit');
+            if (editId) {
+              const pl = lists.find(s => String(s.id) === String(editId));
+              if (pl) applyEditForm(pl, cust);
+            }
+          } catch (err) {
+            if (!cancelled) setError(err.message || String(err));
+          } finally {
+            if (!cancelled) setIsLoading(false);
+          }
+        })();
+        return () => { cancelled = true; };
+      }, []);
+
+      const handleCustomerSelect = (customer) => {
+        setSelectedCustomer(customer);
+        setCustomerSearch(customer.name);
+        // Unified ship-to: customer shipping, else billing
+        setShippingAddress(
+          typeof resolveShipTo === 'function'
+            ? resolveShipTo({ customer })
+            : (customer.shipping_address || customer.billing_address || '')
+        );
+        setShowCustomerResults(false);
+      };
+
+      const handleProductSelect = (product) => {
+        setItems(prev => [
+          ...prev,
+          {
+            tempId: tempId(),
+            product_id: product.id,
+            sku: product.sku,
+            name: product.name,
+            quantity: 1,
+            box_number: activeBox
+          }
+        ]);
+        setSkuSearch('');
+      };
+
+      const updateItem = (id, patch) => {
+        setItems(prev => prev.map(i => i.tempId === id ? { ...i, ...patch } : i));
+      };
+
+      const addBox = () => {
+        const n = boxCount + 1;
+        setBoxCount(n);
+        setActiveBox(n);
+      };
+
+      const removeBox = (boxNum) => {
+        if (boxCount <= 1) return;
+        // Move that box's lines to Backordered (never delete products from the slip)
+        setItems(prev => prev.map(i => {
+          const b = Number(i.box_number);
+          if (b === boxNum) return { ...i, box_number: 0 };
+          if (b > boxNum) return { ...i, box_number: b - 1 };
+          return i;
+        }));
+        setBoxCount(c => Math.max(1, c - 1));
+        setActiveBox(1);
+        setSuccess(`Box ${boxNum} removed — its items moved to Backordered.`);
+      };
+
+      /** Move entire line to previous box (or backordered from box 1) */
+      const moveItemPrevBox = (item) => {
+        const b = Number(item.box_number) || 0;
+        if (b <= 0) return; // already backordered
+        if (b === 1) {
+          updateItem(item.tempId, { box_number: 0 });
+          setSuccess(`${item.sku}: moved to Backordered.`);
+          return;
+        }
+        updateItem(item.tempId, { box_number: b - 1 });
+        setError(null);
+      };
+
+      /** Move entire line to next box (creates a new box if needed) */
+      const moveItemNextBox = (item) => {
+        let b = Number(item.box_number);
+        if (!Number.isFinite(b) || b < 0) b = 0;
+        if (b === 0) {
+          updateItem(item.tempId, { box_number: 1 });
+          setSuccess(`${item.sku}: moved from Backordered to Box 1.`);
+          return;
+        }
+        if (b >= boxCount) {
+          const n = boxCount + 1;
+          setBoxCount(n);
+          updateItem(item.tempId, { box_number: n });
+          setActiveBox(n);
+          setSuccess(`${item.sku}: moved to new Box ${n}.`);
+          return;
+        }
+        updateItem(item.tempId, { box_number: b + 1 });
+        setError(null);
+      };
+
+      /** Entire line not shipping — stays on slip as backordered */
+      const markBackordered = (item) => {
+        updateItem(item.tempId, { box_number: 0 });
+        setSuccess(`${item.sku} (${item.quantity}): marked Backordered.`);
+        setError(null);
+      };
+
+      /**
+       * Backorder only part of the qty (rest stays in current box).
+       * e.g. 10 on hand ship in box, 3 backordered.
+       */
+      const backorderSomeQty = (item) => {
+        const qty = Number(item.quantity) || 1;
+        if (qty < 2) {
+          markBackordered(item);
+          return;
+        }
+        const raw = window.prompt(
+          `How many of ${item.sku} to mark BACKORDERED? (1–${qty - 1}; rest stay in ${Number(item.box_number) === 0 ? 'Backordered' : 'Box ' + item.box_number})`,
+          String(Math.min(1, qty - 1))
+        );
+        if (raw == null) return;
+        const n = parseInt(raw, 10);
+        if (!Number.isFinite(n) || n < 1 || n >= qty) {
+          setError(`Enter a whole number between 1 and ${qty - 1}.`);
+          return;
+        }
+        setItems(prev => prev.flatMap(i => {
+          if (i.tempId !== item.tempId) return [i];
+          return [
+            { ...i, quantity: qty - n },
+            { ...i, tempId: tempId(), quantity: n, box_number: 0 }
+          ];
+        }));
+        setSuccess(`${n} × ${item.sku} → Backordered; ${qty - n} stay in box.`);
+        setError(null);
+      };
+
+      const moveFromBackorderToBox = (item, boxNum) => {
+        const b = Math.max(1, Math.min(boxCount, parseInt(boxNum, 10) || 1));
+        updateItem(item.tempId, { box_number: b });
+        setSuccess(`${item.sku}: moved to Box ${b}.`);
+      };
+
+      const splitItemToNewBox = (item) => {
+        const qty = Number(item.quantity) || 1;
+        if (qty < 2) {
+          setError('Need quantity ≥ 2 to split into another box');
+          return;
+        }
+        const moveQty = Math.floor(qty / 2);
+        const newBox = boxCount + 1;
+        setBoxCount(newBox);
+        setItems(prev => prev.flatMap(i => {
+          if (i.tempId !== item.tempId) return [i];
+          return [
+            { ...i, quantity: qty - moveQty },
+            { ...i, tempId: tempId(), quantity: moveQty, box_number: newBox }
+          ];
+        }));
+        setActiveBox(newBox);
+        setError(null);
+      };
+
+      const renderItemActions = (item) => {
+        const b = Number(item.box_number) || 0;
+        const inBox = b >= 1;
+        return (
+          <div className="actions-cell">
+            {inBox && (
+              <button type="button" className="btn-outline btn-sm" title="Move to previous box (or Backordered from Box 1)" onClick={() => moveItemPrevBox(item)}>
+                ← Prev box
+              </button>
+            )}
+            <button type="button" className="btn-outline btn-sm" title="Move to next box (adds a box if needed)" onClick={() => moveItemNextBox(item)}>
+              {b === 0 ? 'To Box 1 →' : 'Next box →'}
+            </button>
+            {inBox && (
+              <button type="button" className="btn-amber btn-sm" title="Mark entire line as backordered (not shipped)" onClick={() => markBackordered(item)}>
+                Backorder all
+              </button>
+            )}
+            {inBox && Number(item.quantity) > 1 && (
+              <button type="button" className="btn-amber btn-sm" title="Backorder only some of this qty" onClick={() => backorderSomeQty(item)}>
+                Backorder qty…
+              </button>
+            )}
+            {inBox && Number(item.quantity) > 1 && (
+              <button type="button" className="btn-outline btn-sm" title="Split half into a new box" onClick={() => splitItemToNewBox(item)}>
+                Split half
+              </button>
+            )}
+            {b === 0 && boxNumbers.map(bn => (
+              <button key={bn} type="button" className="btn-outline btn-sm" onClick={() => moveFromBackorderToBox(item, bn)}>
+                → Box {bn}
+              </button>
+            ))}
+          </div>
+        );
+      };
+
+      const savePackingList = async () => {
+        setError(null);
+        setSuccess(null);
+        if (!selectedCustomer?.id) {
+          setError('Select a customer from the dropdown (click a name).');
+          return;
+        }
+        if (!items.length) {
+          setError('Add at least one product line.');
+          return;
+        }
+        for (const i of items) {
+          if (!i.product_id || !i.quantity || i.quantity < 1) {
+            setError('Every line needs a product and quantity ≥ 1.');
+            return;
+          }
+        }
+
+        const company_id = parseInt(companyId(), 10) || 1;
+        const payload = {
+          slip_number: editingId && slipNumber ? slipNumber : `PL-${Date.now().toString().slice(-8)}`,
+          date_shipped: dateShipped || todayStr(),
+          company_id,
+          customer_id: selectedCustomer.id,
+          customer_po: customerPO || null,
+          tracking_number: trackingNumber.trim() || null,
+          shipping_address: shippingAddress.trim() || null,
+          notes: notes.trim() || null,
+          invoice_id: invoiceId || null,
+          items: items.map(i => {
+            let bn = parseInt(i.box_number, 10);
+            if (!Number.isFinite(bn) || bn < 0) bn = 1;
+            return {
+              product_id: i.product_id,
+              quantity: Number(i.quantity) || 1,
+              box_number: bn // 0 = backordered
+            };
+          })
+        };
+
+        try {
+          const endpoint = editingId ? `/api/packing-slips/${editingId}` : '/api/packing-slips';
+          const method = editingId ? 'PUT' : 'POST';
+          const data = await fetchJson(endpoint, { method, body: JSON.stringify(payload) });
+          if (!data?.id) throw new Error('Server did not return packing slip id');
+
+          setPackingLists(prev => {
+            if (editingId) return prev.map(p => p.id === data.id ? { ...p, ...data, items: data.items || [] } : p);
+            return [{ ...data, items: data.items || [] }, ...prev];
+          });
+          setSuccess(editingId ? 'Packing slip updated.' : `Packing slip ${data.slip_number} created.`);
+          resetForm();
+          // clean URL
+          if (window.history.replaceState) {
+            window.history.replaceState({}, '', '/packing-slip.html');
+          }
+        } catch (err) {
+          setError(`Failed to save: ${err.message}`);
+        }
+      };
+
+      const generatePDF = (pl) => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 50;
+        let y = margin;
+        const customer = customers.find(c => c.id === pl.customer_id);
+
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text((window.CompanyConfig && CompanyConfig.get && (CompanyConfig.get().legal_name || CompanyConfig.get().name)) || 'My Company', pageWidth / 2, y, { align: 'center' });
+        y += 22;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text('  ·  ', pageWidth / 2, y, { align: 'center' });
+        y += 28;
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text('PACKING LIST', margin, y);
+        y += 22;
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Slip #: ${pl.slip_number || 'N/A'}`, margin, y); y += 16;
+        doc.text(`Customer: ${customer?.name || pl.customer_name || 'N/A'}`, margin, y); y += 16;
+        doc.text(`PO #: ${pl.customer_po || 'N/A'}`, margin, y); y += 16;
+        doc.text(`Tracking #: ${pl.tracking_number || 'N/A'}`, margin, y); y += 16;
+        doc.text(`Date: ${pl.date_shipped || 'N/A'}`, margin, y); y += 20;
+        doc.setFont('helvetica', 'bold');
+        doc.text('Ship To:', margin, y); y += 14;
+        doc.setFont('helvetica', 'normal');
+        const ship = (pl.shipping_address || customer?.shipping_address || 'No address').split('\n');
+        ship.forEach(line => { if (line.trim()) { doc.text(line.trim(), margin + 10, y); y += 14; } });
+        y += 12;
+
+        const lines = pl.items || [];
+        const maxBox = lines.reduce((m, i) => {
+          const b = Number(i.box_number) || 0;
+          return b > 0 ? Math.max(m, b) : m;
+        }, 1);
+        for (let b = 1; b <= maxBox; b++) {
+          const boxItems = lines.filter(i => Number(i.box_number) === b);
+          if (!boxItems.length) continue;
+          if (y > 700) { doc.addPage(); y = margin; }
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(12);
+          doc.text(`Box ${b} of ${maxBox}`, margin, y);
+          y += 6;
+          const summary = boxItems.map(i => {
+            const prod = products.find(p => p.id === i.product_id) || {};
+            return `${i.quantity} × ${i.sku || prod.sku || '?'}`;
+          }).join(', ');
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(10);
+          const split = doc.splitTextToSize(summary, pageWidth - margin * 2);
+          doc.text(split, margin, y + 12);
+          y += 12 + split.length * 12 + 6;
+
+          const tableData = boxItems.map(i => {
+            const prod = products.find(p => p.id === i.product_id) || {};
+            return [i.sku || prod.sku || '—', i.product_name || i.name || prod.name || 'Product', String(i.quantity)];
+          });
+          doc.autoTable({
+            startY: y,
+            head: [['SKU', 'Product', 'Qty']],
+            body: tableData,
+            theme: 'grid',
+            styles: { fontSize: 10, cellPadding: 6 },
+            headStyles: { fillColor: [37, 99, 235], textColor: 255 },
+            margin: { left: margin, right: margin }
+          });
+          y = doc.lastAutoTable.finalY + 18;
+        }
+
+        const boItems = lines.filter(i => Number(i.box_number) === 0);
+        if (boItems.length) {
+          if (y > 700) { doc.addPage(); y = margin; }
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(12);
+          doc.text('Backordered (not shipped)', margin, y);
+          y += 10;
+          const tableData = boItems.map(i => {
+            const prod = products.find(p => p.id === i.product_id) || {};
+            return [i.sku || prod.sku || '—', i.product_name || i.name || prod.name || 'Product', String(i.quantity)];
+          });
+          doc.autoTable({
+            startY: y + 6,
+            head: [['SKU', 'Product', 'Qty']],
+            body: tableData,
+            theme: 'grid',
+            styles: { fontSize: 10, cellPadding: 6 },
+            headStyles: { fillColor: [217, 119, 6], textColor: 255 },
+            margin: { left: margin, right: margin }
+          });
+        }
+
+        doc.save(`PackingList_${pl.slip_number || pl.id}.pdf`);
+      };
+
+      const deletePackingList = async (id) => {
+        try {
+          await fetchJson(`/api/packing-slips/${id}`, { method: 'DELETE' });
+          setPackingLists(prev => prev.filter(p => p.id !== id));
+          setConfirmDeleteId(null);
+          setSuccess('Packing list deleted.');
+          if (editingId === id) resetForm();
+        } catch (err) {
+          setError(err.message);
+        }
+      };
+
+      if (isLoading) {
+        return <main><p>Loading packing slips…</p></main>;
+      }
+
+      return (
+        <main>
+          <h1 className="text-3xl mb-4">Packing Slips</h1>
+          <p className="help">
+            Split an order across boxes (e.g. <strong>Box 1 of 3: 21 × 35-OD6, 12 × 100-006</strong>).
+            Use <strong>← Prev box</strong> / <strong>Next box →</strong> to move a SKU; use <strong>Backorder</strong> if it is not shipping (stays on the slip).
+          </p>
+
+          {error && <div className="alert-err">{error}</div>}
+          {success && <div className="alert-ok">{success}</div>}
+
+          <div className="card">
+            <h2 className="text-xl mb-4">{editingId ? `Edit packing slip ${slipNumber || '#' + editingId}` : 'Create packing slip'}</h2>
+            {invoiceId && <p className="muted mb-2">Linked invoice id: {invoiceId}</p>}
+
+            <div className="grid-3 mb-4">
+              <div className="relative">
+                <label>Customer</label>
+                <input
+                  type="text"
+                  value={customerSearch}
+                  onChange={e => {
+                    setCustomerSearch(e.target.value);
+                    setSelectedCustomer(null);
+                    setShowCustomerResults(true);
+                  }}
+                  onFocus={() => setShowCustomerResults(true)}
+                  onBlur={() => setTimeout(() => setShowCustomerResults(false), 200)}
+                  placeholder="Search customer…"
+                />
+                {showCustomerResults && customerSearch && filteredCustomers.length > 0 && (
+                  <div className="dropdown">
+                    {filteredCustomers.slice(0, 30).map(c => (
+                      <div key={c.id} onMouseDown={() => handleCustomerSelect(c)}>{c.name}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div>
+                <label>Customer PO #</label>
+                <input value={customerPO} onChange={e => setCustomerPO(e.target.value)} placeholder="Optional" />
+              </div>
+              <div>
+                <label>Tracking #</label>
+                <input value={trackingNumber} onChange={e => setTrackingNumber(e.target.value)} placeholder="Optional" />
+              </div>
+              <div>
+                <label>Ship date</label>
+                <input type="date" value={dateShipped} onChange={e => setDateShipped(e.target.value)} />
+              </div>
+              <div style={{ gridColumn: 'span 2' }}>
+                <label>Notes</label>
+                <input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Optional" />
+              </div>
+            </div>
+
+            {selectedCustomer && (
+              <div className="mb-4">
+                <label>Shipping address for {selectedCustomer.name}</label>
+                <textarea rows={3} value={shippingAddress} onChange={e => setShippingAddress(e.target.value)} />
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2 items-center mb-4">
+              <button type="button" className="btn-outline" onClick={addBox}>+ Add box</button>
+              <span className="muted">New products go into:</span>
+              <select className="w-24" value={activeBox} onChange={e => setActiveBox(parseInt(e.target.value, 10) || 1)}>
+                {boxNumbers.map(b => <option key={b} value={b}>Box {b}</option>)}
+              </select>
+              <span className="muted">({boxCount} box{boxCount === 1 ? '' : 'es'} total)</span>
+            </div>
+
+            <div className="mb-4 relative">
+              <label>Add product (SKU or name) → Box {activeBox}</label>
+              <input
+                value={skuSearch}
+                onChange={e => setSkuSearch(e.target.value)}
+                placeholder="Type SKU…"
+              />
+              {skuSearch && filteredProducts.length > 0 && (
+                <div className="dropdown">
+                  {filteredProducts.map(p => (
+                    <div key={p.id} onMouseDown={() => handleProductSelect(p)}>
+                      {p.sku} — {p.name}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {boxNumbers.map(boxNum => {
+              const boxItems = items.filter(i => Number(i.box_number) === boxNum);
+              return (
+                <div key={boxNum} className="box-card">
+                  <div className="box-head">
+                    <div className="box-title">Box {boxNum} of {boxCount}</div>
+                    <div className="flex gap-2">
+                      {boxCount > 1 && (
+                        <button type="button" className="btn-amber btn-sm" title="Items move to Backordered — they are not deleted" onClick={() => removeBox(boxNum)}>
+                          Remove box (→ backorder)
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="box-summary"><strong>Contents:</strong> {boxSummary(boxNum)}</div>
+                  {boxItems.length === 0 ? (
+                    <p className="muted">No lines in this box yet. Use “Next box →” on a line, or add a product into this box.</p>
+                  ) : (
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>SKU</th>
+                          <th>Product</th>
+                          <th>Qty</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {boxItems.map(item => (
+                          <tr key={item.tempId}>
+                            <td>{item.sku}</td>
+                            <td>{item.name}</td>
+                            <td>
+                              <input
+                                className="w-20"
+                                type="number"
+                                min="1"
+                                value={item.quantity}
+                                onChange={e => updateItem(item.tempId, { quantity: parseInt(e.target.value, 10) || 1 })}
+                              />
+                            </td>
+                            <td>{renderItemActions(item)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              );
+            })}
+
+            <div className="box-card backorder">
+              <div className="box-head">
+                <div className="box-title">Backordered (not in any box)</div>
+              </div>
+              <div className="box-summary">
+                <strong>Contents:</strong> {boxSummary(0)}
+              </div>
+              <p className="muted mb-2">
+                Items stay on this packing slip until you put them in a box or leave them listed as backordered for the customer.
+              </p>
+              {backorderedItems.length === 0 ? (
+                <p className="muted">Nothing backordered. Use <strong>Backorder all</strong> or <strong>Backorder qty…</strong> on a line.</p>
+              ) : (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>SKU</th>
+                      <th>Product</th>
+                      <th>Qty</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {backorderedItems.map(item => (
+                      <tr key={item.tempId}>
+                        <td>{item.sku}</td>
+                        <td>{item.name}</td>
+                        <td>
+                          <input
+                            className="w-20"
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={e => updateItem(item.tempId, { quantity: parseInt(e.target.value, 10) || 1 })}
+                          />
+                        </td>
+                        <td>{renderItemActions(item)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            <div className="flex gap-2 mt-2">
+              <button type="button" className="btn-blue" onClick={savePackingList}>
+                {editingId ? 'Update packing slip' : 'Create packing slip'}
+              </button>
+              {editingId && (
+                <button type="button" className="btn-gray" onClick={resetForm}>Cancel</button>
+              )}
+            </div>
+          </div>
+
+          <div className="card">
+            <h3 className="text-xl mb-4">All packing slips</h3>
+            {packingLists.length === 0 ? (
+              <p className="muted">None yet. Create from here or from an invoice.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                {packingLists.map(pl => {
+                  const cust = customers.find(c => c.id === pl.customer_id) || {};
+                  const maxBox = (pl.items || []).reduce((m, i) => {
+                    const b = Number(i.box_number) || 0;
+                    return b > 0 ? Math.max(m, b) : m;
+                  }, 1);
+                  const previewParts = Array.from({ length: maxBox }, (_, i) => i + 1).map(b => {
+                        const lines = (pl.items || []).filter(x => Number(x.box_number) === b);
+                        if (!lines.length) return null;
+                        return `Box ${b} of ${maxBox}: ` + lines.map(x => `${x.quantity}×${x.sku || '?'}`).join(', ');
+                      }).filter(Boolean);
+                  const boLines = (pl.items || []).filter(x => Number(x.box_number) === 0);
+                  if (boLines.length) {
+                    previewParts.push('Backordered: ' + boLines.map(x => `${x.quantity}×${x.sku || '?'}`).join(', '));
+                  }
+                  const preview = previewParts.join(' · ');
+                  return (
+                    <div key={pl.id} className="list-row">
+                      <div>
+                        <strong>{cust.name || pl.customer_name || 'Customer'}</strong>
+                        <div className="muted">
+                          {pl.slip_number} · PO {pl.customer_po || '—'} · Tracking {pl.tracking_number || '—'} · {pl.date_shipped || '—'}
+                          {pl.invoice_id ? ` · Invoice #${pl.invoice_id}` : ''}
+                        </div>
+                        {preview && <div className="muted" style={{ marginTop: 4 }}>{preview}</div>}
+                      </div>
+                      <div className="flex gap-2 flex-wrap">
+                        <button type="button" className="btn-blue" onClick={() => loadEdit(pl)}>Edit</button>
+                        <button type="button" className="btn-gray" onClick={() => generatePDF(pl)}>PDF</button>
+                        {confirmDeleteId === pl.id ? (
+                          <>
+                            <button type="button" className="btn-red" onClick={() => deletePackingList(pl.id)}>Confirm delete</button>
+                            <button type="button" className="btn-gray" onClick={() => setConfirmDeleteId(null)}>No</button>
+                          </>
+                        ) : (
+                          <button type="button" className="btn-red" onClick={() => setConfirmDeleteId(pl.id)}>Delete</button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </main>
+      );
+    };
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<PackingListPage />);
+  </script>
+</body>
+</html>

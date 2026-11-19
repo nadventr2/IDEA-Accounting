@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script type="text/javascript">
+    var gk_isXlsx = false;
+    var gk_xlsxFileLookup = {};
+    var gk_fileData = {};
+    function filledCell(cell) {
+      return cell !== '' && cell != null;
+    }
+    function loadFileData(filename) {
+      if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+        try {
+          var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+          var firstSheetName = workbook.SheetNames[0];
+          var worksheet = workbook.Sheets[firstSheetName];
+          var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+          var filteredData = jsonData.filter(row => row.some(filledCell));
+          var headerRowIndex = filteredData.findIndex((row, index) =>
+            row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+          );
+          if (headerRowIndex === -1 || headerRowIndex > 25) {
+            headerRowIndex = 0;
+          }
+          var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
+          csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+          return csv;
+        } catch (e) {
+          console.error(e);
+          return "";
+        }
+      }
+      return gk_fileData[filename] || "";
+    }
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expenses - My Company Accounting</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js" onerror="this.src='https://unpkg.com/react@18.2.0/umd/react.production.min.js'"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js" onerror="this.src='https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js'"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.24.0/babel.min.js" onerror="this.src='https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.0/babel.min.js'"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" onerror="this.src='https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'"></script>
+  <style>
+    .min-h-screen { min-height: 100vh; }
+    .bg-gray-100 { background-color: #f3f4f6; }
+    .bg-blue-600 { background-color: #2563eb; }
+    .text-white { color: #fff; }
+    .p-4 { padding: 1rem; }
+    .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .container { max-width: 1280px; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-4 { gap: 1rem; }
+    .h-12 { height: 3rem; }
+    .mr-4 { margin-right: 1rem; }
+    .text-2xl { font-size: 1.5rem; }
+    .font-bold { font-weight: 700; }
+    .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .hover\\:bg-blue-700:hover { background-color: #1d4ed8; }
+    .rounded-md { border-radius: 0.375rem; }
+    .bg-blue-700 { background-color: #1d4ed8; }
+    .p-6 { padding: 1.5rem; }
+    .flex-grow { flex-grow: 1; }
+    .text-3xl { font-size: 1.875rem; }
+    .mb-6 { margin-bottom: 1.5rem; }
+    .form-container { background-color: #fff; padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .text-sm { font-size: 0.875rem; }
+    .font-medium { font-weight: 500; }
+    .text-gray-700 { color: #374151; }
+    .mt-1 { margin-top: 0.25rem; }
+    .w-full { width: 100%; }
+    .border-gray-300 { border-color: #d1d5db; }
+    .rounded-md { border-radius: 0.375rem; }
+    .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+    .focus\\:ring-blue-500:focus { outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); }
+    .focus\\:border-blue-500:focus { border-color: #3b82f6; }
+    .mt-4 { margin-top: 1rem; }
+    .text-lg { font-size: 1.125rem; }
+    .font-semibold { font-weight: 600; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .text-red-600 { color: #dc2626; }
+    .bg-red-100 { background-color: #fee2e2; }
+    .text-green-600 { color: #16a34a; }
+    .bg-green-100 { background-color: #dcfce7; }
+    .px-4 { padding-left: 1rem; padding-right: 1rem; }
+    .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+    .hover\\:bg-red-700:hover { background-color: #b91c1c; }
+    .bg-red-600 { background-color: #dc2626; }
+    .border-gray-200 { border-color: #e5e7eb; }
+    .space-x-2 > * + * { margin-left: 0.5rem; }
+    .min-w-full { min-width: 100%; }
+    .divide-y { border-bottom: 1px solid #e5e7eb; }
+    .divide-gray-200 { border-color: #e5e7eb; }
+    .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .text-xs { font-size: 0.75rem; }
+    .uppercase { text-transform: uppercase; }
+    .tracking-wider { letter-spacing: 0.05em; }
+    .whitespace-nowrap { white-space: nowrap; }
+    .table-container { background-color: #fff; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .cursor-pointer { cursor: pointer; }
+    .bg-blue-100 { background-color: #dbeafe; }
+    .bg-gray-600 { background-color: #4b5563; }
+    .hover\\:bg-gray-700:hover { background-color: #374151; }
+    .disabled\\:bg-gray-300:disabled { background-color: #d1d5db; }
+    .relative { position: relative; }
+    .absolute { position: absolute; }
+    .z-10 { z-index: 10; }
+    .max-h-48 { max-height: 12rem; }
+    .overflow-y-auto { overflow-y: auto; }
+    .top-full { top: 100%; }
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+  </style>
+  <link rel="stylesheet" href="/app-shell.css" />
+  <link rel="stylesheet" href="/kpi-common.css" />
+  <script src="/app-shell.js" defer></script>
+  <script src="/kpi-common.js" defer></script>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+  <header id="header" class="text-white p-4">
+    <div class="class"fixed top-0 left-0 w-full bg-blue-600 text-white p-4 flex flex-wrap items-center justify-between gap-4 shadow-md z-10">
+      <div class="flex items-center">
+        <a href="/"><img src="/logo.png" alt="My Company Logo" class="h-12 mr-4" /></a>
+        <h1 class="text-2xl font-bold">Open Accounting</h1>
+      </div>
+      <nav id="nav" class="flex flex-wrap gap-4">
+        <a href="/" class="px-4 hover:underline">Settings</a>
+        <a href="/deposits" class="px-4 hover:underline">Deposits</a>
+        <a href="/expenses" class="px-4 hover:underline">Expenses</a>
+        <a href="/services-reports" class="px-4 hover:underline">Reports</a>
+		<a href="/vendors" class="px-4 hover:underline">Vendors (My Company)</a>
+      </nav>
+    </div>
+  </header>
+  <div id="root" class="flex-grow"></div>
+    <footer class="bg-gray-800 text-white p-4 mt-8">
+    <div class="container mx-auto">
+      <p>© Open Accounting. All rights reserved.</p>
+    </div>
+  </footer>
+  <script type="text/javascript">
+    const fetchWithRetry = async (url, options, type, retries = 5, delay = 1000) => {
+      const companyId = '2';
+      const urlWithCompany = options.method === 'GET' ? `${url}?company_id=${companyId}` : url;
+      console.log(`[FETCH] ${type} URL: ${urlWithCompany}, Options:`, options);
+      for (let i = 0; i < retries; i++) {
+        try {
+          const response = await fetch(urlWithCompany, {
+            ...options,
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', ...options?.headers },
+            signal: AbortSignal.timeout(15000)
+          });
+          console.log(`[FETCH] ${type} Response: ${response.status}`);
+          if (!response.ok) {
+            const errorText = await response.text().catch(() => 'No response text');
+            console.error(`[FETCH] Error ${type}: HTTP ${response.status} - ${errorText}`);
+            throw new Error(`HTTP ${response.status}: ${errorText || 'Unknown error'}`);
+          }
+          const data = await response.json();
+          if (!data) throw new Error(`Empty response for ${type}`);
+          console.log(`[FETCH] ${type} Data:`, data);
+          return data;
+        } catch (error) {
+          console.error(`[FETCH] ${type} Attempt ${i + 1} failed:`, error.message);
+          if (i < retries - 1) {
+            console.log(`[FETCH] Retrying ${type} after ${delay}ms`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+          throw error;
+        }
+      }
+    };
+  </script>
+<script type="text/babel">
+  const { useState, useEffect, useCallback, useMemo, Fragment } = React;
+  const BASE_URL = window.location.origin + '/api';
+
+  const ErrorBoundary = ({ children }) => {
+    const [error, setError] = useState(null);
+    useEffect(() => {
+      const errorHandler = (error) => {
+        setError(error.message || 'An unexpected error occurred');
+      };
+      window.addEventListener('error', errorHandler);
+      return () => window.removeEventListener('error', errorHandler);
+    }, []);
+    if (error) {
+      return (
+        <div className="p-4 text-red-600 bg-red-100 rounded-lg shadow-sm">
+          <h2>Error: {error}</h2>
+          <p>Please refresh the page.</p>
+        </div>
+      );
+    }
+    return children;
+  };
+
+  const ExpensesPage = () => {
+    const [vendors, setVendors] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [expenses, setExpenses] = useState([]);
+    const [form, setForm] = useState({
+      vendorId: '',
+      categoryId: '',
+      amount: 0,
+      date: new Date().toISOString().split('T')[0],
+      description: ''
+    });
+    const [editForm, setEditForm] = useState(null);
+    const [newVendor, setNewVendor] = useState({
+      name: '',
+      contact_name: '',
+      email: '',
+      phone: '',
+      address: ''
+    });
+    const [newCategory, setNewCategory] = useState({ name: '' });
+    const [selectedIndex, setSelectedIndex] = useState(-1);
+    const [error, setError] = useState(null);
+    const [message, setMessage] = useState({ text: '', type: '' });
+    const [importFile, setImportFile] = useState(null);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [showVendorModal, setShowVendorModal] = useState(false);
+    const [showCategoryModal, setShowCategoryModal] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+      const fetchData = async () => {
+        setIsLoading(true);
+        try {
+          const [vendorData, categoryData, expenseData] = await Promise.all([
+            fetchWithRetry(`${BASE_URL}/vendors`, { headers: { 'Accept': 'application/json' }, method: 'GET' }, 'vendors'),
+            fetchWithRetry(`${BASE_URL}/expense_categories`, { headers: { 'Accept': 'application/json' }, method: 'GET' }, 'categories'),
+            fetchWithRetry(`${BASE_URL}/expenses`, { headers: { 'Accept': 'application/json' }, method: 'GET' }, 'expenses')
+          ]);
+          setVendors(Array.isArray(vendorData) ? vendorData.filter(v => v.company_id === 2) : []);
+          setCategories(Array.isArray(categoryData) ? categoryData.filter(c => c.company_id === 2) : []);
+          setExpenses(Array.isArray(expenseData) ? expenseData : []);
+          setIsLoading(false);
+        } catch (err) {
+          setError(`Failed to load data: ${err.message}`);
+          setIsLoading(false);
+        }
+      };
+      fetchData();
+    }, []);
+
+    const handleFormChange = useCallback((e) => {
+      const { name, value } = e.target;
+      setForm(prev => ({
+        ...prev,
+        [name]: name === 'amount' ? (value ? parseFloat(value) || 0 : 0) : value
+      }));
+    }, []);
+
+    const handleEditFormChange = useCallback((e) => {
+      const { name, value } = e.target;
+      setEditForm(prev => ({
+        ...prev,
+        [name]: name === 'amount' ? (value ? parseFloat(value) || 0 : 0) : value
+      }));
+    }, []);
+
+    const handleVendorFormChange = useCallback((e) => {
+      const { name, value } = e.target;
+      setNewVendor(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }, []);
+
+    const handleCategoryFormChange = useCallback((e) => {
+      const { name, value } = e.target;
+      setNewCategory(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }, []);
+
+    const handleImportFileChange = useCallback((e) => {
+      setImportFile(e.target.files[0]);
+      setMessage({ text: '', type: '' });
+    }, []);
+
+    const handleAddVendor = useCallback(async (e) => {
+      e.preventDefault();
+      const vendor = {
+        name: newVendor.name,
+        contact_name: newVendor.contact_name || null,
+        email: newVendor.email || '',
+        phone: newVendor.phone || null,
+        address: newVendor.address || null,
+        company_id: 2
+      };
+      if (!vendor.name || !vendor.email) {
+        setMessage({ text: 'Vendor name and email are required', type: 'error' });
+        return;
+      }
+      try {
+        const newVend = await fetchWithRetry(`${BASE_URL}/vendors`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(vendor)
+        }, 'add vendor');
+        setVendors(prev => [...prev, { ...newVend, company_id: 2 }]);
+        setForm(prev => ({ ...prev, vendorId: newVend.id.toString() }));
+        setNewVendor({ name: '', contact_name: '', email: '', phone: '', address: '' });
+        setShowVendorModal(false);
+        setMessage({ text: `Vendor ${newVend.name} added`, type: 'success' });
+        // Refresh vendors
+        const vendorData = await fetchWithRetry(`${BASE_URL}/vendors`, {
+          headers: { 'Accept': 'application/json' },
+          method: 'GET'
+        }, 'vendors');
+        setVendors(Array.isArray(vendorData) ? vendorData.filter(v => v.company_id === 2) : []);
+      } catch (err) {
+        setMessage({ text: `Error adding vendor: ${err.message}`, type: 'error' });
+      }
+    }, [newVendor]);
+
+    const handleAddCategory = useCallback(async (e) => {
+      e.preventDefault();
+      const category = {
+        name: newCategory.name,
+        company_id: 2
+      };
+      if (!category.name) {
+        setMessage({ text: 'Category name is required', type: 'error' });
+        return;
+      }
+      try {
+        const newCat = await fetchWithRetry(`${BASE_URL}/expense_categories`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(category)
+        }, 'add category');
+        setCategories(prev => [...prev, { ...newCat, company_id: 2 }]);
+        setForm(prev => ({ ...prev, categoryId: newCat.id.toString() }));
+        setNewCategory({ name: '' });
+        setShowCategoryModal(false);
+        setMessage({ text: `Category ${newCat.name} added`, type: 'success' });
+        // Refresh categories
+        const categoryData = await fetchWithRetry(`${BASE_URL}/expense_categories`, {
+          headers: { 'Accept': 'application/json' },
+          method: 'GET'
+        }, 'categories');
+        setCategories(Array.isArray(categoryData) ? categoryData.filter(c => c.company_id === 2) : []);
+      } catch (err) {
+        setMessage({ text: `Error adding category: ${err.message}`, type: 'error' });
+      }
+    }, [newCategory]);
+
+    const handleImportExpenses = useCallback(async () => {
+      if (!importFile) {
+        setMessage({ text: 'Please select a file to import', type: 'error' });
+        return;
+      }
+      try {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+          const expensesToImport = json.map(row => {
+            const vendor = vendors.find(v => v.name.toLowerCase() === (row['Vendor'] || '').toLowerCase());
+            const category = categories.find(c => c.name.toLowerCase() === (row['Category'] || '').toLowerCase());
+            return {
+              vendor_id: vendor ? vendor.id : null,
+              category_id: category ? category.id : null,
+              amount: parseFloat(row['Amount']) || 0,
+              date: row['Date'] || new Date().toISOString().split('T')[0],
+              description: row['Description'] || null,
+              company_id: 2
+            };
+          }).filter(exp => exp.vendor_id && exp.category_id && exp.amount > 0);
+          if (expensesToImport.length === 0) {
+            setMessage({ text: 'No valid expenses found', type: 'error' });
+            return;
+          }
+          const importedExpenses = [];
+          for (const exp of expensesToImport) {
+            const response = await fetchWithRetry(`${BASE_URL}/expenses`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(exp)
+            }, 'import expense');
+            importedExpenses.push({
+              ...response,
+              vendor_name: vendors.find(v => v.id === exp.vendor_id)?.name || 'Unknown',
+              category_name: categories.find(c => c.id === exp.category_id)?.name || 'Unknown'
+            });
+          }
+          setExpenses(prev => [...prev, ...importedExpenses]);
+          setImportFile(null);
+          document.getElementById('importFile').value = '';
+          setMessage({ text: `${importedExpenses.length} expense(s) imported`, type: 'success' });
+        };
+        reader.readAsArrayBuffer(importFile);
+      } catch (err) {
+        setMessage({ text: `Error importing expenses: ${err.message}`, type: 'error' });
+      }
+    }, [importFile, vendors, categories]);
+
+    const handleSubmit = useCallback(async (e) => {
+      e.preventDefault();
+      const vendorId = parseInt(form.vendorId);
+      const categoryId = parseInt(form.categoryId);
+      const amount = form.amount;
+      const date = form.date;
+      const description = form.description;
+      if (!vendorId || !categoryId || !amount || !date) {
+        setMessage({ text: 'Please fill all required fields', type: 'error' });
+        return;
+      }
+      const expense = {
+        vendor_id: vendorId,
+        category_id: categoryId,
+        amount,
+        date,
+        description: description || null,
+        company_id: 2
+      };
+      try {
+        const newExpense = await fetchWithRetry(`${BASE_URL}/expenses`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(expense)
+        }, 'record expense');
+        setExpenses(prev => [...prev, {
+          ...newExpense,
+          vendor_name: vendors.find(v => v.id === vendorId)?.name || 'Unknown',
+          category_name: categories.find(c => c.id === categoryId)?.name || 'Unknown'
+        }]);
+        setForm({
+          vendorId: '',
+          categoryId: '',
+          amount: 0,
+          date: new Date().toISOString().split('T')[0],
+          description: ''
+        });
+        setMessage({ text: `Expense #${newExpense.id} recorded`, type: 'success' });
+      } catch (err) {
+        setMessage({ text: `Error recording expense: ${err.message}`, type: 'error' });
+      }
+    }, [form, vendors, categories]);
+
+    const handleEdit = useCallback((expense) => {
+      setEditForm({
+        id: expense.id,
+        vendorId: expense.vendor_id?.toString() || '',
+        categoryId: expense.category_id?.toString() || '',
+        amount: expense.amount || 0,
+        date: expense.date || new Date().toISOString().split('T')[0],
+        description: expense.description || ''
+      });
+      setShowEditModal(true);
+    }, []);
+
+    const handleEditSubmit = useCallback(async (e) => {
+      e.preventDefault();
+      if (!editForm) {
+        setMessage({ text: 'No expense selected', type: 'error' });
+        return;
+      }
+      const vendorId = parseInt(editForm.vendorId);
+      const categoryId = parseInt(editForm.categoryId);
+      const amount = editForm.amount;
+      const date = editForm.date;
+      const description = editForm.description;
+      if (!vendorId || !categoryId || !amount || !date) {
+        setMessage({ text: 'Please fill all required fields', type: 'error' });
+        return;
+      }
+      const expense = {
+        vendor_id: vendorId,
+        category_id: categoryId,
+        amount,
+        date,
+        description: description || null,
+        company_id: 2
+      };
+      try {
+        const updatedExpense = await fetchWithRetry(`${BASE_URL}/expenses/${editForm.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(expense)
+        }, 'update expense');
+        setExpenses(prev => prev.map(ex => ex.id === updatedExpense.id ? {
+          ...updatedExpense,
+          vendor_name: vendors.find(v => v.id === vendorId)?.name || 'Unknown',
+          category_name: categories.find(c => c.id === categoryId)?.name || 'Unknown'
+        } : ex));
+        setShowEditModal(false);
+        setEditForm(null);
+        setMessage({ text: `Expense #${updatedExpense.id} updated`, type: 'success' });
+      } catch (err) {
+        setMessage({ text: `Error updating expense: ${err.message}`, type: 'error' });
+      }
+    }, [editForm, vendors, categories]);
+
+    const handleDelete = useCallback(async (id) => {
+      if (!window.confirm(`Are you sure you want to delete expense #${id}?`)) return;
+      try {
+        await fetchWithRetry(`${BASE_URL}/expenses/${id}`, {
+          method: 'DELETE',
+          headers: { 'Accept': 'application/json' }
+        }, 'delete expense');
+        setExpenses(prev => prev.filter(expense => expense.id !== id));
+        setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
+        setMessage({ text: `Expense #${id} deleted`, type: 'success' });
+      } catch (err) {
+        setMessage({ text: `Error deleting expense: ${err.message}`, type: 'error' });
+      }
+    }, []);
+
+    const handleExpenseClick = useCallback((index) => {
+      setSelectedIndex(prev => prev === index ? -1 : index);
+    }, []);
+
+    const handlePreviousExpense = useCallback(() => {
+      setSelectedIndex(prev => Math.max(prev - 1, -1));
+    }, []);
+
+    const handleNextExpense = useCallback(() => {
+      setSelectedIndex(prev => Math.min(prev + 1, expenses.length - 1));
+    }, [expenses]);
+
+    if (isLoading) {
+      return (
+        <main className="container mx-auto p-6 flex-grow">
+          <h2 className="text-3xl font-bold mb-6">Expenses</h2>
+          <p>Loading...</p>
+        </main>
+      );
+    }
+
+    return (
+      <ErrorBoundary>
+        <main className="container mx-auto p-6 flex-grow">
+          <h2 className="text-3xl font-bold mb-6">Expenses</h2>
+          {error && (
+            <div className="p-4 mb-6 text-red-600 bg-red-100 rounded-lg shadow-sm">
+              Error: {error}
+            </div>
+          )}
+          {message.text && (
+            <div className={`p-4 mb-6 ${message.type === 'success' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'} rounded-lg shadow-sm`}>
+              {message.text}
+            </div>
+          )}
+          <div className="form-container mb-6">
+            <h3 className="text-lg font-semibold mb-2">Record an Expense</h3>
+            <form onSubmit={handleSubmit}>
+              <label htmlFor="vendorId" className="block text-sm font-medium text-gray-700">Vendor (My Company)</label>
+              <div className="relative mt-1 mb-6">
+                <select
+                  id="vendorId"
+                  name="vendorId"
+                  value={form.vendorId}
+                  onChange={handleFormChange}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  required
+                >
+                  <option value="">Select a vendor</option>
+                  {vendors.map(vendor => (
+                    <option key={vendor.id} value={vendor.id}>{vendor.name}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setShowVendorModal(true)}
+                  className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                >
+                  Add New Vendor (My Company)
+                </button>
+              </div>
+              <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 mt-4">Category</label>
+              <div className="relative mt-1 mb-6">
+                <select
+                  id="categoryId"
+                  name="categoryId"
+                  value={form.categoryId}
+                  onChange={handleFormChange}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  required
+                >
+                  <option value="">Select a category</option>
+                  {categories.map(category => (
+                    <option key={category.id} value={category.id}>{category.name}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setShowCategoryModal(true)}
+                  className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                >
+                  Add New Category (My Company)
+                </button>
+              </div>
+              <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mt-4">Amount</label>
+              <input
+                type="number"
+                id="amount"
+                name="amount"
+                value={form.amount}
+                onChange={handleFormChange}
+                min="0"
+                step="0.01"
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+              <label htmlFor="date" className="block text-sm font-medium text-gray-700 mt-4">Date</label>
+              <input
+                type="date"
+                id="date"
+                name="date"
+                value={form.date}
+                onChange={handleFormChange}
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mt-4">Description (Optional)</label>
+              <textarea
+                id="description"
+                name="description"
+                value={form.description}
+                onChange={handleFormChange}
+                rows="4"
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+              <div className="mt-4 flex gap-4">
+                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                  Record Expense
+                </button>
+              </div>
+            </form>
+          </div>
+          <div className="form-container mb-6">
+            <h3 className="text-lg font-semibold mb-2">Import Expenses</h3>
+            <input
+              id="importFile"
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleImportFileChange}
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            />
+            <button
+              onClick={handleImportExpenses}
+              disabled={!importFile}
+              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-300"
+            >
+              Import Expenses
+            </button>
+          </div>
+          {expenses.length > 0 && (
+            <div className="table-container bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-2xl font-bold mb-4">Previous Expenses</h3>
+              <div className="flex justify-between mb-4">
+                <button
+                  onClick={handlePreviousExpense}
+                  disabled={selectedIndex <= -1}
+                  className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 disabled:bg-gray-300"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={handleNextExpense}
+                  disabled={selectedIndex >= expenses.length - 1}
+                  className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 disabled:bg-gray-300"
+                >
+                  Next
+                </button>
+              </div>
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-blue-600 text-white">
+                  <tr>
+                    <th className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Expense #</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Vendor</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Category</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Amount</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Date</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {expenses.map((expense, index) => (
+                    <Fragment key={expense.id}>
+                      <tr
+                        onClick={() => handleExpenseClick(index)}
+                        className={`cursor-pointer ${index === selectedIndex ? 'bg-blue-100' : ''}`}
+                      >
+                        <td className="px-2 py-2 whitespace-nowrap">{expense.id || 'N/A'}</td>
+                        <td className="px-2 py-2 whitespace-nowrap">{expense.vendor_name || 'Unknown'}</td>
+                        <td className="px-2 py-2 whitespace-nowrap">{expense.category_name || 'Unknown'}</td>
+                        <td className="px-2 py-2 whitespace-nowrap">${(expense.amount || 0).toFixed(2)}</td>
+                        <td className="px-2 py-2 whitespace-nowrap">{expense.date || 'N/A'}</td>
+                        <td className="px-2 py-2 whitespace-nowrap space-x-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleEdit(expense); }}
+                            className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDelete(expense.id); }}
+                            className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                      {index === selectedIndex && (
+                        <tr>
+                          <td colSpan="6" className="px-2 py-2">
+                            <div className="p-4 border rounded-lg bg-gray-50">
+                              <div className="flex justify-between items-center mb-2">
+                                <h3 className="text-lg font-semibold">Expense Details</h3>
+                                <div className="space-x-2">
+                                  <button
+                                    onClick={handlePreviousExpense}
+                                    disabled={selectedIndex <= -1}
+                                    className="bg-gray-600 text-white p-2 rounded disabled:bg-gray-300"
+                                  >
+                                    ←
+                                  </button>
+                                  <button
+                                    onClick={handleNextExpense}
+                                    disabled={selectedIndex >= expenses.length - 1}
+                                    className="bg-gray-600 text-white p-2 rounded disabled:bg-gray-300"
+                                  >
+                                    →
+                                  </button>
+                                </div>
+                              </div>
+                              <p><strong>Expense #:</strong> {expense.id || 'N/A'}</p>
+                              <p><strong>Vendor:</strong> {expense.vendor_name || 'Unknown'}</p>
+                              <p><strong>Category:</strong> {expense.category_name || 'Unknown'}</p>
+                              <p><strong>Amount:</strong> ${(expense.amount || 0).toFixed(2)}</p>
+                              <p><strong>Date:</strong> {expense.date || 'N/A'}</p>
+                              <p><strong>Description:</strong> {expense.description || 'N/A'}</p>
+                              <p><strong>Vendor Address:</strong> {(vendors.find(v => v.id === expense.vendor_id)?.address || 'N/A')}</p>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {showVendorModal && (
+            <div className="modal">
+              <div className="modal-content">
+                <h3 className="text-lg font-semibold mb-4">Add New Vendor (My Company)</h3>
+                <form onSubmit={handleAddVendor}>
+                  <label htmlFor="vendorName" className="block text-sm font-medium text-gray-700">Name</label>
+                  <input
+                    type="text"
+                    id="vendorName"
+                    name="name"
+                    value={newVendor.name}
+                    onChange={handleVendorFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                  <label htmlFor="contact_name" className="block text-sm font-medium text-gray-700 mt-4">Contact Name (Optional)</label>
+                  <input
+                    type="text"
+                    id="contact_name"
+                    name="contact_name"
+                    value={newVendor.contact_name}
+                    onChange={handleVendorFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mt-4">Email</label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={newVendor.email}
+                    onChange={handleVendorFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mt-4">Phone (Optional)</label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={newVendor.phone}
+                    onChange={handleVendorFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <label htmlFor="address" className="block text-sm font-medium text-gray-700 mt-4">Address (Optional)</label>
+                  <textarea
+                    id="address"
+                    name="address"
+                    value={newVendor.address}
+                    onChange={handleVendorFormChange}
+                    rows="4"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <div className="mt-4 flex justify-end gap-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowVendorModal(false);
+                        setNewVendor({ name: '', contact_name: '', email: '', phone: '', address: '' });
+                      }}
+                      className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                      Add Vendor
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+          {showCategoryModal && (
+            <div className="modal">
+              <div className="modal-content">
+                <h3 className="text-lg font-semibold mb-4">Add New Category (My Company)</h3>
+                <form onSubmit={handleAddCategory}>
+                  <label htmlFor="categoryName" className="block text-sm font-medium text-gray-700">Category Name</label>
+                  <input
+                    type="text"
+                    id="categoryName"
+                    name="name"
+                    value={newCategory.name}
+                    onChange={handleCategoryFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                  <div className="mt-4 flex justify-end gap-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCategoryModal(false);
+                        setNewCategory({ name: '' });
+                      }}
+                      className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                      Add Category
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+          {showEditModal && editForm && (
+            <div className="modal">
+              <div className="modal-content">
+                <h3 className="text-lg font-semibold mb-4">Edit Expense</h3>
+                <form onSubmit={handleEditSubmit}>
+                  <label htmlFor="editVendorId" className="block text-sm font-medium text-gray-700">Vendor (My Company)</label>
+                  <select
+                    id="editVendorId"
+                    name="vendorId"
+                    value={editForm.vendorId}
+                    onChange={handleEditFormChange}
+                    required
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select a vendor</option>
+                    {vendors.map(vendor => (
+                      <option key={vendor.id} value={vendor.id}>{vendor.name}</option>
+                    ))}
+                  </select>
+                  <label htmlFor="editCategoryId" className="block text-sm font-medium text-gray-700 mt-4">Category</label>
+                  <select
+                    id="editCategoryId"
+                    name="categoryId"
+                    value={editForm.categoryId}
+                    onChange={handleEditFormChange}
+                    required
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select a category</option>
+                    {categories.map(category => (
+                      <option key={category.id} value={category.id}>{category.name}</option>
+                    ))}
+                  </select>
+                  <label htmlFor="editAmount" className="block text-sm font-medium text-gray-700 mt-4">Amount</label>
+                  <input
+                    type="number"
+                    id="editAmount"
+                    name="amount"
+                    value={editForm.amount}
+                    onChange={handleEditFormChange}
+                    min="0"
+                    step="0.01"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                  <label htmlFor="editDate" className="block text-sm font-medium text-gray-700 mt-4">Date</label>
+                  <input
+                    type="date"
+                    id="editDate"
+                    name="date"
+                    value={editForm.date}
+                    onChange={handleEditFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                  <label htmlFor="editDescription" className="block text-sm font-medium text-gray-700 mt-4">Description (Optional)</label>
+                  <textarea
+                    id="editDescription"
+                    name="description"
+                    value={editForm.description}
+                    onChange={handleEditFormChange}
+                    rows="4"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <div className="mt-4 flex justify-end gap-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowEditModal(false);
+                        setEditForm(null);
+                      }}
+                      className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                      Update Expense
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </main>
+      </ErrorBoundary>
+    );
+  };
+
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(<ExpensesPage />);
+</script>
+  <script>
+
+      }
+      if (linkColorPicker) {
+        linkColorPicker.value = linkColor;
+        linkColorPicker.addEventListener('change', (e) => {
+          const newColor = e.target.value;
+          navLinks.forEach(link => link.style.color = newColor);
+          localStorage.setItem(linkKey, newColor);
+        });
+      }
+    });
+  </script>
+</body>
+</html>

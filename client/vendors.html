@@ -1,0 +1,683 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Company Vendors</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.22.9/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .min-h-screen { min-height: 100vh; }
+    .bg-gray-100 { background-color: #f3f4f6; }
+    .bg-blue-600 { background-color: #2563eb; }
+    .text-white { color: #fff; }
+    .p-4 { padding: 1rem; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-4 { gap: 1rem; }
+    .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .container { max-width: 1280px; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .h-12 { height: 3rem; }
+    .mr-4 { margin-right: 1rem; }
+    .text-2xl { font-size: 1.5rem; }
+    .font-bold { font-weight: 700; }
+    .px-4 { padding-left: 1rem; padding-right: 1rem; }
+    .hover:underline { text-decoration: underline; }
+    .p-6 { padding: 1.5rem; }
+    .flex-grow { flex-grow: 1; }
+    .text-3xl { font-size: 1.875rem; }
+    .mb-6 { margin-bottom: 1.5rem; }
+    .form-container { background-color: #fff; padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .grid { display: grid; }
+    .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+    .md:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .gap-4 { gap: 1rem; }
+    .text-sm { font-size: 0.875rem; }
+    .font-medium { font-weight: 500; }
+    .text-gray-700 { color: #374151; }
+    .mt-1 { margin-top: 0.25rem; }
+    .w-full { width: 100%; }
+    .border-gray-300 { border-color: #d1d5db; }
+    .rounded-md { border-radius: 0.375rem; }
+    .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+    .focus:ring-blue-500 { outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); }
+    .focus:border-blue-500 { border-color: #3b82f6; }
+    .mt-4 { margin-top: 1rem; }
+    .text-lg { font-size: 1.125rem; }
+    .font-semibold { font-weight: 600; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .min-w-full { min-width: 100%; }
+    .divide-y { border-bottom: 1px solid #e5e7eb; }
+    .divide-gray-200 { border-color: #e5e7eb; }
+    .bg-gray-50 { background-color: #f9fafb; }
+    .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .text-left { text-align: left; }
+    .text-xs { font-size: 0.75rem; }
+    .text-gray-500 { color: #6b7280; }
+    .uppercase { text-transform: uppercase; }
+    .tracking-wider { letter-spacing: 0.05em; }
+    .bg-white { background-color: #fff; }
+    .whitespace-nowrap { white-space: nowrap; }
+    .text-green-600 { color: #16a34a; }
+    .text-red-600 { color: #dc2626; }
+    .mb-4 { margin-bottom: 1rem; }
+    .table-container { background-color: #fff; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .hover:bg-gray-100 { background-color: #f9fafb; }
+    .bg-blue-500 { background-color: #3b82f6; }
+    .bg-red-500 { background-color: #ef4444; }
+    .bg-gray-600 { background-color: #4b5563; }
+    .hover:bg-blue-600 { background-color: #2563eb; }
+    .hover:bg-red-600 { background-color: #dc2626; }
+    .hover:bg-gray-700 { background-color: #374151; }
+    .space-x-2 > * + * { margin-left: 0.5rem; }
+    .fixed { position: fixed; }
+    .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+    .bg-black { background-color: #000; }
+    .bg-opacity-50 { background-opacity: 0.5; }
+    .justify-center { justify-content: center; }
+    .rounded-lg { border-radius: 0.5rem; }
+    .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    .max-w-md { max-width: 28rem; }
+  </style>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+  <header id="header" class="text-white p-4">
+    <div class="class"fixed top-0 left-0 w-full bg-blue-600 text-white p-4 flex flex-wrap items-center justify-between gap-4 shadow-md z-10">
+      <div class="flex items-center">
+        <a href="/"><img src="/logo.png" alt="My Company Logo" class="h-12 mr-4" /></a>
+        <h1 class="text-2xl font-bold">Open Accounting</h1>
+      </div>
+      <nav id="nav" class="flex flex-wrap gap-4">
+        <a href="/" class="px-4 hover:underline">Settings</a>
+        <a href="/deposits" class="px-4 hover:underline">Deposits</a>
+        <a href="/expenses" class="px-4 hover:underline">Expenses</a>
+        <a href="/services-reports" class="px-4 hover:underline">Reports</a>
+		<a href="/vendors" class="px-4 hover:underline">Vendors (My Company)</a>
+      </nav>
+    </div>
+  </header>
+  <div id="root" class="flex-grow pt-20"></div>
+  <footer class="bg-gray-800 text-white p-4 mt-8">
+    <div class="container mx-auto">
+      <div class="flex justify-between items-center">
+        <p>© 2025 My Company All rights reserved.</p>
+        <div class="flex items-center gap-4">
+          <div>
+            <label class="text-gray-300 mr-2">Header Color:</label>
+            <input type="color" id="headerColorPicker" class="w-10 h-10 border rounded" />
+          </div>
+          <div>
+            <label class="text-gray-300 mr-2">Link Color:</label>
+            <input type="color" id="linkColorPicker" class="w-10 h-10 border rounded" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback } = React;
+    const BASE_URL = window.location.origin + '/api';
+
+    const fetchWithRetry = async (url, options, type, retries = 5, delay = 1000) => {
+      console.log(`[FETCH] Starting ${type} from ${url}`);
+      for (let i = 0; i < retries; i++) {
+        try {
+          console.log(`[FETCH] Attempt ${i + 1} for ${type}`);
+          const response = await fetch(url, {
+            ...options,
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', ...options?.headers },
+            signal: AbortSignal.timeout(15000)
+          });
+          console.log(`[FETCH] Response for ${type}: status ${response.status}, ok: ${response.ok}`);
+          if (!response.ok) {
+            const errorText = await response.text().catch(() => 'No response text');
+            console.error(`[FETCH] HTTP error for ${type}: ${response.status} - ${errorText}`);
+            throw new Error(`HTTP ${response.status}: ${errorText || 'Unknown server error'}`);
+          }
+          if (response.status === 204 || type === 'delete vendor') {
+            console.log(`[FETCH] No content for ${type}, assuming success`);
+            return {};
+          }
+          const contentType = response.headers.get('content-type');
+          console.log(`[FETCH] Content-Type for ${type}: ${contentType}`);
+          if (!contentType?.includes('application/json')) {
+            const text = await response.text().catch(() => 'No response text');
+            console.error(`[FETCH] Non-JSON response for ${type}: ${contentType || 'unknown'} - ${text.slice(0, 200)}`);
+            throw new Error(`Expected JSON, got ${contentType || 'unknown'}: ${text.slice(0, 200)}`);
+          }
+          const data = await response.json();
+          console.log(`[FETCH] Data for ${type}:`, data);
+          if (!data && type !== 'delete vendor') {
+            console.error(`[FETCH] Empty response for ${type}`);
+            throw new Error(`Received empty response for ${type}`);
+          }
+          return data;
+        } catch (error) {
+          console.error(`[FETCH] Error for ${type} (attempt ${i + 1}):`, error.message);
+          if (i < retries - 1) {
+            console.log(`[FETCH] Retrying ${type} after ${delay}ms`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+          console.error(`[FETCH] All retries failed for ${type}:`, error.message);
+          throw error;
+        }
+      }
+    };
+
+    const VendorsPage = () => {
+      const [vendors, setVendors] = useState([]);
+      const [searchQuery, setSearchQuery] = useState('');
+      const [sortDirection, setSortDirection] = useState('asc');
+      const [editingVendorId, setEditingVendorId] = useState(null);
+      const [error, setError] = useState(null);
+      const [success, setSuccess] = useState(null);
+      const [newVendor, setNewVendor] = useState({
+        name: '',
+        contact_name: '',
+        email: '',
+        phone: '',
+        address: ''
+      });
+      const [isLoading, setIsLoading] = useState(true);
+
+      useEffect(() => {
+        const fetchData = async () => {
+          try {
+            console.log('Starting fetch for vendors');
+            const vendorData = await fetchWithRetry(`${BASE_URL}/vendors?company_id=2`, {
+              headers: { 'Accept': 'application/json' },
+              method: 'GET'
+            }, 'vendors');
+            console.log('[VENDORS] Fetched vendors:', vendorData);
+            setVendors(Array.isArray(vendorData) ? vendorData : []);
+            console.log('Vendors fetch complete');
+            setIsLoading(false);
+          } catch (err) {
+            console.error('Fetch error:', err.message);
+            setError(`Failed to load vendors: ${err.message}`);
+            setIsLoading(false);
+          }
+        };
+        fetchData();
+      }, []);
+
+      const filteredVendors = vendors.filter(vendor =>
+        (vendor.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+         vendor.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+         vendor.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+         vendor.contact_name?.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+
+      const sortedVendors = [...filteredVendors].sort((a, b) => {
+        const isAsc = sortDirection === 'asc' ? 1 : -1;
+        const aValue = (a.name || '').toLowerCase();
+        const bValue = (b.name || '').toLowerCase();
+        return aValue.localeCompare(bValue) * isAsc;
+      });
+
+      const handleSort = () => {
+        setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      };
+
+      const handleVendorFormChange = useCallback((e) => {
+        const { name, value } = e.target;
+        setNewVendor(prev => ({
+          ...prev,
+          [name]: value
+        }));
+      }, []);
+
+      const handleAddVendor = useCallback(async (e) => {
+        e.preventDefault();
+        console.log('[ADD VENDOR] Form state:', newVendor);
+        const vendor = {
+          name: newVendor.name,
+          contact_name: newVendor.contact_name || null,
+          email: newVendor.email || '',
+          phone: newVendor.phone || null,
+          address: newVendor.address || null,
+          company_id: 2
+        };
+        if (!vendor.name || !vendor.email) {
+          setError('Vendor name and email are required');
+          return;
+        }
+        console.log('[ADD VENDOR] Payload:', vendor);
+        try {
+          const newVend = await fetchWithRetry(`${BASE_URL}/vendors`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(vendor)
+          }, 'add vendor');
+          setVendors(prev => [...prev, { ...newVend, company_id: 2 }]);
+          setNewVendor({ name: '', contact_name: '', email: '', phone: '', address: '' });
+          setSuccess('Vendor added successfully');
+          setTimeout(() => setSuccess(null), 3000);
+          // Refresh vendors
+          const vendorData = await fetchWithRetry(`${BASE_URL}/vendors?company_id=2`, {
+            headers: { 'Accept': 'application/json' },
+            method: 'GET'
+          }, 'vendors');
+          console.log('[VENDORS] Refreshed vendors after add:', vendorData);
+          setVendors(Array.isArray(vendorData) ? vendorData : []);
+        } catch (err) {
+          console.error('[ADD VENDOR] Error:', err.message);
+          setError(`Error adding vendor: ${err.message}`);
+        }
+      }, [newVendor]);
+
+      const deleteVendor = async (vendorId) => {
+        console.log('[DELETE VENDOR] ID:', vendorId);
+        const vendor = vendors.find(v => v.id === vendorId);
+        if (!vendor) {
+          setError('Vendor not found in local state, refreshing list');
+          try {
+            const vendorData = await fetchWithRetry(`${BASE_URL}/vendors?company_id=2`, {
+              headers: { 'Accept': 'application/json' },
+              method: 'GET'
+            }, 'vendors');
+            console.log('[VENDORS] Refreshed vendors before delete:', vendorData);
+            setVendors(Array.isArray(vendorData) ? vendorData : []);
+            if (!vendorData.find(v => v.id === vendorId)) {
+              setError('Vendor not found, it may have been deleted');
+              return;
+            }
+          } catch (refreshErr) {
+            console.error('[DELETE VENDOR] Refresh error:', refreshErr.message);
+            setError(`Error refreshing vendor list: ${refreshErr.message}`);
+            return;
+          }
+        }
+        try {
+          await fetchWithRetry(`${BASE_URL}/vendors/${vendorId}?company_id=2`, {
+            method: 'DELETE',
+            headers: { 'Accept': 'application/json' }
+          }, 'delete vendor');
+          setVendors(prev => prev.filter(v => v.id !== vendorId));
+          setSuccess('Vendor deleted successfully');
+          setTimeout(() => setSuccess(null), 3000);
+        } catch (err) {
+          console.error('[DELETE VENDOR] Error:', err.message);
+          setError(err.message.includes('404') ? 'Vendor not found, it may have been deleted' : `Error deleting vendor: ${err.message}`);
+          try {
+            const vendorData = await fetchWithRetry(`${BASE_URL}/vendors?company_id=2`, {
+              headers: { 'Accept': 'application/json' },
+              method: 'GET'
+            }, 'vendors');
+            console.log('[VENDORS] Refreshed vendors after delete error:', vendorData);
+            setVendors(Array.isArray(vendorData) ? vendorData : []);
+          } catch (refreshErr) {
+            console.error('[DELETE VENDOR] Refresh error:', refreshErr.message);
+          }
+        }
+      };
+
+      const updateVendor = async (vendorId, formData) => {
+        const vendor = {
+          name: formData.get('name'),
+          contact_name: formData.get('contact_name') || null,
+          email: formData.get('email'),
+          phone: formData.get('phone') || null,
+          address: formData.get('address') || null,
+          company_id: 2
+        };
+        if (!vendor.name || !vendor.email) {
+          setError('Name and email are required');
+          return;
+        }
+        console.log('[UPDATE VENDOR] ID:', vendorId, 'Payload:', vendor);
+        try {
+          const updatedVendor = await fetchWithRetry(`${BASE_URL}/vendors/${vendorId}?company_id=2`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(vendor)
+          }, 'update vendor');
+          setVendors(prev =>
+            prev.map(v => (v.id === updatedVendor.id ? { ...updatedVendor, company_id: 2 } : v))
+          );
+          setEditingVendorId(null);
+          setSuccess('Vendor updated successfully');
+          setTimeout(() => setSuccess(null), 3000);
+          const vendorData = await fetchWithRetry(`${BASE_URL}/vendors?company_id=2`, {
+            headers: { 'Accept': 'application/json' },
+            method: 'GET'
+          }, 'vendors');
+          console.log('[VENDORS] Refreshed vendors after update:', vendorData);
+          setVendors(Array.isArray(vendorData) ? vendorData : []);
+        } catch (err) {
+          setError(err.message.includes('404') ? 'Vendor not found, it may have been deleted' : `Error updating vendor: ${err.message}`);
+        }
+      };
+
+      if (isLoading) {
+        return (
+          <main className="container mx-auto p-6 flex-grow">
+            <h2 className="text-3xl font-bold mb-6">My Company Vendors</h2>
+            <p>Loading vendors...</p>
+          </main>
+        );
+      }
+
+      return (
+        <main className="container mx-auto p-6 flex-grow">
+          <h2 className="text-3xl font-bold mb-6">My Company Vendors</h2>
+          {error && (
+            <div className="p-4 mb-6 text-red-600 bg-red-100 rounded-lg shadow-sm">
+              Error: {error}
+            </div>
+          )}
+          {success && (
+            <div className="p-4 mb-6 text-green-600 bg-green-100 rounded-lg shadow-sm">
+              {success}
+            </div>
+          )}
+          <div className="form-container mb-6">
+            <h3 className="text-lg font-semibold mb-2">Add Vendor</h3>
+            <form onSubmit={handleAddVendor}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+                  <input
+                    id="name"
+                    type="text"
+                    name="name"
+                    value={newVendor.name}
+                    onChange={handleVendorFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                    placeholder="e.g., Vendor A"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="contact_name" className="block text-sm font-medium text-gray-700">Contact Name (Optional)</label>
+                  <input
+                    id="contact_name"
+                    type="text"
+                    name="contact_name"
+                    value={newVendor.contact_name}
+                    onChange={handleVendorFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="e.g., John Smith"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                  <input
+                    id="email"
+                    type="email"
+                    name="email"
+                    value={newVendor.email}
+                    onChange={handleVendorFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    required
+                    placeholder="e.g., contact@vendor.com"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone (Optional)</label>
+                  <input
+                    id="phone"
+                    type="text"
+                    name="phone"
+                    value={newVendor.phone}
+                    onChange={handleVendorFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="e.g., 123-456-7890"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label htmlFor="address" className="block text-sm font-medium text-gray-700">Address (Optional)</label>
+                  <input
+                    id="address"
+                    type="text"
+                    name="address"
+                    value={newVendor.address}
+                    onChange={handleVendorFormChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="e.g., 123 Main St, City, ST 12345"
+                  />
+                </div>
+              </div>
+              <div className="mt-4">
+                <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+                  Add Vendor
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div className="table-container mb-6">
+            <div className="flex items-center gap-4 mb-4">
+              <input
+                type="text"
+                placeholder="Search by Name, Contact, Email, or Address"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            {sortedVendors.length === 0 ? (
+              <p className="p-4 bg-white rounded-lg shadow-md">No vendors found</p>
+            ) : (
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={handleSort}>
+                      Name {sortDirection === 'asc' ? '↑' : '↓'}
+                    </th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact Name</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {sortedVendors.map(vendor => (
+                    <tr key={vendor.id} className="hover:bg-gray-100">
+                      <td className="px-2 py-2">{vendor.name}</td>
+                      <td className="px-2 py-2">{vendor.contact_name || ''}</td>
+                      <td className="px-2 py-2">{vendor.email}</td>
+                      <td className="px-2 py-2">{vendor.phone || ''}</td>
+                      <td className="px-2 py-2">{vendor.address || ''}</td>
+                      <td className="px-2 py-2 whitespace-nowrap">
+                        <button
+                          className="bg-blue-500 text-white px-2 py-1 rounded mr-2 hover:bg-blue-600"
+                          onClick={() => setEditingVendorId(vendor.id)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to delete vendor ${vendor.name} (ID: ${vendor.id})?`)) {
+                              deleteVendor(vendor.id);
+                            }
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {editingVendorId && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+              <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+                <h3 className="text-lg font-semibold mb-4">Edit Vendor</h3>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.target);
+                    updateVendor(editingVendorId, formData);
+                  }}
+                >
+                  <div className="mb-4">
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      defaultValue={vendors.find(v => v.id === editingVendorId)?.name || ''}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="contact_name" className="block text-sm font-medium text-gray-700">Contact Name (Optional)</label>
+                    <input
+                      type="text"
+                      id="contact_name"
+                      name="contact_name"
+                      defaultValue={vendors.find(v => v.id === editingVendorId)?.contact_name || ''}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      defaultValue={vendors.find(v => v.id === editingVendorId)?.email || ''}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone (Optional)</label>
+                    <input
+                      type="text"
+                      id="phone"
+                      name="phone"
+                      defaultValue={vendors.find(v => v.id === editingVendorId)?.phone || ''}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="address" className="block text-sm font-medium text-gray-700">Address (Optional)</label>
+                    <input
+                      type="text"
+                      id="address"
+                      name="address"
+                      defaultValue={vendors.find(v => v.id === editingVendorId)?.address || ''}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditingVendorId(null)}
+                      className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+                      Save
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </main>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<VendorsPage />);
+  </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const pageKey = 'headerColor_deposits';
+      const linkKey = 'linkColor_deposits';
+      const header = document.getElementById('header');
+      const navLinks = document.querySelectorAll('#nav a');
+      const headerColorPicker = document.getElementById('headerColorPicker');
+      const linkColorPicker = document.getElementById('linkColorPicker');
+      const headerColor = localStorage.getItem(pageKey) || '#ff69b4';
+      const linkColor = localStorage.getItem(linkKey) || '#000000';
+      if (header) {
+        header.style.backgroundColor = headerColor;
+      } else {
+        console.warn('Header element not found');
+      }
+      if (navLinks.length > 0) {
+        navLinks.forEach(link => link.style.color = linkColor);
+      } else {
+        console.warn('No navigation links found');
+      }
+      if (headerColorPicker) {
+        headerColorPicker.value = headerColor;
+        headerColorPicker.addEventListener('change', (e) => {
+          const newColor = e.target.value;
+          if (header) {
+            header.style.backgroundColor = newColor;
+            localStorage.setItem(pageKey, newColor);
+          }
+        });
+      }
+      if (linkColorPicker) {
+        linkColorPicker.value = linkColor;
+        linkColorPicker.addEventListener('change', (e) => {
+          const newColor = e.target.value;
+          navLinks.forEach(link => link.style.color = newColor);
+          localStorage.setItem(linkKey, newColor);
+        });
+      }
+    });
+  </script>
+</body>
+</html>

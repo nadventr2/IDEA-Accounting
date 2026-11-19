@@ -1,0 +1,3 @@
+Liberation Mono is licensed under the SIL Open Font License, Version 1.1.
+The license is published at https://scripts.sil.org/OFL
+These font files are the Liberation Mono family (regular, italic, bold, bold italic).

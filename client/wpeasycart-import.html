@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WP EasyCart Import</title>
+  <link rel="stylesheet" href="/app-shell.css" />
+  <link rel="stylesheet" href="/kpi-common.css" />
+  <script src="/app-shell.js" defer></script>
+  <script src="/kpi-common.js" defer></script>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; background: #f3f4f6; color: #111; }
+    main { max-width: 1600px; margin: 0 auto; padding: 1rem 1rem 3rem; }
+    h2 { margin: 0 0 0.25rem; font-size: 1.65rem; }
+    .sub { color: #6b7280; font-size: 0.9rem; margin-bottom: 1rem; }
+    .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
+    @media (max-width: 1000px) { .layout { grid-template-columns: 1fr; } }
+    .card {
+      background: #fff; border-radius: 10px; padding: 1rem 1.1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    }
+    .card h3 { margin: 0 0 0.75rem; font-size: 1.05rem; }
+    .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.5rem; margin-bottom: 0.75rem; }
+    label { display: block; font-size: 0.7rem; font-weight: 600; color: #6b7280; text-transform: uppercase; margin-bottom: 0.15rem; }
+    input, select {
+      width: 100%; box-sizing: border-box; padding: 0.4rem 0.5rem;
+      border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem;
+    }
+    .btn {
+      border: none; border-radius: 6px; padding: 0.45rem 0.85rem; font-weight: 600;
+      cursor: pointer; background: #1d4ed8; color: #fff; font-size: 0.88rem;
+    }
+    .btn:hover { background: #1e3a8a; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn.secondary { background: #e5e7eb; color: #374151; }
+    .btn.green { background: #059669; }
+    .btn.red { background: #dc2626; }
+    .btn.red:hover { background: #991b1b; }
+    .btn.sm { padding: 0.25rem 0.5rem; font-size: 0.8rem; }
+    .import-hist { margin-top: 1rem; border-top: 1px solid #e5e7eb; padding-top: 0.75rem; }
+    .import-hist table { font-size: 0.8rem; }
+    .modal-bg {
+      position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 1000;
+      display: flex; align-items: center; justify-content: center; padding: 1rem;
+    }
+    .modal-bg.hidden { display: none !important; }
+    .modal {
+      background: #fff; border-radius: 12px; max-width: 560px; width: 100%;
+      max-height: 90vh; overflow: auto; padding: 1.15rem 1.25rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,.2);
+    }
+    .modal h3 { margin: 0 0 0.35rem; font-size: 1.15rem; }
+    .modal .field { margin-bottom: 0.65rem; }
+    .modal textarea { width: 100%; box-sizing: border-box; min-height: 90px; padding: 0.45rem 0.55rem;
+      border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem; font-family: inherit; }
+    .modal .req { color: #dc2626; }
+    .badge.missing { background: #fee2e2; color: #991b1b; }
+    .badge.oksku { background: #d1fae5; color: #065f46; }
+    .msg { padding: 0.6rem 0.8rem; border-radius: 8px; margin-bottom: 0.75rem; font-size: 0.9rem; }
+    .msg.ok { background: #ecfdf5; color: #047857; }
+    .msg.err { background: #fef2f2; color: #b91c1c; }
+    .list-wrap { max-height: 70vh; overflow: auto; border: 1px solid #e5e7eb; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    th, td { padding: 0.4rem 0.45rem; border-bottom: 1px solid #e5e7eb; text-align: left; vertical-align: top; }
+    th { position: sticky; top: 0; background: #f9fafb; font-size: 0.68rem; text-transform: uppercase; color: #6b7280; z-index: 1; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    tr.order-row { cursor: pointer; }
+    tr.order-row:hover { background: #f0f9ff; }
+    tr.order-row.selected { background: #dbeafe; }
+    tr.order-row.imported-full { opacity: 0.55; }
+    .badge {
+      display: inline-block; font-size: 0.68rem; font-weight: 700; padding: 0.1rem 0.4rem;
+      border-radius: 999px; text-transform: uppercase;
+    }
+    .badge.none { background: #e5e7eb; color: #374151; }
+    .badge.partial { background: #fef3c7; color: #92400e; }
+    .badge.full { background: #d1fae5; color: #065f46; }
+    .pager { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.65rem; flex-wrap: wrap; }
+    .pager span { font-size: 0.85rem; color: #6b7280; }
+    .detail-empty { color: #6b7280; padding: 1.5rem 0; text-align: center; }
+    .addr { white-space: pre-line; font-size: 0.85rem; color: #374151; background: #f9fafb; padding: 0.5rem 0.65rem; border-radius: 6px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    @media (max-width: 700px) { .grid2 { grid-template-columns: 1fr; } }
+    .meta { font-size: 0.85rem; color: #4b5563; margin: 0.25rem 0; }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.85rem; align-items: center; }
+    .opts { display: flex; flex-wrap: wrap; gap: 0.85rem; margin-top: 0.65rem; font-size: 0.88rem; }
+    .opts label { display: flex; align-items: center; gap: 0.35rem; text-transform: none; font-size: 0.88rem; color: #111; font-weight: 500; }
+    .opts input { width: auto; }
+    tr.line-imported { opacity: 0.45; }
+    .hint { font-size: 0.8rem; color: #6b7280; margin: 0.4rem 0 0; }
+    .kpi-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.85rem; }
+    .kpi { background: #fff; border-radius: 8px; padding: 0.55rem 0.85rem; border-left: 4px solid #2563eb; box-shadow: 0 1px 2px rgba(0,0,0,.05); min-width: 120px; }
+    .kpi .l { font-size: 0.68rem; color: #6b7280; font-weight: 600; text-transform: uppercase; }
+    .kpi .v { font-size: 1.05rem; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <main>
+    <h2>WP EasyCart Import</h2>
+    <p class="sub" id="companyLine">
+      Browse website orders and import the ones that belong in this company.
+      Imported orders can accrue an amount due to Party A. Orders you leave out can be accrued to Party B. Set the fee under EasyCart settings. The import stays off until EasyCart is enabled.
+    </p>
+    <div id="msg"></div>
+    <div class="kpi-row" id="kpis"></div>
+
+    <div class="card" style="margin-bottom:1rem;border-left:4px solid #d97706;">
+      <h3 style="margin-top:0;">Clean split (through year-end)</h3>
+      <p class="hint" style="margin-top:0;">
+        <strong>Import</strong> the orders that belong in these books. That records a sale and can accrue <strong>Due to Party A</strong>.
+        Leave the other orders unimported. The tool below can accrue <strong>Due to Party B</strong> for store volume you did not import.
+        Sales tax stays with the company. Pay Party B from Books.
+      </p>
+      <div class="filters" style="margin-bottom:0.5rem;">
+        <div><label>Party B remittance from</label><input type="date" id="mr_from" /></div>
+        <div><label>To</label><input type="date" id="mr_to" /></div>
+        <div><label>Fee %</label><input type="number" step="0.1" id="mr_fee" value="3.5" /></div>
+      </div>
+      <div class="actions" style="margin-top:0.5rem;">
+        <button type="button" class="btn secondary" id="mr_preview">Preview Party B remittance</button>
+        <button type="button" class="btn green" id="mr_accrue">Accrue Due to Party B for period</button>
+      </div>
+      <div id="mr_result" class="hint" style="margin-top:0.75rem;white-space:pre-wrap;"></div>
+    </div>
+
+    <div class="layout">
+      <!-- LEFT: order list -->
+      <div class="card">
+        <h3>EasyCart orders</h3>
+        <div class="filters">
+          <div style="grid-column: span 2;">
+            <label>Search</label>
+            <input type="search" id="q" placeholder="Order #, name, email, phone…" />
+          </div>
+          <div>
+            <label>From</label>
+            <input type="date" id="from" />
+          </div>
+          <div>
+            <label>To</label>
+            <input type="date" id="to" />
+          </div>
+          <div>
+            <label>Status</label>
+            <select id="status"><option value="all">All statuses</option></select>
+          </div>
+          <div>
+            <label>Import state</label>
+            <select id="imported">
+              <option value="all">All</option>
+              <option value="no">Not imported</option>
+              <option value="partial">Partially imported</option>
+              <option value="yes">Fully imported</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions" style="margin-top:0;margin-bottom:0.65rem;">
+          <button type="button" class="btn" id="btnSearch">Search</button>
+          <button type="button" class="btn secondary" id="btnReset">Reset</button>
+        </div>
+        <div class="list-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>#</th>
+                <th>Customer</th>
+                <th>Status</th>
+                <th class="num">Total</th>
+                <th>Import</th>
+              </tr>
+            </thead>
+            <tbody id="orderTable"></tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <button type="button" class="btn secondary sm" id="prevPage">Prev</button>
+          <button type="button" class="btn secondary sm" id="nextPage">Next</button>
+          <span id="pageInfo"></span>
+        </div>
+      </div>
+
+      <!-- RIGHT: detail + import -->
+      <div class="card" id="detailCard">
+        <h3>Order detail</h3>
+        <div id="detail" class="detail-empty">Select an order from the list.</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add missing product modal -->
+  <div class="modal-bg hidden" id="productModal" role="dialog" aria-modal="true">
+    <div class="modal">
+      <h3>SKU not in the system — add it?</h3>
+      <p class="hint" id="pm_progress" style="margin-top:0;"></p>
+      <div class="field">
+        <label>SKU</label>
+        <input type="text" id="pm_sku" />
+      </div>
+      <div class="field">
+        <label>Name / title</label>
+        <input type="text" id="pm_name" />
+      </div>
+      <div class="field">
+        <label>Description <span style="font-weight:500;text-transform:none;color:#6b7280;">(from EasyCart)</span></label>
+        <textarea id="pm_desc"></textarea>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>Retail price</label>
+          <input type="number" step="0.01" id="pm_retail" />
+        </div>
+        <div class="field">
+          <label>Wholesale price <span class="req">* required</span></label>
+          <input type="number" step="0.01" id="pm_wholesale" placeholder="Must fill to continue" />
+        </div>
+      </div>
+      <p class="hint" id="pm_hint"></p>
+      <div class="actions">
+        <button type="button" class="btn green" id="pm_save">Add product &amp; continue</button>
+        <button type="button" class="btn secondary" id="pm_skip" title="Leave this SKU out of the import (e.g. Party B items)">Skip — don't import this SKU</button>
+        <button type="button" class="btn secondary" id="pm_cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+(function () {
+  'use strict';
+  var API = location.origin + '/api';
+  var state = {
+    page: 1,
+    limit: 40,
+    total: 0,
+    orders: [],
+    selectedId: null,
+    detail: null,
+    pendingImportBody: null,
+    missingQueue: [],
+    missingIndex: 0,
+    newProducts: [],
+    /** 'import' = add product then continue sale import; 'catalog' = add product only (no sale) */
+    productModalMode: 'import',
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function cid() { return localStorage.getItem('selectedCompanyId') || '1'; }
+  function money(n) {
+    var v = Number(n || 0);
+    return (v < 0 ? '-$' : '$') + Math.abs(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function msg(text, ok) {
+    var el = $('msg');
+    if (!text) { el.innerHTML = ''; return; }
+    el.innerHTML = '<div class="msg ' + (ok ? 'ok' : 'err') + '">' + text + '</div>';
+  }
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  async function api(path, opts) {
+    var o = opts || {};
+    var url = API + path;
+    if (!o.method || o.method === 'GET' || o.method === 'DELETE') {
+      url += (path.indexOf('?') >= 0 ? '&' : '?') + 'company_id=' + encodeURIComponent(cid());
+    }
+    var res = await fetch(url, {
+      ...o,
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...(o.headers || {}) },
+    });
+    var text = await res.text();
+    var data = text ? JSON.parse(text) : null;
+    if (!res.ok) {
+      var err = new Error((data && data.error) || res.statusText);
+      err.status = res.status;
+      err.data = data;
+      throw err;
+    }
+    return data;
+  }
+
+  function badge(status) {
+    var cls = status === 'full' ? 'full' : status === 'partial' ? 'partial' : 'none';
+    var label = status === 'full' ? 'Imported' : status === 'partial' ? 'Partial' : 'New';
+    return '<span class="badge ' + cls + '">' + label + '</span>';
+  }
+
+  async function loadStatuses() {
+    try {
+      var rows = await api('/easycart/statuses');
+      var sel = $('status');
+      rows.forEach(function (s) {
+        var opt = document.createElement('option');
+        opt.value = s.status_id;
+        opt.textContent = s.order_status + (s.is_approved ? '' : ' (not approved)');
+        sel.appendChild(opt);
+      });
+    } catch (e) { /* optional */ }
+  }
+
+  async function loadPing() {
+    try {
+      var p = await api('/easycart/ping');
+      $('kpis').innerHTML =
+        '<div class="kpi"><div class="l">EasyCart orders</div><div class="v">' + (p.order_count || 0).toLocaleString() + '</div></div>' +
+        '<div class="kpi"><div class="l">Latest order #</div><div class="v">' + (p.max_order_id || '—') + '</div></div>' +
+        '<div class="kpi"><div class="l">Company</div><div class="v">#' + cid() + '</div></div>';
+      $('companyLine').textContent =
+        'Company #' + cid() + ' · Connected to EasyCart DB (' + (p.order_count || 0).toLocaleString() +
+        ' orders). Import creates a sale + customer in this company’s books. Party B can run the same on his copy.';
+    } catch (e) {
+      $('kpis').innerHTML = '<div class="kpi"><div class="l">EasyCart</div><div class="v">Offline</div></div>';
+      msg('Cannot reach EasyCart database: ' + e.message, false);
+    }
+  }
+
+  async function loadOrders() {
+    try {
+      var params = new URLSearchParams({
+        page: String(state.page),
+        limit: String(state.limit),
+        q: $('q').value.trim(),
+        imported: $('imported').value,
+      });
+      if ($('from').value) params.set('from', $('from').value);
+      if ($('to').value) params.set('to', $('to').value);
+      if ($('status').value && $('status').value !== 'all') params.set('status_id', $('status').value);
+
+      var data = await api('/easycart/orders?' + params.toString());
+      state.orders = data.orders || [];
+      state.total = data.total || 0;
+      renderList();
+      var pages = Math.max(1, Math.ceil(state.total / state.limit));
+      $('pageInfo').textContent = 'Page ' + state.page + ' · ' + state.total.toLocaleString() + ' match(es)';
+      $('prevPage').disabled = state.page <= 1;
+      $('nextPage').disabled = state.page >= pages && state.orders.length < state.limit && state.page > 1
+        ? true
+        : state.orders.length < state.limit && $('imported').value === 'all'
+          ? state.page * state.limit >= state.total
+          : state.orders.length === 0;
+      // simpler next disable
+      $('nextPage').disabled = state.orders.length < state.limit;
+    } catch (e) {
+      msg('Load failed: ' + e.message, false);
+    }
+  }
+
+  function renderList() {
+    $('orderTable').innerHTML = state.orders.map(function (o) {
+      var cls = 'order-row';
+      if (o.order_id === state.selectedId) cls += ' selected';
+      if (o.import_status === 'full') cls += ' imported-full';
+      return '<tr class="' + cls + '" data-id="' + o.order_id + '">' +
+        '<td>' + escapeHtml(o.date) + '</td>' +
+        '<td><strong>' + o.order_id + '</strong><div style="font-size:0.72rem;color:#6b7280;">' +
+        escapeHtml(o.payment_method_mapped || o.payment_method || '') + ' · ' + o.line_count + ' item(s)</div></td>' +
+        '<td>' + escapeHtml(o.customer_name || '—') +
+        '<div style="font-size:0.72rem;color:#6b7280;">' + escapeHtml(o.user_email || '') + '</div></td>' +
+        '<td style="font-size:0.78rem;">' + escapeHtml(o.order_status || '') + '</td>' +
+        '<td class="num">' + money(o.grand_total) + '</td>' +
+        '<td>' + badge(o.import_status) +
+        (o.import_status === 'partial' ? '<div style="font-size:0.7rem;color:#92400e;">' +
+          o.imported_line_count + '/' + o.line_count + '</div>' : '') +
+        '</td></tr>';
+    }).join('') || '<tr><td colspan="6">No orders match.</td></tr>';
+  }
+
+  async function selectOrder(id) {
+    state.selectedId = id;
+    renderList();
+    try {
+      var d = await api('/easycart/orders/' + id);
+      state.detail = d;
+      renderDetail();
+    } catch (e) {
+      msg(e.message, false);
+    }
+  }
+
+  function renderDetail() {
+    var d = state.detail;
+    if (!d || !d.order) {
+      $('detail').innerHTML = '<div class="detail-empty">Select an order from the list.</div>';
+      return;
+    }
+    var o = d.order;
+    var lines = d.lines || [];
+    var openCount = lines.filter(function (l) { return !l.already_imported; }).length;
+
+    var html = '';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;flex-wrap:wrap;">';
+    html += '<div><strong style="font-size:1.15rem;">Order #' + o.order_id + '</strong>';
+    html += '<div class="meta">' + escapeHtml(o.date) + ' · ' + escapeHtml(o.order_status || '') +
+      ' · ' + escapeHtml(o.payment_method_mapped || o.payment_method || '') + '</div></div>';
+    html += '<div style="text-align:right;"><div style="font-size:1.25rem;font-weight:700;">' + money(o.grand_total) + '</div>';
+    html += '<div class="meta">Sub ' + money(o.sub_total) + ' · Tax ' + money(o.tax_total) +
+      ' · Ship ' + money(o.shipping_total) +
+      (o.discount_total ? ' · Disc ' + money(o.discount_total) : '') + '</div></div></div>';
+
+    html += '<div class="grid2" style="margin-top:0.85rem;">';
+    html += '<div><label>Billing</label><div class="addr">' +
+      escapeHtml(o.billing.name) + (o.billing.company ? '\n' + escapeHtml(o.billing.company) : '') +
+      '\n' + escapeHtml(o.billing.address) +
+      (o.billing.phone ? '\n' + escapeHtml(o.billing.phone) : '') +
+      (o.user_email ? '\n' + escapeHtml(o.user_email) : '') +
+      '</div></div>';
+    html += '<div><label>Shipping</label><div class="addr">' +
+      escapeHtml(o.shipping.name) + (o.shipping.company ? '\n' + escapeHtml(o.shipping.company) : '') +
+      '\n' + escapeHtml(o.shipping.address) +
+      (o.shipping.phone ? '\n' + escapeHtml(o.shipping.phone) : '') +
+      '</div></div></div>';
+
+    if (o.tracking_number) {
+      html += '<p class="meta">Tracking: ' + escapeHtml(o.tracking_number) + '</p>';
+    }
+
+    html += '<h3 style="margin:1rem 0 0.4rem;font-size:0.95rem;">Line items</h3>';
+    html += '<p class="hint">Uncheck lines to split this order — only checked items are imported. Already-imported lines are locked. Use <strong>Add to system</strong> to save a SKU (with wholesale) without importing the sale — handy for catalog items on Party B lines.</p>';
+    html += '<div style="overflow-x:auto;border:1px solid #e5e7eb;border-radius:8px;">';
+    html += '<table><thead><tr><th></th><th>SKU</th><th>Item</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Line</th><th></th></tr></thead><tbody>';
+    lines.forEach(function (l) {
+      var locked = l.already_imported;
+      html += '<tr class="' + (locked ? 'line-imported' : '') + '">';
+      html += '<td><input type="checkbox" class="line-cb" data-id="' + l.orderdetail_id + '" ' +
+        (locked ? 'disabled' : 'checked') + ' /></td>';
+      html += '<td>' + escapeHtml(l.model_number) +
+        (l.in_system
+          ? '<div><span class="badge oksku">In system</span></div>'
+          : '<div><span class="badge missing">Not in system</span></div>') +
+        '</td>';
+      html += '<td>' + escapeHtml(l.title) +
+        (l.options ? '<div style="font-size:0.75rem;color:#6b7280;">' + escapeHtml(l.options) + '</div>' : '') +
+        '</td>';
+      html += '<td class="num">' + l.quantity + '</td>';
+      html += '<td class="num">' + money(l.unit_price) + '</td>';
+      html += '<td class="num">' + money(l.total_price) + '</td>';
+      html += '<td style="white-space:nowrap;">';
+      if (locked) {
+        html += '<span class="badge full">Done</span>';
+      } else if (!l.in_system) {
+        html += '<button type="button" class="btn secondary sm" data-add-product="' +
+          escapeHtml(l.orderdetail_id) + '">Add to system</button>';
+      } else {
+        html += '<span class="badge oksku">OK</span>';
+      }
+      html += '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+
+    html += '<div class="opts">';
+    html += '<label><input type="checkbox" id="inc_tax" ' + (openCount === lines.length ? 'checked' : '') + ' /> Include tax</label>';
+    html += '<label><input type="checkbox" id="inc_ship" ' + (openCount === lines.length ? 'checked' : '') + ' /> Include shipping</label>';
+    html += '<label><input type="checkbox" id="inc_disc" ' + (openCount === lines.length ? 'checked' : '') + ' /> Include discount</label>';
+    html += '</div>';
+    html += '<p class="hint">For a partial (split) import, tax/shipping/discount default off — turn them on to add a proportional share.</p>';
+
+    html += '<div class="actions">';
+    html += '<button type="button" class="btn green" id="btnImportSelected" ' + (openCount ? '' : 'disabled') +
+      '>Import selected lines</button>';
+    html += '<button type="button" class="btn" id="btnImportAllOpen" ' + (openCount ? '' : 'disabled') +
+      '>Import all remaining lines</button>';
+    html += '<button type="button" class="btn secondary sm" id="btnCheckAll">Check remaining</button>';
+    html += '<button type="button" class="btn secondary sm" id="btnUncheckAll">Uncheck all</button>';
+    html += '</div>';
+
+    var imports = d.imports || [];
+    if (imports.length) {
+      html += '<div class="import-hist">';
+      html += '<h3 style="margin:0 0 0.45rem;font-size:0.95rem;">Imports into accounting</h3>';
+      html += '<p class="hint" style="margin-top:0;">Made a mistake? Undo removes the sale and frees those line items so you can re-import differently.</p>';
+      html += '<table><thead><tr><th>When</th><th>Sale #</th><th>Mode</th><th class="num">Total</th><th>Lines</th><th></th></tr></thead><tbody>';
+      imports.forEach(function (imp) {
+        html += '<tr>' +
+          '<td>' + escapeHtml((imp.imported_at || '').toString().slice(0, 19)) + '</td>' +
+          '<td>' + escapeHtml(imp.transaction_number || ('sale ' + imp.sale_id)) +
+          '<div style="font-size:0.7rem;color:#6b7280;">sale id ' + imp.sale_id + '</div></td>' +
+          '<td>' + escapeHtml(imp.import_mode || '') + '</td>' +
+          '<td class="num">' + money(imp.total) + '</td>' +
+          '<td>' + (imp.line_count || (imp.orderdetail_ids || []).length || '—') + '</td>' +
+          '<td><button type="button" class="btn red sm" data-undo-import="' + imp.id + '">Undo</button></td>' +
+          '</tr>';
+      });
+      html += '</tbody></table>';
+      html += '<div class="actions">';
+      html += '<button type="button" class="btn red" id="btnUndoAll">Undo all imports for this order</button>';
+      html += '</div></div>';
+    }
+
+    $('detail').innerHTML = html;
+
+    $('btnCheckAll').onclick = function () {
+      document.querySelectorAll('.line-cb:not(:disabled)').forEach(function (cb) { cb.checked = true; });
+    };
+    $('btnUncheckAll').onclick = function () {
+      document.querySelectorAll('.line-cb:not(:disabled)').forEach(function (cb) { cb.checked = false; });
+    };
+    $('btnImportSelected').onclick = function () { doImport(false); };
+    $('btnImportAllOpen').onclick = function () {
+      document.querySelectorAll('.line-cb:not(:disabled)').forEach(function (cb) { cb.checked = true; });
+      doImport(false);
+    };
+    if ($('btnUndoAll')) {
+      $('btnUndoAll').onclick = function () {
+        doUndo({ order_id: o.order_id, all: true });
+      };
+    }
+    document.querySelectorAll('[data-undo-import]').forEach(function (btn) {
+      btn.onclick = function () {
+        doUndo({ import_id: Number(btn.getAttribute('data-undo-import')) });
+      };
+    });
+    document.querySelectorAll('[data-add-product]').forEach(function (btn) {
+      btn.onclick = function (e) {
+        e.stopPropagation();
+        var odId = Number(btn.getAttribute('data-add-product'));
+        var line = (state.detail.lines || []).find(function (x) {
+          return Number(x.orderdetail_id) === odId;
+        });
+        if (!line) return;
+        openAddProductOnly(line);
+      };
+    });
+  }
+
+  /** Add product to catalog only — no sale import. */
+  function openAddProductOnly(line) {
+    state.productModalMode = 'catalog';
+    state.pendingImportBody = null;
+    state.newProducts = [];
+    state.missingQueue = [{
+      sku: line.model_number || '',
+      name: line.title || line.model_number || '',
+      description: line.description || '',
+      retail_price: line.catalog_price || line.unit_price || 0,
+      unit_price: line.unit_price || 0,
+      product_cost_hint: line.product_cost_hint || null,
+      orderdetail_id: line.orderdetail_id,
+      orderdetail_ids: [line.orderdetail_id],
+    }];
+    state.missingIndex = 0;
+    showMissingProduct();
+  }
+
+  async function doUndo(opts) {
+    var orderId = state.detail && state.detail.order ? state.detail.order.order_id : null;
+    var label = opts.all
+      ? 'Undo ALL EasyCart imports for order #' + orderId + '? This deletes the linked sale(s) from accounting.'
+      : 'Undo this import? The sale will be deleted from accounting and those line items can be imported again.';
+    if (!confirm(label)) return;
+    try {
+      var body = { company_id: Number(cid()) };
+      if (opts.import_id) body.import_id = opts.import_id;
+      if (opts.all && orderId) body.order_id = orderId;
+      var result = await api('/easycart/undo', { method: 'POST', body: JSON.stringify(body) });
+      var parts = (result.undone || []).map(function (u) {
+        return (u.transaction_number || ('sale ' + u.sale_id)) + ' (' + money(u.total) + ')';
+      });
+      msg('Undid ' + result.undone_count + ' import(s): ' + (parts.join(', ') || 'ok') + '.', true);
+      await loadOrders();
+      if (orderId) await selectOrder(orderId);
+      else {
+        state.detail = null;
+        $('detail').innerHTML = '<div class="detail-empty">Select an order from the list.</div>';
+      }
+    } catch (e) {
+      msg(e.message, false);
+    }
+  }
+
+  function closeProductModal() {
+    $('productModal').classList.add('hidden');
+    state.missingQueue = [];
+    state.missingIndex = 0;
+    state.newProducts = [];
+    state.pendingImportBody = null;
+    state.productModalMode = 'import';
+  }
+
+  function showMissingProduct() {
+    var q = state.missingQueue;
+    var i = state.missingIndex;
+    var catalogOnly = state.productModalMode === 'catalog';
+    if (i >= q.length) {
+      if (catalogOnly) {
+        closeProductModal();
+        return;
+      }
+      // All handled — retry import with collected new products
+      finishImportWithNewProducts();
+      return;
+    }
+    var p = q[i];
+    if (catalogOnly) {
+      $('pm_progress').textContent =
+        'Add this SKU to your product list only — no sale will be imported.';
+      $('pm_save').textContent = 'Add product to system';
+      $('pm_skip').classList.add('hidden');
+      $('pm_cancel').textContent = 'Cancel';
+    } else {
+      $('pm_progress').textContent =
+        'Product ' + (i + 1) + ' of ' + q.length + ' missing from accounting. ' +
+        'Add it for your books, or Skip if this line is not yours (e.g. Party B).';
+      $('pm_save').textContent = 'Add product & continue';
+      $('pm_skip').classList.remove('hidden');
+      $('pm_cancel').textContent = 'Cancel import';
+    }
+    $('pm_sku').value = p.sku || '';
+    $('pm_name').value = p.name || '';
+    $('pm_desc').value = p.description || '';
+    $('pm_retail').value = p.retail_price != null ? p.retail_price : (p.unit_price || '');
+    $('pm_wholesale').value = '';
+    $('pm_wholesale').focus();
+    var hint = [];
+    if (p.product_cost_hint) hint.push('EasyCart cost hint: ' + money(p.product_cost_hint));
+    if (p.unit_price) hint.push('Sold on this order at: ' + money(p.unit_price));
+    if (catalogOnly) {
+      hint.push('Wholesale is required. Order is not imported.');
+    } else {
+      hint.push('Skip removes this SKU from the import without adding the product.');
+    }
+    $('pm_hint').textContent = hint.join(' · ');
+    $('productModal').classList.remove('hidden');
+  }
+
+  async function finishImportWithNewProducts() {
+    $('productModal').classList.add('hidden');
+    var body = state.pendingImportBody;
+    if (!body) return;
+    // Lines may have been removed via Skip
+    if (!body.orderdetail_ids || !body.orderdetail_ids.length) {
+      msg('No lines left to import after skipping. Nothing was imported.', false);
+      closeProductModal();
+      if (body.order_id) await selectOrder(body.order_id);
+      return;
+    }
+    body.new_products = state.newProducts.slice();
+    try {
+      var result = await api('/easycart/import', { method: 'POST', body: JSON.stringify(body) });
+      msg(
+        'Imported EasyCart #' + body.order_id + ' → sale ' + result.transaction_number +
+        ' (' + result.lines_imported + ' line(s), ' + money(result.sale.total) + ')' +
+        (state.newProducts.length ? ' · added ' + state.newProducts.length + ' product(s)' : '') + '.',
+        true
+      );
+      closeProductModal();
+      await loadOrders();
+      await selectOrder(body.order_id);
+    } catch (e) {
+      if (e.data && e.data.need_products) {
+        // Still missing some — only re-prompt SKUs that are still on remaining lines
+        var remaining = new Set((body.orderdetail_ids || []).map(Number));
+        state.missingQueue = (e.data.missing_products || []).filter(function (p) {
+          var ids = p.orderdetail_ids || (p.orderdetail_id != null ? [p.orderdetail_id] : []);
+          return ids.some(function (id) { return remaining.has(Number(id)); });
+        });
+        state.missingIndex = 0;
+        if (!state.missingQueue.length) {
+          msg(e.message, false);
+          closeProductModal();
+          return;
+        }
+        showMissingProduct();
+        return;
+      }
+      msg(e.message, false);
+      closeProductModal();
+    }
+  }
+
+  /** Skip = do not import this SKU (remove its lines from the pending import). */
+  function skipCurrentSku() {
+    var p = state.missingQueue[state.missingIndex];
+    if (!p || !state.pendingImportBody) {
+      closeProductModal();
+      return;
+    }
+    var drop = {};
+    function markDrop(id) {
+      if (id != null && id !== '') drop[Number(id)] = true;
+    }
+    (p.orderdetail_ids || []).forEach(markDrop);
+    if (p.orderdetail_id != null) markDrop(p.orderdetail_id);
+    // Match by SKU on the open order (covers any extra lines with same model #)
+    if (state.detail && state.detail.lines) {
+      state.detail.lines.forEach(function (l) {
+        if (String(l.model_number || '').trim() === String(p.sku || '').trim()) {
+          markDrop(l.orderdetail_id);
+        }
+      });
+    }
+    state.pendingImportBody.orderdetail_ids = (state.pendingImportBody.orderdetail_ids || []).filter(
+      function (id) { return !drop[Number(id)]; }
+    );
+    // Uncheck those lines on the form for clarity
+    Object.keys(drop).forEach(function (id) {
+      var cb = document.querySelector('.line-cb[data-id="' + id + '"]');
+      if (cb) cb.checked = false;
+    });
+    var left = state.pendingImportBody.orderdetail_ids.length;
+    msg(
+      'Skipped SKU ' + (p.sku || '') + ' — not imported (e.g. Party B). ' + left + ' line(s) still selected.',
+      true
+    );
+    state.missingIndex += 1;
+    showMissingProduct();
+  }
+
+  async function doImport() {
+    if (!state.detail || !state.detail.order) return;
+    var ids = [];
+    document.querySelectorAll('.line-cb:checked:not(:disabled)').forEach(function (cb) {
+      ids.push(Number(cb.getAttribute('data-id')));
+    });
+    if (!ids.length) {
+      msg('Select at least one line item to import.', false);
+      return;
+    }
+    var orderId = state.detail.order.order_id;
+    var body = {
+      company_id: Number(cid()),
+      order_id: orderId,
+      orderdetail_ids: ids,
+      include_tax: $('inc_tax') && $('inc_tax').checked,
+      include_shipping: $('inc_ship') && $('inc_ship').checked,
+      include_discount: $('inc_disc') && $('inc_disc').checked,
+    };
+    try {
+      var result = await api('/easycart/import', { method: 'POST', body: JSON.stringify(body) });
+      msg(
+        'Imported EasyCart #' + orderId + ' → sale ' + result.transaction_number +
+        ' (' + result.lines_imported + ' line(s), ' + money(result.sale.total) + '). Mode: ' + result.mode + '.',
+        true
+      );
+      await loadOrders();
+      await selectOrder(orderId);
+    } catch (e) {
+      if (e.data && e.data.need_products && (e.data.missing_products || []).length) {
+        state.productModalMode = 'import';
+        state.pendingImportBody = body;
+        state.missingQueue = e.data.missing_products;
+        state.missingIndex = 0;
+        state.newProducts = [];
+        msg(
+          e.data.missing_products.length +
+            ' SKU(s) not in the system. Fill wholesale price to add each product, then import continues.',
+          false
+        );
+        showMissingProduct();
+        return;
+      }
+      msg(e.message, false);
+    }
+  }
+
+  $('pm_save').onclick = async function () {
+    var wholesale = $('pm_wholesale').value;
+    if (wholesale === '' || wholesale == null) {
+      msg('Wholesale price is required to add this product.', false);
+      $('pm_wholesale').focus();
+      return;
+    }
+    var product = {
+      company_id: Number(cid()),
+      sku: $('pm_sku').value.trim(),
+      name: $('pm_name').value.trim(),
+      description: $('pm_desc').value.trim(),
+      retail_price: Number($('pm_retail').value || 0),
+      wholesale_price: Number(wholesale),
+    };
+    if (!product.sku || !product.name) {
+      msg('SKU and name are required.', false);
+      return;
+    }
+    var catalogOnly = state.productModalMode === 'catalog';
+    try {
+      await api('/easycart/products', { method: 'POST', body: JSON.stringify(product) });
+      if (catalogOnly) {
+        msg('Added product ' + product.sku + ' to the system (no sale imported).', true);
+        closeProductModal();
+        if (state.selectedId) await selectOrder(state.selectedId);
+        return;
+      }
+      state.newProducts.push(product);
+      state.missingIndex += 1;
+      msg('Added product ' + product.sku + '.', true);
+      showMissingProduct();
+    } catch (e) {
+      msg(e.message, false);
+    }
+  };
+  $('pm_skip').onclick = function () {
+    if (state.productModalMode === 'catalog') {
+      closeProductModal();
+      return;
+    }
+    skipCurrentSku();
+  };
+  $('pm_cancel').onclick = function () {
+    var wasImport = state.productModalMode === 'import' && state.pendingImportBody;
+    closeProductModal();
+    msg(wasImport ? 'Import cancelled — no sale created.' : 'Cancelled.', false);
+  };
+
+  $('orderTable').addEventListener('click', function (e) {
+    var tr = e.target.closest('tr[data-id]');
+    if (!tr) return;
+    selectOrder(Number(tr.getAttribute('data-id')));
+  });
+
+  // Party B remittance period defaults: current month (or from clean start if earlier)
+  (function initMarkRemitDates() {
+    var now = new Date();
+    var y = now.getFullYear();
+    var m = String(now.getMonth() + 1).padStart(2, '0');
+    var last = new Date(y, now.getMonth() + 1, 0);
+    var fromDef = y + '-' + m + '-01';
+    if (fromDef < '2026-08-01') fromDef = '2026-08-01';
+    if ($('mr_from')) $('mr_from').value = fromDef;
+    if ($('mr_to')) $('mr_to').value = last.toISOString().slice(0, 10);
+  })();
+
+  function feeRateFromUi() {
+    var pct = Number($('mr_fee') && $('mr_fee').value != null ? $('mr_fee').value : 3.5);
+    return pct / 100;
+  }
+
+  if ($('mr_preview')) {
+    $('mr_preview').onclick = async function () {
+      try {
+        var from = $('mr_from').value;
+        var to = $('mr_to').value;
+        var fee = feeRateFromUi();
+        var q = 'from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to) +
+          '&fee_rate=' + encodeURIComponent(fee);
+        var d = await api('/easycart/mark-remittance-preview?' + q);
+        $('mr_result').textContent =
+          'Period ' + d.from + ' → ' + d.to + '  |  fee ' + (d.fee_rate * 100).toFixed(1) + '%\n' +
+          'Store (all EasyCart): ' + d.store.order_count + ' orders · product base ' + money(d.store.product_base) +
+          ' · tax ' + money(d.store.tax) + '\n' +
+          'Party A imported: ' + d.party_a_imported.sale_count + ' sales · base ' + money(d.party_a_imported.product_base) +
+          ' · due Party A ' + money(d.party_a_imported.amount_due) + '\n' +
+          'Party B (store − Party A): base ' + money(d.mark.product_base) +
+          ' · fee ' + money(d.mark.fee) +
+          ' · DUE MARK ' + money(d.mark.amount_due);
+        msg('Party B remittance preview loaded.', true);
+      } catch (e) {
+        msg(e.message, false);
+      }
+    };
+  }
+  if ($('mr_accrue')) {
+    $('mr_accrue').onclick = async function () {
+      try {
+        if (!confirm('Accrue Due to Party B for this period (after 3.5% fee on Party B product base)?')) return;
+        var body = {
+          company_id: Number(cid()),
+          from: $('mr_from').value,
+          to: $('mr_to').value,
+          fee_rate: feeRateFromUi(),
+        };
+        var d = await api('/easycart/mark-remittance-accrue', {
+          method: 'POST',
+          body: JSON.stringify(body),
+        });
+        msg(d.message || 'Accrued.', true);
+        if ($('mr_preview')) $('mr_preview').click();
+      } catch (e) {
+        msg(e.message, false);
+      }
+    };
+  }
+
+  $('btnSearch').onclick = function () { state.page = 1; loadOrders(); };
+  $('btnReset').onclick = function () {
+    $('q').value = '';
+    $('from').value = '';
+    $('to').value = '';
+    $('status').value = 'all';
+    $('imported').value = 'all';
+    state.page = 1;
+    loadOrders();
+  };
+  $('q').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { state.page = 1; loadOrders(); }
+  });
+  $('prevPage').onclick = function () {
+    if (state.page > 1) { state.page--; loadOrders(); }
+  };
+  $('nextPage').onclick = function () {
+    state.page++;
+    loadOrders();
+  };
+
+  window.addEventListener('accounting-company-changed', function () {
+    state.selectedId = null;
+    state.detail = null;
+    $('detail').innerHTML = '<div class="detail-empty">Select an order from the list.</div>';
+    loadPing();
+    loadOrders();
+  });
+
+  loadStatuses().then(function () {
+    loadPing();
+    loadOrders();
+  });
+})();
+  </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "PORT": 3003,
+  "HOST": "0.0.0.0",
+  "DATABASE_PATH": "./data/accounting.db",
+  "BACKUP_DIR": "./data/backups",
+  "UPLOAD_DIR": "./data/uploads",
+  "LOG_LEVEL": "info",
+  "REPORT_TIMEZONE": "UTC",
+  "TLS_KEY": "",
+  "TLS_CERT": ""
+}
