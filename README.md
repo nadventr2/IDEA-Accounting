@@ -26,7 +26,7 @@ The server is Node.js and Express. Data is a SQLite file. Each company is a row 
 ## Quick start
 
 ```bash
-tar -xzf open-accounting-1.0.0.tar.gz
+tar -xzf open-accounting-1.0.1.tar.gz
 cd open-accounting
 npm install
 cp .env.example .env
@@ -77,8 +77,20 @@ Environment variables override `config.json` in the project root. Relative paths
 | EASYCART_REMIT_FEE_RATE | 0 | Fee fraction for product remittances |
 | EASYCART_CLEAN_START | empty | Optional start date for the import split |
 | EASYCART_IMPORT_OWNER | party_a | `party_a` or `party_b` |
+| DEFAULT_TAX_RATE | 0 | Decimal tax rate seeded on a new company (0.0825 = 8.25%) |
+| DEFAULT_TAX_LABEL | empty | Optional label for that seeded rate |
 
 Copy `config.example.json` to `config.json` if you prefer a file. `config.json` is gitignored.
+
+## Sales tax
+
+Open Settings and edit the tax-rate table. Type the percent (8.25 for 8.25%). The server stores a decimal (0.0825). Mark one row as the default. That default is preselected on new invoices, estimates, and sales. You can still pick another configured rate, or choose Custom percent and type a number from 0 to 100 for that document only.
+
+Each document keeps its own `tax_rate` (decimal) and `tax_label`. Printed invoices, estimates, and sales show that label, for example Sales Tax (City 8.25%). A document saved before it had a label shows Tax (8.25%), using the stored rate.
+
+A CSV Tax Rate cell may be a percent (`8.25` or `8.25%`), a decimal (`0.0825`), or a label that matches a rate in Settings.
+
+`DEFAULT_TAX_RATE` and `DEFAULT_TAX_LABEL` apply only when a company is created. Change later rates in Settings. They do not rewrite documents you already saved.
 
 Party A and Party B are optional labels for product-proceeds owed to someone else. Set them in Settings. They are not owner draws.
 

@@ -2,14 +2,42 @@
  * Per-company configuration for a multi-tenant-ready accounting UI.
  * Neutral defaults for a fresh install. Per-company values live in settings.
  */
-const DEFAULT_TAX_RATES = [
-  { id: 'exempt', label: 'Out of State / Exempt (0%)', rate: 0 },
-  { id: 'ca', label: 'CA (7.75%)', rate: 0.0775 },
-];
+const { loadConfig } = require('./load-config');
+const { normalizeTaxRate, sanitizeTaxRates, rateIsAcceptable } = require('./tax-rate');
 
 const DEFAULT_PAYMENT_METHODS = [
   'Cash', 'Card', 'PayPal', 'Amazon', 'eBay', 'Check', 'Square', 'ACH', 'Wire',
 ];
+
+/** Env DEFAULT_TAX_RATE (decimal) and optional DEFAULT_TAX_LABEL seed a new company. */
+function seedTaxFromConfig() {
+  let cfg = {};
+  try {
+    cfg = loadConfig();
+  } catch (e) {
+    cfg = {};
+  }
+  const raw = cfg.defaultTaxRate != null ? cfg.defaultTaxRate : 0;
+  const rate = rateIsAcceptable(raw) ? normalizeTaxRate(raw) : 0;
+  const label = cfg.defaultTaxLabel ? String(cfg.defaultTaxLabel).trim() : '';
+  return { rate, label };
+}
+
+function defaultTaxRates() {
+  const { rate, label } = seedTaxFromConfig();
+  const rates = [{ id: 'none', label: 'No tax (0%)', rate: 0 }];
+  if (label || rate > 0) {
+    const pct = (rate * 100).toFixed(2);
+    rates.push({
+      id: 'seed',
+      label: label || ('Tax (' + pct + '%)'),
+      rate,
+    });
+  } else {
+    rates.push({ id: 'example', label: 'Example rate (edit in Settings)', rate: 0 });
+  }
+  return rates;
+}
 
 /** Empty template for a public / freeware release (no branding). */
 function emptyCompanySettings() {
@@ -26,11 +54,8 @@ function emptyCompanySettings() {
     tax_id: '',
     /** State tax / entity ID — optional */
     state_id: '',
-    tax_rates: [
-      { id: 'exempt', label: 'Exempt / Out of jurisdiction (0%)', rate: 0 },
-      { id: 'local', label: 'Local tax (edit rate in Settings)', rate: 0 },
-    ],
-    default_tax_rate: 0,
+    tax_rates: defaultTaxRates(),
+    default_tax_rate: seedTaxFromConfig().rate,
     payment_methods: ['Cash', 'Card', 'Check', 'ACH'],
     receipt_footer: 'Thank you for your business.',
     features: {
@@ -70,8 +95,15 @@ function parseSettings(raw, id, row) {
       ...obj,
       features: { ...seed.features, ...(obj.features || {}) },
       tax_rates: Array.isArray(obj.tax_rates) && obj.tax_rates.length
-        ? obj.tax_rates
+        ? obj.tax_rates.map((item, i) => ({
+            id: item && item.id ? String(item.id) : 'r' + i,
+            label: item && item.label ? String(item.label) : ('Rate ' + (i + 1)),
+            rate: normalizeTaxRate(item && item.rate),
+          }))
         : seed.tax_rates,
+      default_tax_rate: obj.default_tax_rate != null
+        ? normalizeTaxRate(obj.default_tax_rate)
+        : seed.default_tax_rate,
       payment_methods: Array.isArray(obj.payment_methods) && obj.payment_methods.length
         ? obj.payment_methods
         : seed.payment_methods,
@@ -100,7 +132,7 @@ function companyPublicView(row) {
     tax_id: settings.tax_id || '',
     state_id: settings.state_id || '',
     features: settings.features || {},
-    tax_rates: settings.tax_rates || DEFAULT_TAX_RATES,
+    tax_rates: settings.tax_rates || defaultTaxRates(),
     payment_methods: settings.payment_methods || DEFAULT_PAYMENT_METHODS,
   };
 }
@@ -218,6 +250,19 @@ function registerCompanyRoutes(app, db) {
     db.get('SELECT * FROM companies WHERE id = ?', [id], (err, row) => {
       if (err) return res.status(500).json({ error: err.message });
       if (!row) return res.status(404).json({ error: 'Company not found' });
+      if (settings && typeof settings === 'object' && settings.tax_rates != null) {
+        const cleanRates = sanitizeTaxRates(settings.tax_rates);
+        if (!cleanRates) {
+          return res.status(400).json({ error: 'Each tax rate needs a label and a percent from 0 to 100.' });
+        }
+        settings.tax_rates = cleanRates;
+      }
+      if (settings && typeof settings === 'object' && settings.default_tax_rate != null) {
+        if (!rateIsAcceptable(settings.default_tax_rate)) {
+          return res.status(400).json({ error: 'Default tax rate must be between 0 and 100 percent.' });
+        }
+        settings.default_tax_rate = normalizeTaxRate(settings.default_tax_rate);
+      }
       const merged = parseSettings(
         settings != null ? JSON.stringify(settings) : row.settings_json,
         id,
@@ -289,6 +334,6 @@ module.exports = {
   seedSettingsForCompany,
   parseSettings,
   companyPublicView,
-  DEFAULT_TAX_RATES,
+  defaultTaxRates,
   DEFAULT_PAYMENT_METHODS,
 };

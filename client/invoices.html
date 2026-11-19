@@ -319,6 +319,11 @@
       items: [],
       discount: 0,
       taxRate: 0,
+      taxLabel: '',
+      taxIndex: 0,
+      taxCustom: false,
+      customPercent: '',
+      taxTouched: false,
       shipping: 0,
       paymentMethod: 'Cash',
       date: new Date().toISOString().split('T')[0],
@@ -372,10 +377,19 @@
         ? window.CompanyConfig.get(selectedCompanyId)
         : null;
       return (c && c.tax_rates) || [
-        { label: 'Out of State (0%)', rate: 0 },
-        { label: 'CA (7.75%)', rate: 0.0775 },
+        { id: 'none', label: 'No tax (0%)', rate: 0 },
+        { id: 'example', label: 'Example rate (edit in Settings)', rate: 0 },
       ];
     };
+    useEffect(() => {
+      const apply = () => setForm(prev => (
+        prev.taxTouched || !(window.CompanyConfig && CompanyConfig.defaultTaxFields)
+          ? prev
+          : { ...prev, ...CompanyConfig.defaultTaxFields(selectedCompanyId) }
+      ));
+      if (window.CompanyConfig && CompanyConfig.load) CompanyConfig.load().then(apply).catch(apply);
+      else apply();
+    }, []);
 
     useEffect(() => {
       console.log('[FETCH] Fetching data');
@@ -520,7 +534,8 @@
         const price = item.customPrice || (product.retail_price || 0);
         return sum + price * (item.quantity || 0);
       }, 0);
-      const validTaxRate = isNaN(taxRate) ? 0 : taxRate;
+      const rawTax = Number(taxRate);
+      const validTaxRate = !Number.isFinite(rawTax) ? 0 : (rawTax > 1 && rawTax <= 100 ? rawTax / 100 : rawTax);
       const validShipping = isNaN(shipping) ? 0 : shipping;
       const validDiscount = isNaN(discount) ? 0 : discount;
       const tax = subtotal * validTaxRate;
@@ -595,7 +610,9 @@
       const customerId = parseInt(form.customerId);
       const items = form.items;
       const discount = form.discount;
-      const taxRate = form.taxRate;
+      const taxRate = (window.CompanyConfig && CompanyConfig.normalizeTaxRate)
+        ? CompanyConfig.normalizeTaxRate(form.taxRate)
+        : (Number(form.taxRate) || 0);
       const shipping = form.shipping;
       const paymentMethod = form.paymentMethod;
       const date = form.date;
@@ -617,6 +634,7 @@
         })),
         discount,
         tax_rate: taxRate,
+        tax_label: form.taxLabel || '',
         shipping,
         payment_method: paymentMethod,
         date,
@@ -664,13 +682,15 @@
           customerId: '',
           items: [],
           discount: 0,
-          taxRate: 0,
           shipping: 0,
           paymentMethod: 'Cash',
           date: new Date().toISOString().split('T')[0],
           status: 'Pending',
           notes: '',
-          customer_po: ''
+          customer_po: '',
+          ...((window.CompanyConfig && CompanyConfig.defaultTaxFields)
+            ? CompanyConfig.defaultTaxFields(selectedCompanyId)
+            : { taxRate: 0, taxLabel: '', taxIndex: 0, taxCustom: false, customPercent: '', taxTouched: false })
         });
         setCurrentProductId('');
         setCurrentQuantity('');
@@ -697,7 +717,9 @@
           customPrice: item.custom_price
         })) : [],
         discount: invoice.discount || 0,
-        taxRate: invoice.tax_rate || 0,
+        ...((window.CompanyConfig && CompanyConfig.taxFieldsFromDoc)
+          ? CompanyConfig.taxFieldsFromDoc(invoice, selectedCompanyId)
+          : { taxRate: invoice.tax_rate || 0, taxLabel: invoice.tax_label || '', taxIndex: 0, taxCustom: !invoice.tax_label, customPercent: '' }),
         shipping: invoice.shipping || 0,
         paymentMethod: invoice.payment_method || 'Cash',
         date: invoice.date || new Date().toISOString().split('T')[0],
@@ -716,7 +738,9 @@
       const customerId = parseInt(editForm.customerId);
       const items = editForm.items;
       const discount = editForm.discount;
-      const taxRate = editForm.taxRate;
+      const taxRate = (window.CompanyConfig && CompanyConfig.normalizeTaxRate)
+        ? CompanyConfig.normalizeTaxRate(editForm.taxRate)
+        : (Number(editForm.taxRate) || 0);
       const shipping = editForm.shipping;
       const paymentMethod = editForm.paymentMethod;
       const date = editForm.date;
@@ -737,6 +761,7 @@
         })),
         discount,
         tax_rate: taxRate,
+        tax_label: editForm.taxLabel || '',
         shipping,
         payment_method: paymentMethod,
         date,
@@ -845,6 +870,7 @@
           })),
           discount: invoice.discount,
           tax_rate: invoice.tax_rate,
+          tax_label: invoice.tax_label || '',
           shipping: invoice.shipping,
           payment_method: payForm.payment_method,
           date: payForm.payment_date,
@@ -877,6 +903,7 @@
             })),
             discount: invoice.discount || 0,
             tax_rate: invoice.tax_rate || 0,
+            tax_label: invoice.tax_label || '',
             shipping: invoice.shipping || 0,
             payment_method: payForm.payment_method,
             date: invoice.date,
@@ -1088,7 +1115,7 @@
         head: [['Description', 'Amount']],
         body: [
           ['Subtotal', `$${(invoice.subtotal || 0).toFixed(2)}`],
-          [`Sales Tax (${invoice.tax_rate === 0.0775 ? 'CA 7.75%' : 'Out of State 0%'})`, `$${(invoice.tax || 0).toFixed(2)}`],
+          [(window.CompanyConfig && CompanyConfig.taxCaption) ? CompanyConfig.taxCaption(invoice) : 'Tax', `$${(invoice.tax || 0).toFixed(2)}`],
           ['Shipping', `$${(invoice.shipping || 0).toFixed(2)}`],
           ...(discount > 0 ? [['Discount', `-$${discount.toFixed(2)}`]] : []),
           ['Total', `$${(invoice.total || 0).toFixed(2)}`]
@@ -1148,7 +1175,9 @@
               customer_id: customer ? customer.id : null,
               items,
               discount: parseFloat(row['Discount']) || 0,
-              tax_rate: row['Tax Rate'] === 'CA' ? 0.0775 : 0,
+              ...((window.CompanyConfig && CompanyConfig.parseImportTax)
+                ? CompanyConfig.parseImportTax(row['Tax Rate'], selectedCompanyId)
+                : { tax_rate: 0, tax_label: '' }),
               shipping: parseFloat(row['Shipping']) || 0,
               payment_method: row['Payment Method'] || 'Cash',
               date: row['Date'] || new Date().toISOString().split('T')[0],
@@ -1385,16 +1414,29 @@
               <label htmlFor="taxRate" className="block text-sm font-medium text-gray-700 mt-4">Sales Tax</label>
               <select
                 id="taxRate"
-                name="taxRate"
-                value={form.taxRate}
-                onChange={handleFormChange}
+                value={form.taxCustom ? '__custom__' : String(form.taxIndex != null ? form.taxIndex : 0)}
+                onChange={(e) => setForm(prev => (window.CompanyConfig ? CompanyConfig.pickTax(prev, companyTaxRates(), e.target.value) : prev))}
                 required
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
               >
                 {companyTaxRates().map((tr, i) => (
-                  <option key={i} value={tr.rate}>{tr.label}</option>
+                  <option key={i} value={String(i)}>{tr.label}</option>
                 ))}
+                <option value="__custom__">Custom percent</option>
               </select>
+              {form.taxCustom && (
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.001"
+                  aria-label="Custom tax percent"
+                  placeholder="Percent from 0 to 100"
+                  value={form.customPercent}
+                  onChange={(e) => setForm(prev => (window.CompanyConfig ? CompanyConfig.setCustomPercent(prev, e.target.value) : prev))}
+                  className="mt-2 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                />
+              )}
               <label htmlFor="shipping" className="block text-sm font-medium text-gray-700 mt-4">Shipping Charge</label>
               <input
                 type="number"
@@ -1648,7 +1690,7 @@
                                 )}
                               </ul>
                               <p><strong>Subtotal:</strong> ${(invoice.subtotal || 0).toFixed(2)}</p>
-                              <p><strong>Tax:</strong> ${(invoice.tax || 0).toFixed(2)} ({invoice.tax_rate === 0.0775 ? 'CA 7.75%' : 'Out of State 0%'})</p>
+                              <p><strong>{(window.CompanyConfig && CompanyConfig.taxCaption) ? CompanyConfig.taxCaption(invoice) : 'Tax'}:</strong> ${(invoice.tax || 0).toFixed(2)}</p>
                               <p><strong>Shipping:</strong> ${(invoice.shipping || 0).toFixed(2)}</p>
                               {invoice.discount > 0 && <p><strong>Discount:</strong> -${(invoice.discount || 0).toFixed(2)}</p>}
                               <p><strong>Total:</strong> ${(invoice.total || 0).toFixed(2)}</p>
@@ -1947,16 +1989,29 @@
                   <label htmlFor="editTaxRate" className="block text-sm font-medium text-gray-700 mt-4">Sales Tax</label>
                   <select
                     id="editTaxRate"
-                    name="taxRate"
-                    value={editForm.taxRate}
-                    onChange={handleEditFormChange}
+                    value={editForm.taxCustom ? '__custom__' : String(editForm.taxIndex != null ? editForm.taxIndex : 0)}
+                    onChange={(e) => setEditForm(prev => (window.CompanyConfig ? CompanyConfig.pickTax(prev, companyTaxRates(), e.target.value) : prev))}
                     required
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   >
                     {companyTaxRates().map((tr, i) => (
-                      <option key={i} value={tr.rate}>{tr.label}</option>
+                      <option key={i} value={String(i)}>{tr.label}</option>
                     ))}
+                    <option value="__custom__">Custom percent</option>
                   </select>
+                  {editForm.taxCustom && (
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.001"
+                      aria-label="Custom tax percent"
+                      placeholder="Percent from 0 to 100"
+                      value={editForm.customPercent}
+                      onChange={(e) => setEditForm(prev => (window.CompanyConfig ? CompanyConfig.setCustomPercent(prev, e.target.value) : prev))}
+                      className="mt-2 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  )}
                   <label htmlFor="editShipping" className="block text-sm font-medium text-gray-700 mt-4">Shipping Charge</label>
                   <input
                     type="number"

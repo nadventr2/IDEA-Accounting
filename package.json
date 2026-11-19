@@ -1,6 +1,6 @@
 {
   "name": "open-accounting",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Small-business accounting: sales, invoices, bills, inventory, deposits, and books.",
   "license": "GPL-3.0-or-later",
   "main": "server/server_new.js",

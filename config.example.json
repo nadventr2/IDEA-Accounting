@@ -6,6 +6,8 @@
   "UPLOAD_DIR": "./data/uploads",
   "LOG_LEVEL": "info",
   "REPORT_TIMEZONE": "UTC",
+  "DEFAULT_TAX_RATE": 0,
+  "DEFAULT_TAX_LABEL": "",
   "TLS_KEY": "",
   "TLS_CERT": ""
 }

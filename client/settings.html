@@ -75,6 +75,11 @@
     .dropzone .hint { margin: 0.35rem 0 0; }
     .dropzone input[type=file] { display: none; }
     .logo-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+    .tax-table { width: 100%; border-collapse: collapse; }
+    .tax-table th, .tax-table td { text-align: left; padding: 0.35rem 0.3rem; vertical-align: middle; }
+    .tax-table input[type="number"] { max-width: 8rem; }
+    .tax-table input[type="radio"] { width: auto; }
+    .tax-actions { display: flex; gap: 0.5rem; margin-top: 0.6rem; }
   </style>
 </head>
 <body class="bg-gray-100">
@@ -102,14 +107,25 @@
         tax_id: '',
         state_id: '',
         receipt_footer: 'Thank you for your business.',
-        tax_rates_text: 'Out of State (0%)|0\nLocal tax|0',
+        tax_rows: [
+          { key: 'none', label: 'No tax (0%)', percent: '0' },
+          { key: 'example', label: 'Example rate (edit in Settings)', percent: '0' },
+        ],
+        default_tax_index: 0,
         payment_methods_text: 'Cash\nCard\nCheck\nACH',
-        default_tax_rate: 0,
         features: { products: true, easycart: false, packing_slips: true, books: true, deposits: true },
         party_a_label: '',
         party_b_label: '',
         notes: '',
       };
+    }
+
+    function decimalToPercentInput(rate) {
+      let n = Number(rate);
+      if (!Number.isFinite(n)) return '0';
+      if (n > 1 && n <= 100) n = n / 100;
+      const text = (n * 100).toFixed(4).replace(/\.?0+$/, '');
+      return text === '' ? '0' : text;
     }
 
     function companyToForm(c) {
@@ -136,27 +152,27 @@
         tax_id: s.tax_id || '',
         state_id: s.state_id || '',
         receipt_footer: s.receipt_footer || 'Thank you for your business.',
-        tax_rates_text: rates.map(r => `${r.label}|${r.rate}`).join('\n'),
+        tax_rows: (rates.length ? rates : [{ label: 'No tax (0%)', rate: 0 }]).map((r, i) => ({
+          key: r.id || ('k' + i),
+          label: r.label || '',
+          percent: decimalToPercentInput(r.rate),
+        })),
+        default_tax_index: (() => {
+          const def = s.default_tax_rate != null ? Number(s.default_tax_rate) : 0;
+          const defDec = def > 1 && def <= 100 ? def / 100 : def;
+          const idx = rates.findIndex(r => {
+            let n = Number(r.rate);
+            if (n > 1 && n <= 100) n = n / 100;
+            return Math.abs(n - defDec) < 0.000001;
+          });
+          return idx >= 0 ? idx : 0;
+        })(),
         payment_methods_text: methods.join('\n'),
-        default_tax_rate: s.default_tax_rate != null ? s.default_tax_rate : 0,
         features: feat,
         party_a_label: s.party_a_label || c.party_a_label || '',
         party_b_label: s.party_b_label || c.party_b_label || '',
         notes: s.notes || '',
       };
-    }
-
-    function parseTaxRates(text) {
-      return String(text || '')
-        .split('\n')
-        .map(l => l.trim())
-        .filter(Boolean)
-        .map((line, i) => {
-          const parts = line.split('|');
-          const label = (parts[0] || `Rate ${i + 1}`).trim();
-          const rate = parseFloat(parts[1] != null ? parts[1] : '0');
-          return { id: 'r' + i, label, rate: Number.isFinite(rate) ? rate : 0 };
-        });
     }
 
     function SettingsPage() {
@@ -285,7 +301,22 @@
         setSaving(true);
         setMsg(null);
         try {
-          const tax_rates = parseTaxRates(form.tax_rates_text);
+          const tax_rates = [];
+          for (const row of form.tax_rows || []) {
+            const label = String(row.label || '').trim();
+            if (!label) throw new Error('Each tax rate needs a label.');
+            const pct = Number(row.percent);
+            if (!Number.isFinite(pct) || pct < 0 || pct > 100) {
+              throw new Error('Tax percent must be a number from 0 to 100.');
+            }
+            tax_rates.push({
+              id: row.key || ('r' + tax_rates.length),
+              label,
+              rate: Math.round((pct / 100) * 1e6) / 1e6,
+            });
+          }
+          if (!tax_rates.length) throw new Error('Add at least one tax rate.');
+          const defIdx = Math.min(Math.max(Number(form.default_tax_index) || 0, 0), tax_rates.length - 1);
           const payment_methods = String(form.payment_methods_text || '')
             .split('\n').map(s => s.trim()).filter(Boolean);
           const settings = {
@@ -302,7 +333,7 @@
             receipt_footer: form.receipt_footer,
             tax_rates,
             payment_methods,
-            default_tax_rate: Number(form.default_tax_rate) || 0,
+            default_tax_rate: tax_rates[defIdx].rate,
             features: form.features,
             party_a_label: form.party_a_label,
             party_b_label: form.party_b_label,
@@ -602,22 +633,83 @@
 
           <div className="card">
             <h3>Tax rates</h3>
-            <p className="hint">One per line: <code>Label|rate</code> where rate is a decimal (e.g. 0.0775 for 7.75%).</p>
-            <div className="row">
-              <textarea
-                value={form.tax_rates_text}
-                onChange={e => setField('tax_rates_text', e.target.value)}
-                style={{ minHeight: '6rem' }}
-              />
-            </div>
-            <div className="row" style={{ maxWidth: 220 }}>
-              <label>Default tax rate</label>
-              <input
-                type="number"
-                step="0.0001"
-                value={form.default_tax_rate}
-                onChange={e => setField('default_tax_rate', e.target.value)}
-              />
+            <p className="hint">Enter each rate as a percent from 0 to 100. The books store it as a decimal. Choose which rate new invoices, estimates, and sales start with.</p>
+            <table className="tax-table">
+              <thead>
+                <tr>
+                  <th>Label</th>
+                  <th>Percent</th>
+                  <th>Default</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {(form.tax_rows || []).map((row, i) => (
+                  <tr key={row.key || i}>
+                    <td>
+                      <input
+                        aria-label="Tax rate label"
+                        value={row.label}
+                        onChange={e => setForm(prev => ({
+                          ...prev,
+                          tax_rows: prev.tax_rows.map((r, j) => j === i ? { ...r, label: e.target.value } : r),
+                        }))}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.001"
+                        aria-label="Tax percent"
+                        value={row.percent}
+                        onChange={e => setForm(prev => ({
+                          ...prev,
+                          tax_rows: prev.tax_rows.map((r, j) => j === i ? { ...r, percent: e.target.value } : r),
+                        }))}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="radio"
+                        name="defaultTax"
+                        aria-label={'Default ' + (row.label || 'rate')}
+                        checked={Number(form.default_tax_index) === i}
+                        onChange={() => setField('default_tax_index', i)}
+                      />
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn danger"
+                        disabled={(form.tax_rows || []).length < 2}
+                        onClick={() => setForm(prev => {
+                          const tax_rows = prev.tax_rows.filter((_, j) => j !== i);
+                          let default_tax_index = Number(prev.default_tax_index) || 0;
+                          if (default_tax_index === i) default_tax_index = 0;
+                          else if (default_tax_index > i) default_tax_index -= 1;
+                          return { ...prev, tax_rows, default_tax_index };
+                        })}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="tax-actions">
+              <button
+                type="button"
+                className="btn secondary"
+                onClick={() => setForm(prev => ({
+                  ...prev,
+                  tax_rows: [...(prev.tax_rows || []), { key: 'n' + Date.now(), label: '', percent: '0' }],
+                }))}
+              >
+                Add rate
+              </button>
             </div>
           </div>
 

@@ -5,6 +5,7 @@
 const mysql = require('mysql2/promise');
 const { DateTime } = require('luxon');
 const ecConfig = require('./easycart-config');
+const { normalizeTaxRate, rateFromTaxAmount } = require('./tax-rate');
 
 function dbRun(db, sql, params = []) {
   return new Promise((resolve, reject) => {
@@ -769,10 +770,24 @@ async function importOrder(db, body) {
 
   const subtotal = Math.round(lineSubtotal * 100) / 100;
   const total = Math.round((subtotal + tax + shipping - discount) * 100) / 100;
-  // Accounting stores rate as a decimal (0.0775 = CA 7.75%), NOT a percentage (7.75).
-  // Any tax collected on an EasyCart order is CA sales tax for liability tracking.
-  const CA_SALES_TAX_RATE = 0.0775;
-  const tax_rate = tax > 0.0001 ? CA_SALES_TAX_RATE : 0;
+  // Rate is the order's own tax divided by taxable merchandise (subtotal minus discount).
+  // When that base is missing, use the company's default rate.
+  const taxable = Math.max(0, Math.round((subtotal - discount) * 100) / 100);
+  let tax_rate = rateFromTaxAmount(tax, taxable > 0 ? taxable : subtotal);
+  let tax_label = null;
+  const companyRow = await dbGet(db, 'SELECT settings_json FROM companies WHERE id = ?', [companyId]);
+  let companySettings = {};
+  try {
+    companySettings = JSON.parse((companyRow && companyRow.settings_json) || '{}');
+  } catch (e) {
+    companySettings = {};
+  }
+  const configured = Array.isArray(companySettings.tax_rates) ? companySettings.tax_rates : [];
+  if (tax_rate == null) {
+    tax_rate = normalizeTaxRate(companySettings.default_tax_rate || 0);
+  }
+  const matched = configured.find((r) => Math.abs(normalizeTaxRate(r.rate) - tax_rate) < 0.0001);
+  if (matched && matched.label) tax_label = String(matched.label);
   const date = orderDateOnly(order.order_date);
   const payment_method = mapPaymentMethod(order.payment_method);
   const mode = isFull ? 'full' : 'partial';
@@ -844,15 +859,16 @@ async function importOrder(db, body) {
   const saleResult = await dbRun(
     db,
     `INSERT INTO sales (
-      customer_id, date, subtotal, tax, tax_rate, shipping, discount, total,
+      customer_id, date, subtotal, tax, tax_rate, tax_label, shipping, discount, total,
       payment_method, transaction_number, notes, company_id, customer_name, source, product_owner, shipping_address
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?, (SELECT name FROM customers WHERE id = ?), ?, ?, ?)`,
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?, (SELECT name FROM customers WHERE id = ?), ?, ?, ?)`,
     [
       customerId,
       date,
       subtotal,
       tax,
       tax_rate,
+      tax_label,
       shipping,
       discount,
       total,

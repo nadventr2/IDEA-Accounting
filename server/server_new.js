@@ -21,6 +21,7 @@ const {
   registerCompanyRoutes,
 } = require('./company-settings');
 const { loadConfig } = require('./load-config');
+const { applyDocumentTax } = require('./tax-rate');
 const appConfig = loadConfig();
 const app = express();
 // ==== FINAL, BULLETPROOF, ZERO-CORS, ZERO-ERRORS FIX ====
@@ -409,7 +410,7 @@ db.serialize(() => {
   db.run('CREATE TABLE IF NOT EXISTS customers (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT, phone TEXT, billing_address TEXT, shipping_address TEXT, company_id INTEGER NOT NULL, FOREIGN KEY (company_id) REFERENCES companies(id))');
   db.run('CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY AUTOINCREMENT, sku TEXT NOT NULL UNIQUE, name TEXT NOT NULL, wholesale_price REAL, retail_price REAL NOT NULL, stock INTEGER, vendor_id INTEGER, company_id INTEGER NOT NULL, FOREIGN KEY (vendor_id) REFERENCES vendors(id), FOREIGN KEY (company_id) REFERENCES companies(id))');
   db.run('CREATE TABLE IF NOT EXISTS vendors (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, contact_name TEXT, email TEXT, phone TEXT, address TEXT, company_id INTEGER NOT NULL, FOREIGN KEY (company_id) REFERENCES companies(id))');
-  db.run('CREATE TABLE IF NOT EXISTS sales (id INTEGER PRIMARY KEY AUTOINCREMENT, customer_id INTEGER, date TEXT NOT NULL, subtotal REAL NOT NULL, tax REAL NOT NULL, tax_rate REAL NOT NULL, shipping REAL NOT NULL, discount REAL NOT NULL, total REAL NOT NULL, payment_method TEXT NOT NULL, transaction_number TEXT NOT NULL UNIQUE, company_id INTEGER NOT NULL, notes TEXT, customer_name TEXT, FOREIGN KEY (customer_id) REFERENCES customers(id), FOREIGN KEY (company_id) REFERENCES companies(id))');
+  db.run('CREATE TABLE IF NOT EXISTS sales (id INTEGER PRIMARY KEY AUTOINCREMENT, customer_id INTEGER, date TEXT NOT NULL, subtotal REAL NOT NULL, tax REAL NOT NULL, tax_rate REAL NOT NULL, tax_label TEXT, shipping REAL NOT NULL, discount REAL NOT NULL, total REAL NOT NULL, payment_method TEXT NOT NULL, transaction_number TEXT NOT NULL UNIQUE, company_id INTEGER NOT NULL, notes TEXT, customer_name TEXT, FOREIGN KEY (customer_id) REFERENCES customers(id), FOREIGN KEY (company_id) REFERENCES companies(id))');
   db.run('CREATE TABLE IF NOT EXISTS sale_items (id INTEGER PRIMARY KEY AUTOINCREMENT, transaction_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL, custom_price REAL, wholesale_price REAL, company_id INTEGER NOT NULL, FOREIGN KEY (transaction_id) REFERENCES sales(id), FOREIGN KEY (product_id) REFERENCES products(id), FOREIGN KEY (company_id) REFERENCES companies(id))');
   db.run('CREATE TABLE IF NOT EXISTS purchase_orders (id INTEGER PRIMARY KEY AUTOINCREMENT, po_number TEXT NOT NULL UNIQUE, vendor_id INTEGER, drop_ship_customer_id INTEGER, date_ordered TEXT NOT NULL, expected_delivery TEXT, status TEXT, created_date TEXT, notes TEXT, company_id INTEGER NOT NULL, FOREIGN KEY (vendor_id) REFERENCES vendors(id), FOREIGN KEY (drop_ship_customer_id) REFERENCES customers(id), FOREIGN KEY (company_id) REFERENCES companies(id))');
   db.run('CREATE TABLE IF NOT EXISTS purchase_order_items (id INTEGER PRIMARY KEY AUTOINCREMENT, purchase_order_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL, unit_price REAL NOT NULL, received_quantity INTEGER DEFAULT 0, company_id INTEGER NOT NULL, FOREIGN KEY (purchase_order_id) REFERENCES purchase_orders(id), FOREIGN KEY (product_id) REFERENCES products(id), FOREIGN KEY (company_id) REFERENCES companies(id))');
@@ -424,9 +425,9 @@ db.serialize(() => {
   db.run('CREATE TABLE IF NOT EXISTS inventory_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, purchase_order_id INTEGER, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL, transaction_type TEXT NOT NULL, transaction_date TEXT NOT NULL, company_id INTEGER NOT NULL, FOREIGN KEY (purchase_order_id) REFERENCES purchase_orders(id), FOREIGN KEY (product_id) REFERENCES products(id), FOREIGN KEY (company_id) REFERENCES companies(id))');
   db.run('CREATE TABLE IF NOT EXISTS deposits (id INTEGER PRIMARY KEY AUTOINCREMENT, customer_id INTEGER NOT NULL, amount REAL NOT NULL, type TEXT NOT NULL, date TEXT NOT NULL, description TEXT, company_id INTEGER NOT NULL, FOREIGN KEY (customer_id) REFERENCES customers(id), FOREIGN KEY (company_id) REFERENCES companies(id))');
   db.run('CREATE TABLE IF NOT EXISTS expenses (id INTEGER PRIMARY KEY AUTOINCREMENT, vendor_id INTEGER NOT NULL, category_id INTEGER NOT NULL, amount REAL NOT NULL, date TEXT NOT NULL, description TEXT, company_id INTEGER NOT NULL, FOREIGN KEY (vendor_id) REFERENCES vendors(id), FOREIGN KEY (category_id) REFERENCES expense_categories(id), FOREIGN KEY (company_id) REFERENCES companies(id))');
-  db.run('CREATE TABLE IF NOT EXISTS estimates (id INTEGER PRIMARY KEY AUTOINCREMENT, customer_id INTEGER, date TEXT NOT NULL, subtotal REAL NOT NULL, tax REAL NOT NULL, tax_rate REAL NOT NULL, shipping REAL NOT NULL, discount REAL NOT NULL, total REAL NOT NULL, payment_method TEXT NOT NULL, estimate_number TEXT NOT NULL UNIQUE, company_id INTEGER NOT NULL, notes TEXT, customer_name TEXT, status TEXT NOT NULL, FOREIGN KEY (customer_id) REFERENCES customers(id), FOREIGN KEY (company_id) REFERENCES companies(id))');
+  db.run('CREATE TABLE IF NOT EXISTS estimates (id INTEGER PRIMARY KEY AUTOINCREMENT, customer_id INTEGER, date TEXT NOT NULL, subtotal REAL NOT NULL, tax REAL NOT NULL, tax_rate REAL NOT NULL, tax_label TEXT, shipping REAL NOT NULL, discount REAL NOT NULL, total REAL NOT NULL, payment_method TEXT NOT NULL, estimate_number TEXT NOT NULL UNIQUE, company_id INTEGER NOT NULL, notes TEXT, customer_name TEXT, status TEXT NOT NULL, FOREIGN KEY (customer_id) REFERENCES customers(id), FOREIGN KEY (company_id) REFERENCES companies(id))');
   db.run('CREATE TABLE IF NOT EXISTS estimate_items (id INTEGER PRIMARY KEY AUTOINCREMENT, transaction_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL, custom_price REAL, wholesale_price REAL, company_id INTEGER NOT NULL, FOREIGN KEY (transaction_id) REFERENCES estimates(id), FOREIGN KEY (product_id) REFERENCES products(id), FOREIGN KEY (company_id) REFERENCES companies(id))');
-  db.run('CREATE TABLE IF NOT EXISTS invoices (id INTEGER PRIMARY KEY AUTOINCREMENT, customer_id INTEGER, date TEXT NOT NULL, subtotal REAL NOT NULL, tax REAL NOT NULL, tax_rate REAL NOT NULL, shipping REAL NOT NULL, discount REAL NOT NULL, total REAL NOT NULL, payment_method TEXT NOT NULL, invoice_number TEXT NOT NULL UNIQUE, company_id INTEGER NOT NULL, notes TEXT, customer_name TEXT, status TEXT NOT NULL, FOREIGN KEY (customer_id) REFERENCES customers(id), FOREIGN KEY (company_id) REFERENCES companies(id))');
+  db.run('CREATE TABLE IF NOT EXISTS invoices (id INTEGER PRIMARY KEY AUTOINCREMENT, customer_id INTEGER, date TEXT NOT NULL, subtotal REAL NOT NULL, tax REAL NOT NULL, tax_rate REAL NOT NULL, tax_label TEXT, shipping REAL NOT NULL, discount REAL NOT NULL, total REAL NOT NULL, payment_method TEXT NOT NULL, invoice_number TEXT NOT NULL UNIQUE, company_id INTEGER NOT NULL, notes TEXT, customer_name TEXT, status TEXT NOT NULL, FOREIGN KEY (customer_id) REFERENCES customers(id), FOREIGN KEY (company_id) REFERENCES companies(id))');
   db.run('CREATE TABLE IF NOT EXISTS invoice_items (id INTEGER PRIMARY KEY AUTOINCREMENT, transaction_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL, custom_price REAL, wholesale_price REAL, company_id INTEGER NOT NULL, FOREIGN KEY (transaction_id) REFERENCES invoices(id), FOREIGN KEY (product_id) REFERENCES products(id), FOREIGN KEY (company_id) REFERENCES companies(id))');
   // Add source column to sales table
   db.run('ALTER TABLE sales ADD COLUMN source TEXT DEFAULT "direct"', (err) => {
@@ -464,6 +465,15 @@ db.serialize(() => {
     } else if (!err) {
       console.log('[DB] Added customer_po column to invoices table');
     }
+  });
+  ['sales', 'estimates', 'invoices'].forEach((table) => {
+    db.run('ALTER TABLE ' + table + ' ADD COLUMN tax_label TEXT', (err) => {
+      if (err && !err.message.includes('duplicate column name')) {
+        console.error('[DB] Error adding ' + table + '.tax_label:', err.message);
+      } else if (!err) {
+        console.log('[DB] Added tax_label column to ' + table);
+      }
+    });
   });
 
   // Packing slips: multi-box lines + optional source invoice
@@ -542,6 +552,11 @@ db.serialize(() => {
           console.log('[DB] Updated sales source for invoice-converted sales');
         }
       });
+    }
+  });
+  db.run('ALTER TABLE products ADD COLUMN description TEXT', (err) => {
+    if (err && !err.message.includes('duplicate column name')) {
+      console.error('[DB] Error adding products.description:', err.message);
     }
   });
   db.run("ALTER TABLE products ADD COLUMN item_kind TEXT DEFAULT 'product'", (err) => {
@@ -1848,17 +1863,19 @@ app.post('/api/sales', async (req, res) => {
       customer_billing: cust.billing_address
     }) || null;
 
+    const priced = applyDocumentTax(req.body);
     await dbRun('BEGIN IMMEDIATE TRANSACTION');
     let saleId;
     try {
       const txn = generateTransactionNumber(date);
       const ins = await dbRun(
         `INSERT INTO sales (
-          customer_id, date, subtotal, tax, tax_rate, shipping, discount, total,
+          customer_id, date, subtotal, tax, tax_rate, tax_label, shipping, discount, total,
           payment_method, transaction_number, notes, company_id, customer_name, shipping_address
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          customer_id, date, subtotal, tax, tax_rate, shipping, discount, total,
+          customer_id, date, priced.subtotal, priced.tax, priced.tax_rate, priced.tax_label,
+          priced.shipping, priced.discount, priced.total,
           payment_method, txn, notes || 'Thank you for your patronage!', company_id,
           cust.name, saleShipAddr
         ]
@@ -1947,12 +1964,14 @@ app.put('/api/sales/:id', async (req, res) => {
     try {
       // Restore stock from previous lines, then apply new lines
       await applySaleStockDeltas(oldItems, company_id, +1, date, `Sale edit restore id=${saleId}`);
+      const priced = applyDocumentTax(req.body);
       const upd = await dbRun(
-        `UPDATE sales SET customer_id = ?, date = ?, subtotal = ?, tax = ?, tax_rate = ?, shipping = ?,
+        `UPDATE sales SET customer_id = ?, date = ?, subtotal = ?, tax = ?, tax_rate = ?, tax_label = ?, shipping = ?,
           discount = ?, total = ?, payment_method = ?, company_id = ?, customer_name = ?, shipping_address = ?
          WHERE id = ?`,
         [
-          customer_id, date, subtotal, tax, tax_rate, shipping, discount, total,
+          customer_id, date, priced.subtotal, priced.tax, priced.tax_rate, priced.tax_label,
+          priced.shipping, priced.discount, priced.total,
           payment_method, company_id, cust.name, saleShipAddr, saleId
         ]
       );
@@ -2127,11 +2146,12 @@ app.post('/api/estimates', async (req, res) => {
       customer_shipping: custRow && custRow.shipping_address,
       customer_billing: custRow && custRow.billing_address
     }) || null;
+    const priced = applyDocumentTax(req.body);
     db.serialize(() => {
       db.run('BEGIN TRANSACTION');
       db.run(
-        'INSERT INTO estimates (customer_id, date, subtotal, tax, tax_rate, shipping, discount, total, payment_method, estimate_number, notes, company_id, customer_name, status, shipping_address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT name FROM customers WHERE id = ?), ?, ?)',
-        [customer_id, date, subtotal, tax, tax_rate, shipping, discount, total, payment_method, generateTransactionNumber(date), notes || 'Estimate for your review', company_id, customer_id, status, estShip],
+        'INSERT INTO estimates (customer_id, date, subtotal, tax, tax_rate, tax_label, shipping, discount, total, payment_method, estimate_number, notes, company_id, customer_name, status, shipping_address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT name FROM customers WHERE id = ?), ?, ?)',
+        [customer_id, date, priced.subtotal, priced.tax, priced.tax_rate, priced.tax_label, priced.shipping, priced.discount, priced.total, payment_method, generateTransactionNumber(date), notes || 'Estimate for your review', company_id, customer_id, status, estShip],
         function(err) {
           if (err) {
             console.error('[API] Error inserting estimate:', err.message);
@@ -2221,9 +2241,10 @@ app.put('/api/estimates/:id', async (req, res) => {
     }) || null;
     db.serialize(() => {
       db.run('BEGIN TRANSACTION');
+      const priced = applyDocumentTax(req.body);
       db.run(
-        'UPDATE estimates SET customer_id = ?, date = ?, subtotal = ?, tax = ?, tax_rate = ?, shipping = ?, discount = ?, total = ?, payment_method = ?, company_id = ?, customer_name = (SELECT name FROM customers WHERE id = ?), status = ?, shipping_address = ? WHERE id = ?',
-        [customer_id, date, subtotal, tax, tax_rate, shipping, discount, total, payment_method, company_id, customer_id, status, estShip, req.params.id],
+        'UPDATE estimates SET customer_id = ?, date = ?, subtotal = ?, tax = ?, tax_rate = ?, tax_label = ?, shipping = ?, discount = ?, total = ?, payment_method = ?, company_id = ?, customer_name = (SELECT name FROM customers WHERE id = ?), status = ?, shipping_address = ? WHERE id = ?',
+        [customer_id, date, priced.subtotal, priced.tax, priced.tax_rate, priced.tax_label, priced.shipping, priced.discount, priced.total, payment_method, company_id, customer_id, status, estShip, req.params.id],
         function(err) {
           if (err) {
             console.error('[API] Error updating estimate:', err.message);
@@ -2418,11 +2439,12 @@ app.post('/api/invoices', async (req, res) => {
       customer_shipping: custRow && custRow.shipping_address,
       customer_billing: custRow && custRow.billing_address
     }) || null;
+    const priced = applyDocumentTax(req.body);
     db.serialize(() => {
       db.run('BEGIN TRANSACTION');
       db.run(
-        'INSERT INTO invoices (customer_id, date, subtotal, tax, tax_rate, shipping, discount, total, payment_method, invoice_number, notes, company_id, customer_name, status, shipping_address, customer_po) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT name FROM customers WHERE id = ?), ?, ?, ?)',
-        [customer_id, date, subtotal, tax, tax_rate, shipping, discount, total, payment_method, generateTransactionNumber(date), notes || 'Invoice for your payment', company_id, customer_id, status, invShip, (customer_po || '').trim() || null],
+        'INSERT INTO invoices (customer_id, date, subtotal, tax, tax_rate, tax_label, shipping, discount, total, payment_method, invoice_number, notes, company_id, customer_name, status, shipping_address, customer_po) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT name FROM customers WHERE id = ?), ?, ?, ?)',
+        [customer_id, date, priced.subtotal, priced.tax, priced.tax_rate, priced.tax_label, priced.shipping, priced.discount, priced.total, payment_method, generateTransactionNumber(date), notes || 'Invoice for your payment', company_id, customer_id, status, invShip, (customer_po || '').trim() || null],
         function(err) {
           if (err) {
             console.error('[API] Error inserting invoice:', err.message);
@@ -2512,9 +2534,10 @@ app.put('/api/invoices/:id', async (req, res) => {
     }) || null;
     db.serialize(() => {
       db.run('BEGIN TRANSACTION');
+      const priced = applyDocumentTax(req.body);
       db.run(
-        'UPDATE invoices SET customer_id = ?, date = ?, subtotal = ?, tax = ?, tax_rate = ?, shipping = ?, discount = ?, total = ?, payment_method = ?, company_id = ?, customer_name = (SELECT name FROM customers WHERE id = ?), status = ?, shipping_address = ?, notes = ?, customer_po = ? WHERE id = ?',
-        [customer_id, date, subtotal, tax, tax_rate, shipping, discount, total, payment_method, company_id, customer_id, status, invShip, notes || null, (customer_po || '').trim() || null, req.params.id],
+        'UPDATE invoices SET customer_id = ?, date = ?, subtotal = ?, tax = ?, tax_rate = ?, tax_label = ?, shipping = ?, discount = ?, total = ?, payment_method = ?, company_id = ?, customer_name = (SELECT name FROM customers WHERE id = ?), status = ?, shipping_address = ?, notes = ?, customer_po = ? WHERE id = ?',
+        [customer_id, date, priced.subtotal, priced.tax, priced.tax_rate, priced.tax_label, priced.shipping, priced.discount, priced.total, payment_method, company_id, customer_id, status, invShip, notes || null, (customer_po || '').trim() || null, req.params.id],
         function(err) {
           if (err) {
             console.error('[API] Error updating invoice:', err.message);

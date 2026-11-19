@@ -18,8 +18,8 @@
       industry: '',
       bank_name: '',
       tax_rates: [
-        { id: 'exempt', label: 'Exempt (0%)', rate: 0 },
-        { id: 'local', label: 'Local tax (edit rate in Settings)', rate: 0 },
+        { id: 'none', label: 'No tax (0%)', rate: 0 },
+        { id: 'example', label: 'Example rate (edit in Settings)', rate: 0 },
       ],
       payment_methods: ['Cash', 'Card', 'Check', 'ACH'],
       features: { products: true, easycart: false, packing_slips: true, books: true, deposits: true },
@@ -115,6 +115,162 @@
     return hasFeature('products', id);
   }
 
+  function normalizeTaxRate(rate, opts) {
+    var n = Number(rate);
+    if (!isFinite(n)) return 0;
+    var forcePercent = opts && opts.percent;
+    if (forcePercent || (n > 1 && n <= 100)) n = n / 100;
+    if (n < 0) n = 0;
+    if (n > 1) n = 1;
+    return Math.round(n * 1000000) / 1000000;
+  }
+
+  function formatTaxPercent(rate) {
+    return (normalizeTaxRate(rate) * 100).toFixed(2);
+  }
+
+  /** "Sales Tax (label)" when the document stored a label, otherwise "Tax (8.25%)". */
+  function taxCaption(doc) {
+    var src = doc || {};
+    var raw = src.tax_rate != null ? src.tax_rate : src.taxRate;
+    var label = src.tax_label != null ? src.tax_label : src.taxLabel;
+    label = label != null ? String(label).trim() : '';
+    if (label) return 'Sales Tax (' + label + ')';
+    return 'Tax (' + formatTaxPercent(raw) + '%)';
+  }
+
+  function defaultTaxFields(companyId) {
+    var c = getCompany(companyId);
+    var rates = (c && c.tax_rates) || FALLBACK[0].tax_rates;
+    var def = 0;
+    if (c && c.settings && c.settings.default_tax_rate != null) {
+      def = normalizeTaxRate(c.settings.default_tax_rate);
+    }
+    var idx = 0;
+    for (var i = 0; i < rates.length; i++) {
+      if (Math.abs(normalizeTaxRate(rates[i].rate) - def) < 0.000001) {
+        idx = i;
+        break;
+      }
+    }
+    var hit = rates[idx] || { label: 'No tax (0%)', rate: 0 };
+    return {
+      taxRate: normalizeTaxRate(hit.rate),
+      taxLabel: hit.label || '',
+      taxIndex: idx,
+      taxCustom: false,
+      customPercent: '',
+      taxTouched: false,
+    };
+  }
+
+  function taxFieldsFromDoc(doc, companyId) {
+    var src = doc || {};
+    var rate = normalizeTaxRate(src.tax_rate != null ? src.tax_rate : src.taxRate);
+    var label = String(src.tax_label || src.taxLabel || '').trim();
+    var rates = (getCompany(companyId).tax_rates) || [];
+    var idx = -1;
+    if (label) {
+      for (var i = 0; i < rates.length; i++) {
+        if (String(rates[i].label || '').trim() === label) { idx = i; break; }
+      }
+    }
+    if (idx < 0 && !label) {
+      for (var j = 0; j < rates.length; j++) {
+        if (Math.abs(normalizeTaxRate(rates[j].rate) - rate) < 0.000001) { idx = j; break; }
+      }
+    }
+    if (idx >= 0) {
+      return {
+        taxRate: normalizeTaxRate(rates[idx].rate),
+        taxLabel: rates[idx].label || '',
+        taxIndex: idx,
+        taxCustom: false,
+        customPercent: '',
+        taxTouched: true,
+      };
+    }
+    return {
+      taxRate: rate,
+      taxLabel: label,
+      taxIndex: -1,
+      taxCustom: true,
+      customPercent: (rate * 100).toFixed(2),
+      taxTouched: true,
+    };
+  }
+
+  function pickTax(prev, rates, value) {
+    var list = rates || [];
+    if (value === '__custom__') {
+      var pct = prev.customPercent != null && String(prev.customPercent) !== ''
+        ? String(prev.customPercent)
+        : ((normalizeTaxRate(prev.taxRate) * 100).toFixed(2));
+      var n = parseFloat(pct);
+      return Object.assign({}, prev, {
+        taxTouched: true,
+        taxCustom: true,
+        taxIndex: -1,
+        customPercent: pct,
+        taxRate: isFinite(n) ? normalizeTaxRate(Math.min(100, Math.max(0, n)), { percent: true }) : 0,
+        taxLabel: '',
+      });
+    }
+    var idx = parseInt(value, 10);
+    var tr = list[idx] || { rate: 0, label: '' };
+    return Object.assign({}, prev, {
+      taxTouched: true,
+      taxCustom: false,
+      taxIndex: idx,
+      taxRate: normalizeTaxRate(tr.rate),
+      taxLabel: tr.label || '',
+      customPercent: '',
+    });
+  }
+
+  function setCustomPercent(prev, pct) {
+    var n = parseFloat(pct);
+    var clamped = isFinite(n) ? Math.min(100, Math.max(0, n)) : 0;
+    return Object.assign({}, prev, {
+      taxTouched: true,
+      taxCustom: true,
+      taxIndex: -1,
+      customPercent: pct,
+      taxRate: normalizeTaxRate(clamped, { percent: true }),
+      taxLabel: '',
+    });
+  }
+
+  /**
+   * CSV Tax Rate cell: "8.25%" or 8.25 (percent when > 1) or 0.0825 (decimal)
+   * or a label that matches a configured rate.
+   */
+  function parseImportTax(raw, companyId) {
+    var text = raw == null ? '' : String(raw).trim();
+    var rates = (getCompany(companyId).tax_rates) || [];
+    if (!text) {
+      var d = defaultTaxFields(companyId);
+      return { tax_rate: d.taxRate, tax_label: d.taxLabel };
+    }
+    var percentForm = /%$/.test(text);
+    var numeric = text.replace(/%$/, '').replace(/,/g, '').trim();
+    if (/^-?\d+(\.\d+)?$/.test(numeric)) {
+      var rate = normalizeTaxRate(numeric, { percent: percentForm });
+      var match = null;
+      for (var i = 0; i < rates.length; i++) {
+        if (Math.abs(normalizeTaxRate(rates[i].rate) - rate) < 0.000001) { match = rates[i]; break; }
+      }
+      return { tax_rate: rate, tax_label: match ? (match.label || '') : '' };
+    }
+    var lower = text.toLowerCase();
+    for (var k = 0; k < rates.length; k++) {
+      if (String(rates[k].label || '').trim().toLowerCase() === lower) {
+        return { tax_rate: normalizeTaxRate(rates[k].rate), tax_label: rates[k].label || '' };
+      }
+    }
+    return { tax_rate: 0, tax_label: '' };
+  }
+
   function taxRateOptionsHtml(id, selectedRate) {
     var c = getCompany(id);
     var rates = c.tax_rates || [];
@@ -158,6 +314,14 @@
     taxRateOptionsHtml: taxRateOptionsHtml,
     paymentMethodOptionsHtml: paymentMethodOptionsHtml,
     taxLabel: taxLabel,
+    normalizeTaxRate: normalizeTaxRate,
+    formatTaxPercent: formatTaxPercent,
+    taxCaption: taxCaption,
+    defaultTaxFields: defaultTaxFields,
+    taxFieldsFromDoc: taxFieldsFromDoc,
+    pickTax: pickTax,
+    setCustomPercent: setCustomPercent,
+    parseImportTax: parseImportTax,
     apiBase: apiBase,
     FALLBACK: FALLBACK,
   };

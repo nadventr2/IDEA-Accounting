@@ -150,6 +150,7 @@
   </style>
   <link rel="stylesheet" href="/app-shell.css" />
   <link rel="stylesheet" href="/kpi-common.css" />
+  <script src="/company-config.js"></script>
   <script src="/app-shell.js" defer></script>
   <script src="/kpi-common.js" defer></script>
 </head>
@@ -288,6 +289,7 @@
         subtotal: t.subtotal || 0,
         tax: t.tax || 0,
         taxRate: t.tax_rate || 0,
+        taxLabel: t.tax_label || '',
         shipping: t.shipping || 0,
         discount: t.discount || 0,
         total: t.total || 0,
@@ -481,7 +483,7 @@
                                 )}
                               </ul>
                               <p><strong>Subtotal:</strong> ${t.subtotal.toFixed(2)}</p>
-                              <p><strong>Tax:</strong> ${t.tax.toFixed(2)} ({t.taxRate === 0.0775 ? 'CA 7.75%' : 'Out of State 0%'})</p>
+                              <p><strong>{(window.CompanyConfig && CompanyConfig.taxCaption) ? CompanyConfig.taxCaption({ tax_rate: t.taxRate, tax_label: t.taxLabel }) : ('Tax (' + ((Number(t.taxRate) > 1 && Number(t.taxRate) <= 100 ? Number(t.taxRate) : (Number(t.taxRate) || 0) * 100)).toFixed(2) + '%)')}:</strong> ${t.tax.toFixed(2)}</p>
                               <p><strong>Shipping:</strong> ${t.shipping.toFixed(2)}</p>
                               {t.discount > 0 && <p><strong>Discount:</strong> -${t.discount.toFixed(2)}</p>}
                               <p><strong>Total:</strong> ${t.total.toFixed(2)}</p>

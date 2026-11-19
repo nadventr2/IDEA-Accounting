@@ -37,6 +37,8 @@ function loadConfig() {
     tlsKey: String(pick('TLS_KEY', '') || ''),
     tlsCert: String(pick('TLS_CERT', '') || ''),
     reportTimezone: String(pick('REPORT_TIMEZONE', 'UTC')),
+    defaultTaxRate: pick('DEFAULT_TAX_RATE', '0'),
+    defaultTaxLabel: String(pick('DEFAULT_TAX_LABEL', '') || ''),
   };
 }
 

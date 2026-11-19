@@ -283,17 +283,6 @@
   <script type="text/babel">
   const { useState, useEffect, useCallback, useMemo, Fragment } = React;
 
-  /** CA sales tax is stored as decimal 0.0775. EasyCart import briefly stored 7.75 (percent).
-   *  Any sale with tax collected counts as CA for display + liability. */
-  const CA_SALES_TAX_RATE = 0.0775;
-  function isCaSalesTax(sale) {
-    if (!sale) return false;
-    const tax = Number(sale.tax || 0);
-    if (tax > 0.0001) return true;
-    const r = Number(sale.tax_rate || 0);
-    if (r > 1) return true; // percent form e.g. 7.75
-    return Math.abs(r - CA_SALES_TAX_RATE) < 0.001 || r > 0;
-  }
   const ErrorBoundary = ({ children }) => {
     const [error, setError] = useState(null);
     useEffect(() => {
@@ -336,6 +325,11 @@
       items: [],
       discount: 0,
       taxRate: 0,
+      taxLabel: '',
+      taxIndex: 0,
+      taxCustom: false,
+      customPercent: '',
+      taxTouched: false,
       shipping: 0,
       paymentMethod: 'Cash',
       date: new Date().toISOString().split('T')[0],
@@ -369,14 +363,15 @@ console.log('Name effect:', {
       }));
     }
   }, [newCustomer.billing_address]);
-          if (isLoading) {
-      return (
-        <main className="container mx-auto p-6 flex-grow">
-          <h2 className="text-3xl font-bold mb-6">Sales</h2>
-          <p>Loading...</p>
-        </main>
-      );
-    }
+    useEffect(() => {
+      const apply = () => setForm(prev => (
+        prev.taxTouched || !(window.CompanyConfig && CompanyConfig.defaultTaxFields)
+          ? prev
+          : { ...prev, ...CompanyConfig.defaultTaxFields(localStorage.getItem('selectedCompanyId') || '1') }
+      ));
+      if (window.CompanyConfig && CompanyConfig.load) CompanyConfig.load().then(apply).catch(apply);
+      else apply();
+    }, []);
     const [skuSearch, setSkuSearch] = useState('');
     const [selectedSaleIndex, setSelectedSaleIndex] = useState(-1);
     const [error, setError] = useState(null);
@@ -404,8 +399,8 @@ console.log('Name effect:', {
         ? window.CompanyConfig.get(selectedCompanyId)
         : null;
       return (c && c.tax_rates) || [
-        { label: 'Out of State (0%)', rate: 0 },
-        { label: 'CA (7.75%)', rate: 0.0775 },
+        { id: 'none', label: 'No tax (0%)', rate: 0 },
+        { id: 'example', label: 'Example rate (edit in Settings)', rate: 0 },
       ];
     };
     const companyLegalName = () => {
@@ -735,7 +730,8 @@ const handleCustomerFormChange = (e) => {
         const price = item.customPrice || (product.retail_price || 0);
         return sum + price * (item.quantity || 0);
       }, 0);
-      const validTaxRate = isNaN(taxRate) ? 0 : taxRate;
+      const rawTax = Number(taxRate);
+      const validTaxRate = !Number.isFinite(rawTax) ? 0 : (rawTax > 1 && rawTax <= 100 ? rawTax / 100 : rawTax);
       const validShipping = isNaN(shipping) ? 0 : shipping;
       const validDiscount = isNaN(discount) ? 0 : discount;
       const tax = subtotal * validTaxRate;
@@ -877,7 +873,8 @@ const handleCustomerFormChange = (e) => {
               custom_price: item.customPrice
             })),
             discount: totals.discount,
-            tax_rate: taxRate,
+            tax_rate: (window.CompanyConfig && CompanyConfig.normalizeTaxRate) ? CompanyConfig.normalizeTaxRate(taxRate) : taxRate,
+            tax_label: form.taxLabel || '',
             shipping: totals.shipping,
             payment_method: paymentMethod,
             date,
@@ -899,11 +896,13 @@ const handleCustomerFormChange = (e) => {
           customerId: '',
           items: [],
           discount: 0,
-          taxRate: 0,
           shipping: 0,
           paymentMethod: 'Cash',
           date: new Date().toISOString().split('T')[0],
-          notes: ''
+          notes: '',
+          ...((window.CompanyConfig && CompanyConfig.defaultTaxFields)
+            ? CompanyConfig.defaultTaxFields(selectedCompanyId)
+            : { taxRate: 0, taxLabel: '', taxIndex: 0, taxCustom: false, customPercent: '', taxTouched: false })
         });
         setSelectedCustomer(null);
         setCustomerSearch('');
@@ -924,7 +923,9 @@ const handleCustomerFormChange = (e) => {
           customPrice: item.custom_price
         })),
         discount: sale.discount,
-        taxRate: sale.tax_rate,
+        ...((window.CompanyConfig && CompanyConfig.taxFieldsFromDoc)
+          ? CompanyConfig.taxFieldsFromDoc(sale, selectedCompanyId)
+          : { taxRate: sale.tax_rate, taxLabel: sale.tax_label || '', taxIndex: 0, taxCustom: false, customPercent: '' }),
         shipping: sale.shipping,
         paymentMethod: sale.payment_method,
         date: sale.date,
@@ -1007,7 +1008,8 @@ const handleCustomerFormChange = (e) => {
               custom_price: item.customPrice
             })),
             discount: totals.discount,
-            tax_rate: taxRate,
+            tax_rate: (window.CompanyConfig && CompanyConfig.normalizeTaxRate) ? CompanyConfig.normalizeTaxRate(taxRate) : taxRate,
+            tax_label: editForm.taxLabel || '',
             shipping: totals.shipping,
             payment_method: paymentMethod,
             date,
@@ -1132,7 +1134,7 @@ doc.setFontSize(11);
 doc.setFont("helvetica", "normal");
 
 doc.text(`Subtotal: $${(sale.subtotal || 0).toFixed(2)}`, 14, finalY); finalY += 8;
-doc.text(`Tax: $${(sale.tax || 0).toFixed(2)} (${isCaSalesTax(sale) ? 'CA 7.75%' : 'Out of State 0%'})`, 14, finalY); finalY += 8;
+doc.text(`${(window.CompanyConfig && CompanyConfig.taxCaption) ? CompanyConfig.taxCaption(sale) : 'Tax'}: $${(sale.tax || 0).toFixed(2)}`, 14, finalY); finalY += 8;
 doc.text(`Shipping: $${(sale.shipping || 0).toFixed(2)}`, 14, finalY); finalY += 8;
 
 if (sale.discount > 0) {
@@ -1201,7 +1203,9 @@ doc.text(`Total: $${(sale.total || 0).toFixed(2)}`, 14, finalY);
             customPrice: item.custom_price
           })),
           discount: invoice.discount,
-          taxRate: invoice.tax_rate,
+          ...((window.CompanyConfig && CompanyConfig.taxFieldsFromDoc)
+            ? CompanyConfig.taxFieldsFromDoc(invoice, selectedCompanyId)
+            : { taxRate: invoice.tax_rate, taxLabel: invoice.tax_label || '', taxIndex: 0, taxCustom: false, customPercent: '' }),
           shipping: invoice.shipping,
           paymentMethod: invoice.payment_method,
           date: new Date().toISOString().split('T')[0],
@@ -1448,16 +1452,29 @@ doc.text(`Total: $${(sale.total || 0).toFixed(2)}`, 14, finalY);
                   <label htmlFor="taxRate" className="block text-sm font-medium text-gray-700">Sales Tax</label>
                   <select
                     id="taxRate"
-                    name="taxRate"
-                    value={form.taxRate}
-                    onChange={handleFormChange}
+                    value={form.taxCustom ? '__custom__' : String(form.taxIndex != null ? form.taxIndex : 0)}
+                    onChange={(e) => setForm(prev => (window.CompanyConfig ? CompanyConfig.pickTax(prev, companyTaxRates(), e.target.value) : prev))}
                     required
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   >
                     {companyTaxRates().map((tr, i) => (
-                      <option key={i} value={tr.rate}>{tr.label}</option>
+                      <option key={i} value={String(i)}>{tr.label}</option>
                     ))}
+                    <option value="__custom__">Custom percent</option>
                   </select>
+                  {form.taxCustom && (
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.001"
+                      aria-label="Custom tax percent"
+                      placeholder="Percent from 0 to 100"
+                      value={form.customPercent}
+                      onChange={(e) => setForm(prev => (window.CompanyConfig ? CompanyConfig.setCustomPercent(prev, e.target.value) : prev))}
+                      className="mt-2 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  )}
                 </div>
                 <div>
                   <label htmlFor="shipping" className="block text-sm font-medium text-gray-700">Shipping Charge</label>
@@ -1781,7 +1798,7 @@ doc.text(`Total: $${(sale.total || 0).toFixed(2)}`, 14, finalY);
                                             )}
                                           </ul>
                                           <p><strong>Subtotal:</strong> ${(sale.subtotal || 0).toFixed(2)}</p>
-                                          <p><strong>Tax:</strong> ${(sale.tax || 0).toFixed(2)} ({isCaSalesTax(sale) ? 'CA 7.75%' : 'Out of State 0%'})</p>
+                                          <p><strong>{(window.CompanyConfig && CompanyConfig.taxCaption) ? CompanyConfig.taxCaption(sale) : 'Tax'}:</strong> ${(sale.tax || 0).toFixed(2)}</p>
                                           <p><strong>Shipping:</strong> ${(sale.shipping || 0).toFixed(2)}</p>
                                           {sale.discount > 0 && <p><strong>Discount:</strong> -${(sale.discount || 0).toFixed(2)}</p>}
                                           <p><strong>Total:</strong> ${(sale.total || 0).toFixed(2)}</p>
@@ -2042,16 +2059,29 @@ doc.text(`Total: $${(sale.total || 0).toFixed(2)}`, 14, finalY);
                   <label htmlFor="editTaxRate" className="block text-sm font-medium text-gray-700 mt-4">Sales Tax</label>
                   <select
                     id="editTaxRate"
-                    name="taxRate"
-                    value={editForm.taxRate}
-                    onChange={handleEditFormChange}
+                    value={editForm.taxCustom ? '__custom__' : String(editForm.taxIndex != null ? editForm.taxIndex : 0)}
+                    onChange={(e) => setEditForm(prev => (window.CompanyConfig ? CompanyConfig.pickTax(prev, companyTaxRates(), e.target.value) : prev))}
                     required
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   >
                     {companyTaxRates().map((tr, i) => (
-                      <option key={i} value={tr.rate}>{tr.label}</option>
+                      <option key={i} value={String(i)}>{tr.label}</option>
                     ))}
+                    <option value="__custom__">Custom percent</option>
                   </select>
+                  {editForm.taxCustom && (
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.001"
+                      aria-label="Custom tax percent"
+                      placeholder="Percent from 0 to 100"
+                      value={editForm.customPercent}
+                      onChange={(e) => setEditForm(prev => (window.CompanyConfig ? CompanyConfig.setCustomPercent(prev, e.target.value) : prev))}
+                      className="mt-2 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  )}
                   <label htmlFor="editShipping" className="block text-sm font-medium text-gray-700 mt-4">Shipping Charge</label>
                   <input
                     type="number"
