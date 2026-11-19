@@ -25,9 +25,18 @@ The server is Node.js and Express. Data is a SQLite file. Each company is a row 
 
 ## Quick start
 
+Linux, macOS, or any system with Node.js: use the source. Windows users can use the ready-to-run zip in the Windows section below.
+
 ```bash
-tar -xzf open-accounting-1.0.1.tar.gz
-cd open-accounting
+# Option A
+git clone https://github.com/nadventr2/IDEA-Accounting.git
+cd IDEA-Accounting
+
+# Option B: download https://github.com/nadventr2/IDEA-Accounting/archive/refs/tags/v1.0.2.tar.gz
+curl -L -o v1.0.2.tar.gz https://github.com/nadventr2/IDEA-Accounting/archive/refs/tags/v1.0.2.tar.gz
+tar -xzf v1.0.2.tar.gz
+cd IDEA-Accounting-1.0.2
+
 npm install
 cp .env.example .env
 # Export the variables in .env, or copy config.example.json to config.json
