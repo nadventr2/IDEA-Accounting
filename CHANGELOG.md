@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.0.2
+
 - API: invoices/estimates created without tax_rate now use the company default tax rate. Sales receipts, and updates that recompute tax, use the same rule. An explicit tax_rate of 0 stays 0%.
 
 ## 1.0.1
