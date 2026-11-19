@@ -19,9 +19,10 @@ const {
 const {
   initCompanySettingsSchema,
   registerCompanyRoutes,
+  parseSettings,
 } = require('./company-settings');
 const { loadConfig } = require('./load-config');
-const { applyDocumentTax } = require('./tax-rate');
+const { applyDocumentTax, taxDefaultsFromSettings } = require('./tax-rate');
 const appConfig = loadConfig();
 const app = express();
 // ==== FINAL, BULLETPROOF, ZERO-CORS, ZERO-ERRORS FIX ====
@@ -147,6 +148,15 @@ function dbRun(sql, params = []) {
       else resolve({ lastID: this.lastID, changes: this.changes });
     });
   });
+}
+
+/** Price a sale, estimate, or invoice. Omitted tax_rate uses the company default. */
+async function priceDocument(body, companyId) {
+  const row = await dbGet('SELECT * FROM companies WHERE id = ?', [companyId]);
+  const settings = row
+    ? parseSettings(row.settings_json, row.id, row)
+    : { default_tax_rate: 0, tax_rates: [] };
+  return applyDocumentTax(body, taxDefaultsFromSettings(settings));
 }
 
 /** Ship-to precedence: explicit override → customer shipping → customer billing */
@@ -1863,7 +1873,7 @@ app.post('/api/sales', async (req, res) => {
       customer_billing: cust.billing_address
     }) || null;
 
-    const priced = applyDocumentTax(req.body);
+    const priced = await priceDocument(req.body, company_id);
     await dbRun('BEGIN IMMEDIATE TRANSACTION');
     let saleId;
     try {
@@ -1964,7 +1974,7 @@ app.put('/api/sales/:id', async (req, res) => {
     try {
       // Restore stock from previous lines, then apply new lines
       await applySaleStockDeltas(oldItems, company_id, +1, date, `Sale edit restore id=${saleId}`);
-      const priced = applyDocumentTax(req.body);
+      const priced = await priceDocument(req.body, company_id);
       const upd = await dbRun(
         `UPDATE sales SET customer_id = ?, date = ?, subtotal = ?, tax = ?, tax_rate = ?, tax_label = ?, shipping = ?,
           discount = ?, total = ?, payment_method = ?, company_id = ?, customer_name = ?, shipping_address = ?
@@ -2146,7 +2156,7 @@ app.post('/api/estimates', async (req, res) => {
       customer_shipping: custRow && custRow.shipping_address,
       customer_billing: custRow && custRow.billing_address
     }) || null;
-    const priced = applyDocumentTax(req.body);
+    const priced = await priceDocument(req.body, company_id);
     db.serialize(() => {
       db.run('BEGIN TRANSACTION');
       db.run(
@@ -2239,9 +2249,9 @@ app.put('/api/estimates/:id', async (req, res) => {
       customer_shipping: custRow && custRow.shipping_address,
       customer_billing: custRow && custRow.billing_address
     }) || null;
+    const priced = await priceDocument(req.body, company_id);
     db.serialize(() => {
       db.run('BEGIN TRANSACTION');
-      const priced = applyDocumentTax(req.body);
       db.run(
         'UPDATE estimates SET customer_id = ?, date = ?, subtotal = ?, tax = ?, tax_rate = ?, tax_label = ?, shipping = ?, discount = ?, total = ?, payment_method = ?, company_id = ?, customer_name = (SELECT name FROM customers WHERE id = ?), status = ?, shipping_address = ? WHERE id = ?',
         [customer_id, date, priced.subtotal, priced.tax, priced.tax_rate, priced.tax_label, priced.shipping, priced.discount, priced.total, payment_method, company_id, customer_id, status, estShip, req.params.id],
@@ -2439,7 +2449,7 @@ app.post('/api/invoices', async (req, res) => {
       customer_shipping: custRow && custRow.shipping_address,
       customer_billing: custRow && custRow.billing_address
     }) || null;
-    const priced = applyDocumentTax(req.body);
+    const priced = await priceDocument(req.body, company_id);
     db.serialize(() => {
       db.run('BEGIN TRANSACTION');
       db.run(
@@ -2532,9 +2542,9 @@ app.put('/api/invoices/:id', async (req, res) => {
       customer_shipping: custRow && custRow.shipping_address,
       customer_billing: custRow && custRow.billing_address
     }) || null;
+    const priced = await priceDocument(req.body, company_id);
     db.serialize(() => {
       db.run('BEGIN TRANSACTION');
-      const priced = applyDocumentTax(req.body);
       db.run(
         'UPDATE invoices SET customer_id = ?, date = ?, subtotal = ?, tax = ?, tax_rate = ?, tax_label = ?, shipping = ?, discount = ?, total = ?, payment_method = ?, company_id = ?, customer_name = (SELECT name FROM customers WHERE id = ?), status = ?, shipping_address = ?, notes = ?, customer_po = ? WHERE id = ?',
         [customer_id, date, priced.subtotal, priced.tax, priced.tax_rate, priced.tax_label, priced.shipping, priced.discount, priced.total, payment_method, company_id, customer_id, status, invShip, notes || null, (customer_po || '').trim() || null, req.params.id],

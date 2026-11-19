@@ -43,35 +43,71 @@ function sanitizeTaxRates(list) {
 }
 
 /**
+ * Company default used when a document request omits tax_rate.
+ * Label is the configured rate whose decimal matches default_tax_rate.
+ */
+function taxDefaultsFromSettings(settings) {
+  const s = settings || {};
+  const tax_rate = s.default_tax_rate != null && s.default_tax_rate !== ''
+    ? normalizeTaxRate(s.default_tax_rate)
+    : 0;
+  const rates = Array.isArray(s.tax_rates) ? s.tax_rates : [];
+  let tax_label = '';
+  for (let i = 0; i < rates.length; i++) {
+    const item = rates[i];
+    if (!item) continue;
+    if (Math.abs(normalizeTaxRate(item.rate) - tax_rate) < 1e-6) {
+      tax_label = String(item.label || '').trim();
+      break;
+    }
+  }
+  return { tax_rate, tax_label };
+}
+
+/**
  * Tax is subtotal × rate. Shipping is not taxed. Discount is not taken out of the tax base.
  * Totals are rounded to cents.
+ *
+ * An explicit tax_rate, including 0, is the rate. When tax_rate is omitted (undefined, null,
+ * or ''), `defaults` supplies the company default rate and, if the request has no label, its label.
+ * A sent tax amount does not override that default. Without defaults, a sent tax amount still
+ * implies the rate (older callers).
  */
-function applyDocumentTax(body) {
+function applyDocumentTax(body, defaults) {
   const src = body || {};
   const hasRate = src.tax_rate != null && src.tax_rate !== '';
   const subtotal = roundMoney(src.subtotal);
   const shipping = roundMoney(src.shipping);
   const discount = roundMoney(src.discount);
+  const hasDefault = defaults && defaults.tax_rate != null && defaults.tax_rate !== '';
   let tax_rate;
+  let usedDefault = false;
   if (hasRate) {
     tax_rate = normalizeTaxRate(src.tax_rate);
+  } else if (hasDefault) {
+    tax_rate = normalizeTaxRate(defaults.tax_rate);
+    usedDefault = true;
   } else if (subtotal > 0 && src.tax != null && src.tax !== '') {
     tax_rate = rateFromTaxAmount(src.tax, subtotal);
     if (tax_rate == null) tax_rate = 0;
   } else {
     tax_rate = 0;
   }
-  const tax = hasRate || src.tax == null || src.tax === ''
+  const tax = hasRate || usedDefault || src.tax == null || src.tax === ''
     ? roundMoney(subtotal * tax_rate)
     : roundMoney(src.tax);
   let total = roundMoney(subtotal + tax + shipping - discount);
   if (total < 0) total = 0;
   const rawLabel = src.tax_label != null ? String(src.tax_label).trim() : '';
+  let tax_label = rawLabel || null;
+  if (!tax_label && usedDefault && defaults.tax_label) {
+    tax_label = String(defaults.tax_label).trim() || null;
+  }
   return {
     subtotal,
     tax,
     tax_rate,
-    tax_label: rawLabel || null,
+    tax_label,
     shipping,
     discount,
     total,
@@ -92,6 +128,7 @@ module.exports = {
   normalizeTaxRate,
   rateIsAcceptable,
   sanitizeTaxRates,
+  taxDefaultsFromSettings,
   applyDocumentTax,
   rateFromTaxAmount,
 };

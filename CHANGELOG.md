@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- API: invoices/estimates created without tax_rate now use the company default tax rate. Sales receipts, and updates that recompute tax, use the same rule. An explicit tax_rate of 0 stays 0%.
+
 ## 1.0.1
 
 - Sales tax rates are set per company in Settings (label and percent, stored as a decimal).

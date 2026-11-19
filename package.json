@@ -6,6 +6,7 @@
   "main": "server/server_new.js",
   "scripts": {
     "start": "node server/server_new.js",
+    "test": "node --test tests/*.test.js",
     "dev": "node --watch server/server_new.js",
     "seed:demo": "node scripts/seed-demo.js"
   },
